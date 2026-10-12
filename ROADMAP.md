@@ -9,7 +9,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 - [ ] 0.3 Sprite system and first art (see the Art quality bar in CLAUDE.md): a starter creature and one boss with full idle/attack/hurt/faint animations, plus one illustrated battle background.
   - [x] 0.3a Shaded-primitive pixel painter (`lib/paint.ts`), the starter **Pingkit** (64×64 front + back, idle/attack/hurt/faint frames), named animations on the stage actor, and the `/dev/sprites` viewer.
   - [x] 0.3b A 96×96 boss creature (front + back, full animations) replacing the Glitchling stand-in as the demo foe.
-  - [ ] 0.3c An illustrated battle background (sky, terrain, props) drawn as pixel art, replacing the vector-ish demo field.
+  - [x] 0.3c An illustrated battle background (sky, terrain, props) drawn as pixel art, replacing the vector-ish demo field.
   - [ ] 0.3d Evolve animation on the stage (white silhouette morph between two forms) and a second Pingkit form to evolve into.
 - [ ] 0.4 GBA-style battle screen: foe front sprite on a platform top-right, player creature back sprite bottom-left, HP/XP boxes, typed-out message box, and a move menu of 4 answer options (tap-friendly).
 

@@ -9,6 +9,8 @@
  *   await stage.faint("foe")
  */
 import { Application, Container, Graphics, Sprite, Text } from "pixi.js";
+import { copperfield } from "@/game/art/backgrounds/copperfield";
+import type { BattleBackground } from "@/game/art/backgrounds/types";
 import { PACKET, SPARK } from "@/game/art/effects";
 import type { AnimSet } from "@/game/art/creature";
 import { Camera } from "./fx";
@@ -18,7 +20,6 @@ import { Tweener, ease } from "./tween";
 
 export const W = 256;
 export const H = 192;
-const HORIZON = 92;
 
 export type Side = "player" | "foe";
 
@@ -35,6 +36,8 @@ export interface StageOptions {
   reducedMotion: boolean;
   /** Pixel display font family (resolved next/font name). */
   font: string;
+  /** The area's battle background (defaults to Copperfield). */
+  background?: BattleBackground;
 }
 
 /** Deterministic PRNG so the background looks the same on every load. */
@@ -56,7 +59,7 @@ export class BattleStage {
   private flashRect = new Graphics();
   private wipe = new Graphics();
   private leds: Graphics[] = [];
-  private clouds: Graphics[] = [];
+  private clouds: Sprite[] = [];
   private tw = new Tweener();
   private fx = new Particles();
   private cam!: Camera;
@@ -66,7 +69,11 @@ export class BattleStage {
   private scale = 1;
   private destroyed = false;
 
-  private constructor(private opts: StageOptions) {}
+  private opts: Required<StageOptions>;
+
+  private constructor(opts: StageOptions) {
+    this.opts = { ...opts, background: opts.background ?? copperfield() };
+  }
 
   static async create(host: HTMLElement, opts: StageOptions): Promise<BattleStage> {
     const s = new BattleStage(opts);
@@ -95,11 +102,12 @@ export class BattleStage {
     this.drawBackground();
 
     this.player = new PixelActor(this.opts.player.anims, this.opts.player.scale, this.opts.player.fps, 1);
-    this.player.homeX = 68;
-    this.player.homeY = 166;
+    const spots = this.opts.background.platforms;
+    this.player.homeX = spots.player.cx;
+    this.player.homeY = spots.player.cy + 2;
     this.foe = new PixelActor(this.opts.foe.anims, this.opts.foe.scale, this.opts.foe.fps, -1);
-    this.foe.homeX = 190;
-    this.foe.homeY = 102;
+    this.foe.homeX = spots.foe.cx;
+    this.foe.homeY = spots.foe.cy + 5;
     for (const a of [this.player, this.foe]) a.root.position.set(a.homeX, a.homeY);
     this.fighters.addChild(this.foe.root, this.player.root);
 
@@ -120,107 +128,28 @@ export class BattleStage {
     this.wipeK = 0;
   }
 
-  /** Background: banded sky, clouds, hills with relay towers, grass and two platforms. */
+  /** The area's illustrated pixel background, plus its drifting clouds and blinking lights. */
   private drawBackground() {
-    const g = new Graphics();
+    const bg = this.opts.background;
+    const sky = new Sprite(pixelTexture(bg.image));
+    sky.position.set(bg.x, bg.y);
+    sky.roundPixels = true;
+    this.bg.addChild(sky);
     const r = rng(7);
-    const X0 = -128;
-    const X1 = W + 128;
-    // sky: hard colour steps, like a limited palette
-    const bands: [number, number][] = [
-      [-64, 0x3a7fd5],
-      [14, 0x4f95e2],
-      [30, 0x6aaceb],
-      [46, 0x8cc4f1],
-      [60, 0xb3dbf5],
-    ];
-    bands.forEach(([y], i) => {
-      const y1 = i + 1 < bands.length ? bands[i + 1][0] : HORIZON;
-      g.rect(X0, y, X1 - X0, y1 - y).fill({ color: bands[i][1] });
-    });
-    // dithered band edges
-    for (let i = 1; i < bands.length; i++) {
-      for (let x = X0; x < X1; x += 4) g.rect(x + ((i % 2) * 2), bands[i][0] - 1, 2, 1).fill({ color: bands[i][1] });
-    }
-    this.bg.addChild(g);
-
-    // clouds drift slowly (separate objects)
-    for (let i = 0; i < 4; i++) {
-      const c = new Graphics();
-      const w = 22 + Math.floor(r() * 18);
-      c.rect(4, 0, w - 8, 3).fill({ color: 0xffffff });
-      c.rect(0, 3, w, 4).fill({ color: 0xffffff });
-      c.rect(2, 7, w - 4, 2).fill({ color: 0xd6ebfa });
-      c.position.set(Math.floor(X0 + r() * (X1 - X0)), 8 + Math.floor(r() * 36));
+    for (let i = 0; i < 6; i++) {
+      const c = new Sprite(pixelTexture(bg.clouds[i % bg.clouds.length]));
+      c.roundPixels = true;
+      c.position.set(Math.floor(bg.x + r() * (W - 2 * bg.x)), 2 + Math.floor(r() * 26));
       this.clouds.push(c);
-      this.bg.addChild(c);
     }
-
-    const land = new Graphics();
-    // far hills (stepped silhouettes)
-    const hill = (base: number, amp: number, col: number, top: number, seed: number) => {
-      const rr = rng(seed);
-      let h = amp / 2;
-      for (let x = X0; x < X1; x += 4) {
-        h = Math.max(4, Math.min(amp, h + Math.floor((rr() - 0.5) * 6)));
-        land.rect(x, base - h, 4, h).fill({ color: col });
-        land.rect(x, base - h, 4, 1).fill({ color: top });
-      }
-    };
-    hill(HORIZON, 26, 0x7fb4c9, 0x9fcadb, 3);
-    hill(HORIZON, 14, 0x5f9b74, 0x7dbb86, 11);
-
-    // relay towers: lattice masts with a blinking LED
-    for (const [tx, th] of [
-      [24, 44],
-      [118, 34],
-      [236, 40],
-    ] as const) {
-      const base = HORIZON;
-      land.rect(tx - 1, base - th, 2, th).fill({ color: 0x45506e });
-      for (let y = base - th + 4; y < base; y += 5) {
-        land.rect(tx - 3, y, 6, 1).fill({ color: 0x5c6889 });
-        land.rect(tx - 3 + ((y / 5) % 2 ? 4 : 0), y + 1, 2, 3).fill({ color: 0x45506e });
-      }
-      land.rect(tx - 4, base - th + 2, 8, 2).fill({ color: 0x2c3350 });
+    // clouds stay above the peaks, so they never need to pass behind scenery
+    this.bg.addChild(...this.clouds);
+    for (const l of bg.lights) {
       const led = new Graphics();
-      led.rect(tx - 1, base - th - 3, 2, 2).fill({ color: 0xff4f7b });
+      led.rect(l.x - 1, l.y - 1, 2, 2).fill({ color: l.color });
       this.leds.push(led);
     }
-
-    // ground: grass rows with tufts
-    const grass = [0x7cc96b, 0x67b65c, 0x58a352, 0x4b9249];
-    for (let i = 0; i < grass.length; i++) {
-      const y0 = HORIZON + i * 26;
-      land.rect(X0, y0, X1 - X0, i === grass.length - 1 ? 200 : 26).fill({ color: grass[i] });
-    }
-    const tuft = rng(21);
-    for (let i = 0; i < 90; i++) {
-      const x = Math.floor(X0 + tuft() * (X1 - X0));
-      const y = Math.floor(HORIZON + 4 + tuft() * (H - HORIZON));
-      land.rect(x, y, 1, 2).fill({ color: 0x3d7d3e });
-      land.rect(x + 2, y - 1, 1, 3).fill({ color: 0x3d7d3e });
-      land.rect(x + 1, y, 1, 1).fill({ color: 0x9fe08a });
-    }
-
-    // platforms: pixel ellipses with a lit rim and a shaded underside
-    this.platform(land, 190, 97, 50, 10);
-    this.platform(land, 68, 164, 56, 11);
-
-    this.bg.addChild(land, ...this.leds);
-  }
-
-  private platform(g: Graphics, cx: number, cy: number, rx: number, ry: number) {
-    const ellipse = (oy: number, shade: (dy: number) => number) => {
-      for (let dy = -ry; dy <= ry; dy++) {
-        const half = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry))));
-        g.rect(cx - half - 1, cy + oy + dy, half * 2 + 2, 1).fill({ color: 0x24402a });
-        g.rect(cx - half, cy + oy + dy, half * 2, 1).fill({ color: shade(dy) });
-      }
-    };
-    // soil rim (offset down), then the grassy top with a lit back edge
-    ellipse(3, (dy) => (dy > ry * 0.5 ? 0x5a3b26 : 0x7a5434));
-    ellipse(0, (dy) => (dy < -ry * 0.55 ? 0xb4e58a : dy < ry * 0.2 ? 0x8fcf6c : 0x6fae58));
+    this.bg.addChild(...this.leds);
   }
 
   /* ----------------------------------------------------------- layout */

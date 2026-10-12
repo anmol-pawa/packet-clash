@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { PixelSprite } from "@/components/ui/PixelSprite";
+import { copperfield } from "@/game/art/backgrounds/copperfield";
 import { ANIMS, type CreatureArt } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
@@ -61,6 +62,8 @@ export function SpriteViewer() {
         </section>
       ))}
 
+      <BackgroundSection scale={scale} />
+
       <section className="flex flex-col gap-3">
         <h2 className="font-pixel text-xs text-white">MOVE EFFECTS</h2>
         <div className="flex flex-wrap gap-3">
@@ -75,5 +78,33 @@ export function SpriteViewer() {
         </div>
       </section>
     </main>
+  );
+}
+
+/** Battle backgrounds: the 256×192 stage frame (scrolls on narrow screens), the clouds and the full painted area. */
+function BackgroundSection({ scale }: { scale: number }) {
+  const bg = copperfield();
+  const frame = { palette: bg.image.palette, rows: bg.image.rows.slice(-bg.y, -bg.y + 192).map((r) => r.slice(-bg.x, -bg.x + 256)) };
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-pixel text-xs text-white">
+        BACKGROUND · {bg.name.toUpperCase()} <span className="text-[#9ab]">· stage 256×192</span>
+      </h2>
+      <div className="max-w-full overflow-x-auto">
+        <PixelSprite frames={[frame]} scale={Math.max(1, scale - 1)} label={`${bg.name} stage frame`} />
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {bg.clouds.map((c, i) => (
+          <figure key={i} className="flex flex-col items-center gap-1 rounded bg-[#4f95e2] p-2">
+            <PixelSprite frames={[c]} scale={scale} label={`cloud ${i + 1}`} />
+            <figcaption className="font-pixel text-[9px] text-white">cloud</figcaption>
+          </figure>
+        ))}
+      </div>
+      <h3 className="font-pixel text-[10px] text-[#9ab]">FULL AREA (WIDE SCREENS) · {bg.image.rows[0].length}×{bg.image.rows.length}</h3>
+      <div className="max-w-full overflow-x-auto">
+        <PixelSprite frames={[bg.image]} scale={1} label={`${bg.name} full area`} />
+      </div>
+    </section>
   );
 }
