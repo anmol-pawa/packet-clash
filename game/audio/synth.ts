@@ -138,6 +138,12 @@ export const sfx = {
   blip() {
     tone(1200, 0.025, { type: "square", gain: 0.03 });
   },
+  /** The badge-get fanfare: a rising arpeggio, a held chord and a shimmer. */
+  badge() {
+    [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, { type: "square", gain: 0.06, delay: i * 0.1 }));
+    [1047, 1319, 1568].forEach((f) => tone(f, 1.1, { type: "triangle", gain: 0.06, delay: 0.62 }));
+    noise(0.8, { gain: 0.06, freq: 4000, sweep: 9000 });
+  },
   unlockCodex() {
     tone(1318, 0.15, { type: "sine", gain: 0.08 });
     tone(1760, 0.3, { type: "sine", gain: 0.08, delay: 0.1 });

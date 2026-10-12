@@ -8,7 +8,9 @@ import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { EVOLUTIONS, morphFrames } from "@/game/art/evolve";
+import { badgeFrames } from "@/game/art/world/badges";
 import { COURIER } from "@/game/art/world/courier";
+import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
@@ -68,6 +70,7 @@ export function SpriteViewer() {
       <EvolveSection scale={scale} />
 
       <CourierSection scale={scale} />
+      <BadgeSection scale={scale} />
 
       <BackgroundSection scale={scale} />
 
@@ -147,6 +150,25 @@ function CourierSection({ scale }: { scale: number }) {
             </figure>
           )),
         )}
+      </div>
+    </section>
+  );
+}
+
+/** Gym badges, each with its glint sweep. */
+function BadgeSection({ scale }: { scale: number }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-pixel text-xs text-[#ffd257]">
+        GYM BADGES <span className="text-[#9ab]">· 24×24 · glint sweep</span>
+      </h2>
+      <div className="flex flex-wrap gap-3">
+        {TOWNS.map((t) => (
+          <figure key={t.id} className="flex flex-col items-center gap-1 rounded bg-[#2a2350] p-2">
+            <PixelSprite frames={badgeFrames(t)} scale={scale + 1} frameMs={90} label={t.badge} />
+            <figcaption className="font-pixel text-[8px] text-[#d9d2ff]">{t.badge.replace(" Badge", "").toUpperCase()}</figcaption>
+          </figure>
+        ))}
       </div>
     </section>
   );

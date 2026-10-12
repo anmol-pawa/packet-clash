@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { gymOpen } from "@/content/gyms";
 import { currentTown, isRouteOpen, isUnlocked, ROUTES, town, TOWNS, townCidr, type Town } from "@/content/world";
+import { PixelSprite } from "@/components/ui/PixelSprite";
+import { badgeSprite } from "@/game/art/world/badges";
 import { COURIER, COURIER_FEET } from "@/game/art/world/courier";
 import { MAP_TICK_MS, mapFrame } from "@/game/art/world/mapAnim";
 import { MAP_H, MAP_W, overworld } from "@/game/art/world/overworld";
@@ -119,15 +122,12 @@ function MapLife({ badges, at, trip, still, onArrive }: { badges: readonly numbe
   return <canvas ref={ref} width={MAP_W} height={MAP_H} aria-hidden className="pixelated pointer-events-none absolute inset-0 h-full w-full" />;
 }
 
-/** A pixel badge: a faceted gem in the gym's colour, or an empty socket. */
+/** A pixel badge from the badge case, or a dim empty socket. */
 function Badge({ t, earned }: { t: Town; earned: boolean }) {
   return (
-    <span
-      title={earned ? t.badge : `${t.badge} (not yet earned)`}
-      aria-label={earned ? t.badge : `${t.badge}, not earned`}
-      className="inline-block h-5 w-5 rotate-45 border-[3px] border-[#0b0818] sm:h-6 sm:w-6"
-      style={earned ? { background: t.badgeColor, boxShadow: "inset 3px 3px 0 #ffffffaa, inset -3px -3px 0 #00000055" } : { background: "#2a2350", boxShadow: "inset 2px 2px 0 #00000088" }}
-    />
+    <span title={earned ? t.badge : `${t.badge} (not yet earned)`} className={earned ? "" : "opacity-25 grayscale"}>
+      <PixelSprite frames={[badgeSprite(t)]} scale={1} label={earned ? t.badge : `${t.badge}, not earned`} />
+    </span>
   );
 }
 
@@ -258,9 +258,9 @@ export function WorldMap() {
             <button type="button" onClick={() => walkTo(sel)} className="pixel-button flex min-h-12 w-full items-center justify-center px-4 py-3 text-xs sm:w-auto">
               ▶ WALK TO {sel.name.toUpperCase()}
             </button>
-          ) : sel.bossSprite ? (
-            <Link href="/battle" className="pixel-button flex min-h-12 w-full items-center justify-center px-4 py-3 text-xs sm:w-auto">
-              ▶ CHALLENGE {sel.boss.toUpperCase()}
+          ) : gymOpen(sel) ? (
+            <Link href={`/gym?n=${sel.gym}`} className="pixel-button flex min-h-12 w-full items-center justify-center px-4 py-3 text-xs sm:w-auto">
+              {badges.includes(sel.gym) ? `▶ REMATCH ${sel.boss.toUpperCase()}` : `▶ ENTER GYM · VS ${sel.boss.toUpperCase()}`}
             </Link>
           ) : (
             <p className="font-pixel text-[10px] leading-relaxed text-[#ffd257]">THE GYM DOORS OPEN SOON · {sel.boss.toUpperCase()} IS TRAINING</p>

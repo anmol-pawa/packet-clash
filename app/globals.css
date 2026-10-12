@@ -78,8 +78,40 @@ body {
   animation: bob-small 0.8s steps(2) infinite;
 }
 
+/* badge-get screen: the badge pops in, rays turn, sparkles twinkle */
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.25); }
+  80% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.badge-pop {
+  animation: badge-pop 0.6s steps(6) both;
+}
+@keyframes spin-rays {
+  to { transform: rotate(30deg); }
+}
+.spin-rays {
+  animation: spin-rays 1.6s steps(8) infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.twinkle {
+  animation: twinkle 1.2s steps(3) infinite both;
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: rise-in 0.4s steps(4) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .blink, .bob, .bob-small { animation: none; }
+  .blink, .bob, .bob-small, .badge-pop, .spin-rays, .twinkle, .rise-in { animation: none; }
+  .twinkle { opacity: 1; }
 }
 
 /* HP box: cream panel with a dark outline and hard shadow. */
