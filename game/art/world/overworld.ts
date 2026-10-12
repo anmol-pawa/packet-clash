@@ -285,14 +285,14 @@ function townStamp(c: Canvas, t: Town) {
   building(c, t.x - 6, t.y + 6, 13, 14, t.roof, true);
 }
 
-function road(c: Canvas, water: Uint8Array, pts: [number, number][], seed: number) {
-  // sample the polyline densely with a gentle wobble so it looks walked, not ruled
+/** The road's centre line: the route polyline sampled densely with a gentle wobble so it looks walked, not ruled. */
+export function roadSamples(pts: [number, number][], seed: number): [number, number][] {
   const samples: [number, number][] = [];
   for (let i = 0; i + 1 < pts.length; i++) {
     const [ax, ay] = pts[i];
     const [bx, by] = pts[i + 1];
     const n = Math.ceil(Math.hypot(bx - ax, by - ay) * 2);
-    for (let k = 0; k <= n; k++) {
+    for (let k = i === 0 ? 0 : 1; k <= n; k++) {
       const t = k / n;
       const wob = Math.sin(t * Math.PI) * (vnoise(k, i, 9, seed) - 0.5) * 6;
       const nx = -(by - ay) / (Math.hypot(bx - ax, by - ay) || 1);
@@ -300,6 +300,17 @@ function road(c: Canvas, water: Uint8Array, pts: [number, number][], seed: numbe
       samples.push([ax + (bx - ax) * t + nx * wob, ay + (by - ay) * t + ny * wob]);
     }
   }
+  return samples;
+}
+
+/** The seed each route's road is painted with. */
+export const roadSeed = (routeIndex: number) => 40 + routeIndex;
+
+/** Where the light on top of a town's gym antenna is painted. */
+export const gymLight = (t: Town): [number, number] => [t.x, t.y - 10];
+
+function road(c: Canvas, water: Uint8Array, pts: [number, number][], seed: number) {
+  const samples = roadSamples(pts, seed);
   // edge pass then fill pass, so the dark rim stays on the outside
   for (const pass of [0, 1])
     for (const [sx, sy] of samples)
@@ -321,6 +332,8 @@ export interface Overworld {
   image: SpriteDef;
   /** True where the map is sea (for tests and later the walking sprite). */
   water: Uint8Array;
+  /** Distance from each sea cell to the nearest land (0 on land), for the shimmer. */
+  shore: Int16Array;
 }
 
 let cached: Overworld | null = null;
@@ -385,7 +398,7 @@ export function overworld(): Overworld {
   const roadMask = new Uint8Array(MAP_W * MAP_H);
   ROUTES.forEach((r, n) => {
     const before = c.px.slice();
-    road(c, water, routePoints(r), 40 + n);
+    road(c, water, routePoints(r), roadSeed(n));
     for (let i = 0; i < before.length; i++) if (before[i] !== c.px[i]) roadMask[i] = 1;
   });
   const busy = (x: number, y: number, pad: number) => {
@@ -419,7 +432,10 @@ export function overworld(): Overworld {
         if (fbm(kx, ky, 51) > 0.58 && !busy(kx, ky, 4)) stamps.push({ y: ky, draw: () => tree(c, kx, ky, false) });
       }
     }
+  const roadLayer = c.px.slice();
   stamps.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
+  // a big stamp can spill over a road; the road wins (a pass through the hills), so it stays walkable
+  for (let i = 0; i < roadMask.length; i++) if (roadMask[i]) c.px[i] = roadLayer[i];
   for (const t of TOWNS) townStamp(c, t);
 
   // collapse colours to a palette grid
@@ -442,6 +458,6 @@ export function overworld(): Overworld {
     }
     rows.push(row);
   }
-  cached = { image: { palette: pal, rows }, water };
+  cached = { image: { palette: pal, rows }, water, shore: toLand };
   return cached;
 }

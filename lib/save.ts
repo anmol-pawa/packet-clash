@@ -18,6 +18,7 @@ export interface SaveData {
   badges: number[]; // gym numbers beaten
   seen: string[]; // creature ids seen (Packetdex)
   caught: string[]; // creature ids caught
+  mapTown: string | null; // where the courier stands on the overworld (null = the first town)
   settings: Settings;
 }
 
@@ -29,6 +30,7 @@ const DEFAULT: SaveData = {
   badges: [],
   seen: [],
   caught: [],
+  mapTown: null,
   settings: { volume: 0.6, music: true, reducedMotion: false, zen: false },
 };
 

@@ -8,6 +8,7 @@ import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { EVOLUTIONS, morphFrames } from "@/game/art/evolve";
+import { COURIER } from "@/game/art/world/courier";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
@@ -66,6 +67,8 @@ export function SpriteViewer() {
 
       <EvolveSection scale={scale} />
 
+      <CourierSection scale={scale} />
+
       <BackgroundSection scale={scale} />
 
       <section className="flex flex-col gap-3">
@@ -113,6 +116,38 @@ function EvolveSection({ scale }: { scale: number }) {
           </div>
         );
       })}
+    </section>
+  );
+}
+
+/** The overworld courier: each direction's walk cycle, then every frame. */
+function CourierSection({ scale }: { scale: number }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-pixel text-xs text-white">
+        OVERWORLD COURIER <span className="text-[#9ab]">· 12×16 · drawn at map scale</span>
+      </h2>
+      <div className="flex flex-wrap gap-3">
+        {(Object.keys(COURIER) as (keyof typeof COURIER)[]).map((dir) => (
+          <figure key={dir} className="flex flex-col items-center gap-1 rounded bg-[#7cc65e] p-2">
+            <PixelSprite frames={COURIER[dir]} scale={scale + 2} frameMs={160} label={`courier walking ${dir}`} />
+            <figcaption className="font-pixel text-[9px] text-[#0b0818]">{dir}</figcaption>
+          </figure>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {(Object.keys(COURIER) as (keyof typeof COURIER)[]).flatMap((dir) =>
+          COURIER[dir].map((f, i) => (
+            <figure key={`${dir}${i}`} className="flex flex-col items-center gap-1 rounded bg-[#d2ab6d] p-1">
+              <PixelSprite frames={[f]} scale={scale} label={`courier ${dir} frame ${i + 1}`} />
+              <figcaption className="font-pixel text-[8px] text-[#0b0818]">
+                {dir[0]}
+                {i + 1}
+              </figcaption>
+            </figure>
+          )),
+        )}
+      </div>
     </section>
   );
 }
