@@ -10,7 +10,7 @@
  */
 import { Application, Container, Graphics, Sprite, Text } from "pixi.js";
 import { PACKET, SPARK } from "@/game/art/effects";
-import type { SpriteDef } from "@/lib/pixel";
+import type { AnimSet } from "@/game/art/creature";
 import { Camera } from "./fx";
 import { Particles } from "./particles";
 import { PixelActor, pixelTexture } from "./pixelTex";
@@ -22,9 +22,16 @@ const HORIZON = 92;
 
 export type Side = "player" | "foe";
 
+/** A creature's animations as drawn on the stage, at an integer scale. */
+export interface FighterArt {
+  anims: AnimSet;
+  scale: number;
+  fps: number;
+}
+
 export interface StageOptions {
-  player: SpriteDef[];
-  foe: SpriteDef[];
+  player: FighterArt;
+  foe: FighterArt;
   reducedMotion: boolean;
   /** Pixel display font family (resolved next/font name). */
   font: string;
@@ -87,10 +94,10 @@ export class BattleStage {
     this.fx.scale = this.opts.reducedMotion ? 0.35 : 1;
     this.drawBackground();
 
-    this.player = new PixelActor(this.opts.player, 2, 3, 1);
+    this.player = new PixelActor(this.opts.player.anims, this.opts.player.scale, this.opts.player.fps, 1);
     this.player.homeX = 68;
     this.player.homeY = 166;
-    this.foe = new PixelActor(this.opts.foe, 2, 3, -1);
+    this.foe = new PixelActor(this.opts.foe.anims, this.opts.foe.scale, this.opts.foe.fps, -1);
     this.foe.homeX = 190;
     this.foe.homeY = 92;
     for (const a of [this.player, this.foe]) a.root.position.set(a.homeX, a.homeY);
@@ -283,7 +290,8 @@ export class BattleStage {
     const me = this.actor(side);
     const them = this.actor(side === "player" ? "foe" : "player");
     const dir = side === "player" ? 1 : -1;
-    // lunge
+    // wind-up + lunge
+    me.play("attack", 0.14);
     await this.tw.to(me.body, { x: -4 * dir }, 0.1, ease.outQuad);
     await this.tw.to(me.body, { x: 10 * dir }, 0.08, ease.inQuad);
     this.tw.to(me.body, { x: 0 }, 0.25, ease.outCubic);
@@ -329,7 +337,8 @@ export class BattleStage {
     this.tw.wait(0.07).then(step);
     this.fx.burst(at.x, at.y, { count: crit ? 22 : 12, speed: 90, size: 3, life: 0.4, color: 0xffd257 });
 
-    // hurt: white flash blinks + recoil
+    // hurt: hurt frames, white flash blinks + recoil
+    if (target.current !== "faint") target.play("hurt", 0.16);
     const dir = target === this.foe ? 1 : -1;
     (async () => {
       for (let i = 0; i < 3; i++) {
@@ -370,6 +379,7 @@ export class BattleStage {
   async faint(side: Side) {
     const a = this.actor(side);
     await this.tw.wait(0.2);
+    await a.play("faint", 0.22);
     await this.tw.to(a.body, { y: 24, alpha: 0 }, 0.6, ease.inCubic);
   }
 

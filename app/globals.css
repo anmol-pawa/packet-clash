@@ -105,3 +105,12 @@ body {
   background: #7a1f35;
   border-color: #ff6a8a;
 }
+
+/* Sprite viewer cells: a grassy checkerboard so outlines and transparency are easy to judge. */
+.sprite-cell {
+  background-color: #6fa86a;
+  background-image: conic-gradient(#78b272 25%, transparent 0 50%, #78b272 0 75%, transparent 0);
+  background-size: 16px 16px;
+  border: 2px solid #0b0818;
+  box-shadow: inset 0 0 0 2px #2c5e3a;
+}

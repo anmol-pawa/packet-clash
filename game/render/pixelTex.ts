@@ -1,5 +1,6 @@
 import { Container, Sprite, Texture } from "pixi.js";
 import { parseSprite, type SpriteDef } from "@/lib/pixel";
+import type { AnimName, AnimSet } from "@/game/art/creature";
 
 const cache = new WeakMap<SpriteDef, { color?: Texture; white?: Texture }>();
 
@@ -27,28 +28,35 @@ export function pixelTexture(def: SpriteDef, white = false): Texture {
 }
 
 /**
- * A pixel creature on the stage: frame-cycling sprite plus a white silhouette
- * overlay (`flash`). Anchored at bottom centre so `position` is where its feet
- * touch the platform. `body` is what attack/hurt tweens move.
+ * A pixel creature on the stage: a frame-animated sprite plus a white
+ * silhouette overlay (`flash`). Anchored at bottom centre so `position` is
+ * where its feet touch the platform. `body` is what attack/hurt tweens move.
+ *
+ * The idle animation loops; `play()` runs another animation once and then
+ * returns to idle (except `faint`, which holds its last frame).
  */
 export class PixelActor {
   readonly root = new Container();
   readonly body = new Container();
   private sprite: Sprite;
   private white: Sprite;
+  private anim: AnimName = "idle";
   private frame = 0;
   private acc = 0;
+  private frameDur: number;
+  private done: (() => void) | null = null;
   homeX = 0;
   homeY = 0;
 
   constructor(
-    private frames: SpriteDef[],
+    private anims: AnimSet,
     scale: number,
     private fps = 3,
     facing: 1 | -1 = 1,
   ) {
-    this.sprite = new Sprite(pixelTexture(frames[0]));
-    this.white = new Sprite(pixelTexture(frames[0], true));
+    this.frameDur = 1 / fps;
+    this.sprite = new Sprite(pixelTexture(anims.idle[0]));
+    this.white = new Sprite(pixelTexture(anims.idle[0], true));
     for (const s of [this.sprite, this.white]) {
       s.anchor.set(0.5, 1);
       s.scale.set(scale * facing, scale);
@@ -70,12 +78,47 @@ export class PixelActor {
     return this.sprite.height;
   }
 
+  get current(): AnimName {
+    return this.anim;
+  }
+
+  /** Plays `name` once at `frameDur` seconds per frame; resolves when it ends. */
+  play(name: AnimName, frameDur = 0.12): Promise<void> {
+    this.done?.();
+    this.anim = name;
+    this.frame = 0;
+    this.acc = 0;
+    this.frameDur = frameDur;
+    this.show();
+    return new Promise((resolve) => (this.done = resolve));
+  }
+
+  private show() {
+    const f = this.anims[this.anim][this.frame];
+    this.sprite.texture = pixelTexture(f);
+    this.white.texture = pixelTexture(f, true);
+  }
+
   update(dt: number) {
     this.acc += dt;
-    if (this.acc < 1 / this.fps) return;
-    this.acc %= 1 / this.fps;
-    this.frame = (this.frame + 1) % this.frames.length;
-    this.sprite.texture = pixelTexture(this.frames[this.frame]);
-    this.white.texture = pixelTexture(this.frames[this.frame], true);
+    if (this.acc < this.frameDur) return;
+    this.acc %= this.frameDur;
+    const frames = this.anims[this.anim];
+    if (this.anim === "idle") {
+      this.frame = (this.frame + 1) % frames.length;
+    } else if (this.frame < frames.length - 1) {
+      this.frame++;
+    } else {
+      const finished = this.done;
+      this.done = null;
+      if (this.anim !== "faint") {
+        this.anim = "idle";
+        this.frame = 0;
+        this.frameDur = 1 / this.fps;
+      }
+      finished?.();
+      if (this.anim === "faint") return;
+    }
+    this.show();
   }
 }

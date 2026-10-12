@@ -4,13 +4,14 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { pressStart } from "@/app/fonts";
 import { DEMO_QUESTIONS } from "@/content/demo";
 import { sfx } from "@/game/audio/synth";
-import { BITLING, BITLING_DIM, GLITCHLING, GLITCHLING_DIM } from "@/game/art/mascot";
+import { PINGKIT } from "@/game/art/creatures/pingkit";
+import { GLITCHLING_ANIMS } from "@/game/art/mascot";
 import { initialState, reducer, type Fighter } from "@/game/engine/battle";
 import type { BattleStage } from "@/game/render/stage";
 import { HpBox } from "./HpBox";
 import { useTyped } from "./useTyped";
 
-const PLAYER: Fighter = { name: "Bitling", level: 5, hp: 60, maxHp: 60 };
+const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60 };
 const FOE: Fighter = { name: "Glitchling", level: 4, hp: 100, maxHp: 100 };
 
 /**
@@ -46,8 +47,8 @@ export function BattleScreen() {
       const { BattleStage } = await import("@/game/render/stage");
       if (cancelled || !host.current) return;
       st = await BattleStage.create(host.current, {
-        player: [BITLING, BITLING, BITLING_DIM],
-        foe: [GLITCHLING, GLITCHLING_DIM],
+        player: { anims: PINGKIT.back, scale: 1, fps: PINGKIT.idleFps },
+        foe: { anims: GLITCHLING_ANIMS, scale: 2, fps: 3 },
         reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         font: pressStart.style.fontFamily,
       });

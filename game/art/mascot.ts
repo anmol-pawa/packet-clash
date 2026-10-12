@@ -1,4 +1,5 @@
 import type { SpriteDef } from "@/lib/pixel";
+import type { AnimSet } from "./creature";
 
 /**
  * Bitling, the title-screen mascot: a round signal-sprite carrying a sealed
@@ -90,4 +91,12 @@ export const GLITCHLING: SpriteDef = { palette: GLITCHLING_PALETTE, rows: BITLIN
 export const GLITCHLING_DIM: SpriteDef = {
   palette: { ...GLITCHLING_PALETTE, R: "#b8861f", r: "#7a5a14", d: "#4d390d" },
   rows: BITLING.rows,
+};
+
+/** Glitchling as a stage animation set (one drawing, so every animation reuses it). */
+export const GLITCHLING_ANIMS: AnimSet = {
+  idle: [GLITCHLING, GLITCHLING_DIM],
+  attack: [GLITCHLING],
+  hurt: [GLITCHLING_DIM],
+  faint: [GLITCHLING_DIM],
 };

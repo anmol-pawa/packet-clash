@@ -64,3 +64,8 @@ export function toRgba(grid: PixelGrid, scale = 1, background: string | null = n
   }
   return { width, height, data };
 }
+
+/** The same sprite as a solid white silhouette (hurt flashes, the evolve morph). */
+export function silhouette(def: SpriteDef, color = "#ffffff"): SpriteDef {
+  return { palette: Object.fromEntries(Object.keys(def.palette).map((k) => [k, color])), rows: def.rows };
+}
