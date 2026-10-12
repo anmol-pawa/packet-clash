@@ -65,3 +65,29 @@ export const BITLING_DIM: SpriteDef = {
   palette: { ...BITLING_PALETTE, R: "#b82652", r: "#8a1d40", d: "#5c1530" },
   rows: BITLING.rows,
 };
+
+/**
+ * Glitchling, the demo battle's wild foe: Bitling's frame corrupted into a
+ * magenta/violet palette with a green "error" envelope. A stand-in until the
+ * real creature roster arrives (0.3).
+ */
+const GLITCHLING_PALETTE = {
+  ...BITLING_PALETTE,
+  A: "#f6c8ff",
+  a: "#d27ff5",
+  b: "#9a3fdb",
+  c: "#5a239e",
+  F: "#e3ffd6",
+  f: "#8af77a",
+  g: "#3fa64a",
+  R: "#fff3a8",
+  r: "#ffd23f",
+  d: "#b8861f",
+  p: "#ff7ad9",
+};
+
+export const GLITCHLING: SpriteDef = { palette: GLITCHLING_PALETTE, rows: BITLING.rows };
+export const GLITCHLING_DIM: SpriteDef = {
+  palette: { ...GLITCHLING_PALETTE, R: "#b8861f", r: "#7a5a14", d: "#4d390d" },
+  rows: BITLING.rows,
+};

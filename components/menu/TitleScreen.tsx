@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import Link from "next/link";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { BITLING, BITLING_DIM } from "@/game/art/mascot";
 
@@ -11,8 +11,6 @@ const STARS = [
 ];
 
 export function TitleScreen() {
-  const [started, setStarted] = useState(false);
-
   return (
     <main className="relative flex min-h-dvh flex-col items-center overflow-hidden px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]">
       {/* Banded night sky: hard colour steps instead of a smooth gradient. */}
@@ -48,16 +46,10 @@ export function TitleScreen() {
       </div>
 
       <div className="mt-auto flex w-full max-w-sm flex-col items-center gap-4 pt-10">
-        {started ? (
-          <div className="pixel-box w-full p-4 text-lg leading-snug" role="status">
-            The Packet League is still laying its cables. The first gym opens soon — check back!
-          </div>
-        ) : (
-          <button type="button" onClick={() => setStarted(true)} className="pixel-button min-h-14 w-full px-6 py-4 text-base">
-            <span className="blink">▶</span> PRESS START
-          </button>
-        )}
-        <p className="font-pixel text-[10px] text-[#9d93d6]">v0.1 · learn networks by battling</p>
+        <Link href="/battle" className="pixel-button flex min-h-14 w-full items-center justify-center gap-2 px-6 py-4 text-base">
+          <span className="blink">▶</span> PRESS START
+        </Link>
+        <p className="font-pixel text-[10px] text-[#9d93d6]">v0.2 · learn networks by battling</p>
       </div>
     </main>
   );

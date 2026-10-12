@@ -73,3 +73,35 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .blink, .bob { animation: none; }
 }
+
+/* HP box: cream panel with a dark outline and hard shadow. */
+.hp-box {
+  background: #f8f4e3;
+  color: #1a1433;
+  border: 3px solid #1a1433;
+  border-radius: 4px 4px 4px 12px;
+  box-shadow: inset -3px -3px 0 0 #c9c1a4, 3px 3px 0 0 rgba(11, 8, 24, 0.6);
+}
+
+/* Answer ("move") buttons in the battle menu. */
+.move-button {
+  background: #2d2560;
+  color: var(--ink);
+  border: 3px solid var(--frame);
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 3px #3b3175, 3px 3px 0 0 #0b0818;
+}
+.move-button:not(:disabled):hover {
+  background: #3b3175;
+}
+.move-button:not(:disabled):active {
+  transform: translate(2px, 2px);
+}
+.move-button.move-right {
+  background: #1f6b3a;
+  border-color: #8af77a;
+}
+.move-button.move-wrong {
+  background: #7a1f35;
+  border-color: #ff6a8a;
+}
