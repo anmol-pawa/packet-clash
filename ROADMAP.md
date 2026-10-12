@@ -1,0 +1,35 @@
+# Packet Clash roadmap
+
+The hourly routine works top to bottom: take the first unchecked box. Split big items into sub-boxes when you start them.
+
+## 0. Bootstrap (reuse Query Clash's engine)
+
+- [ ] 0.1 Scaffold Next.js 16 + TypeScript + Tailwind 4 + Vitest + ESLint, copying configs from Query Clash. Static export with `BASE_PATH=/packet-clash`, the PWA manifest and icons (an original "PC" pixel icon), the offline service worker (with the worker-fragment fix), and `ci.yml` + `pages.yml`. Ship a placeholder title screen that deploys and installs.
+- [ ] 0.2 Port the Pixi battle engine (stage, tweens, particles, camera, audio synth, battle reducer, UI kit, save) and get a demo battle running.
+- [ ] 0.3 Sprite system and first art (see the Art quality bar in CLAUDE.md): a starter creature and one boss with full idle/attack/hurt/faint animations, plus one illustrated battle background.
+- [ ] 0.4 GBA-style battle screen: foe front sprite on a platform top-right, player creature back sprite bottom-left, HP/XP boxes, typed-out message box, and a move menu of 4 answer options (tap-friendly).
+
+## 1. Game structure
+
+- [ ] 1.1 Overworld map shaped like a network (towns = subnets, routes = links) with 9 gyms, one per chapter below, and an original boss creature per gym (e.g. a cable-serpent for the physical layer, a collision beetle for MAC, a router owl, a handshake twin-creature for TCP, a DNS oracle…). Badges are earned per gym.
+- [ ] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
+- [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
+- [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.
+- [ ] 1.5 **Packet animations**: attacks are packets travelling between creatures, with headers that visibly encapsulate and decapsulate layer by layer.
+
+## 2. Curriculum (each gym: concept lessons → generated battles → boss)
+
+- [ ] 2.1 Models and basics: OSI vs TCP/IP layers (drag a protocol to its layer), encapsulation, PDU names, circuit vs packet switching, **delay calculations** (transmission, propagation, queuing; bandwidth-delay product).
+- [ ] 2.2 Physical and data link: encoding, framing, **error detection** (parity, checksum, CRC with generated division problems, Hamming code), MAC/CSMA-CD/CSMA-CA, Ethernet, switches and MAC learning, VLANs, ARP.
+- [ ] 2.3 Network layer and addressing: IPv4 header, **subnetting and CIDR drills** (network/broadcast/host range/subnet count, VLSM), private ranges, NAT/PAT, fragmentation (offset calculations), ICMP, IPv6 basics.
+- [ ] 2.4 Routing: **Dijkstra / link-state** and **Bellman-Ford / distance-vector** with generated graphs where the player fills routing tables (solver-checked), count-to-infinity, RIP/OSPF/BGP at interview depth.
+- [ ] 2.5 Transport: UDP vs TCP, ports and sockets, the **3-way handshake and teardown** (animated state machine), sequence/ack number problems, flow control (sliding window, Go-Back-N, Selective Repeat simulations), **congestion control** (slow start, AIMD, fast retransmit/recovery: plot cwnd over RTTs).
+- [ ] 2.6 Application layer: DNS resolution (iterative vs recursive, order the steps, record types), HTTP/1.1 vs 2 vs 3, status codes, cookies, caching headers, REST, email (SMTP/IMAP), DHCP (DORA), FTP/SSH basics.
+- [ ] 2.7 Security: TLS 1.3 handshake ordering, symmetric vs asymmetric crypto, certificates and PKI, hashing and MACs, firewalls, VPNs, common attacks (MITM, DDoS, spoofing, XSS/CSRF at interview level).
+- [ ] 2.8 "What happens when you type a URL": a full end-to-end animated journey (DNS, ARP, TCP, TLS, HTTP, rendering) as an order-the-steps boss battle.
+- [ ] 2.9 Interview gauntlet: the top networking interview questions (TCP vs UDP, how DNS works, HTTP vs HTTPS, subnetting on the spot, load balancers L4 vs L7, CDN, WebSockets, NAT traversal) as a timed mock interview with a scorecard.
+
+## 3. Polish
+
+- [ ] 3.1 Daily challenge (date-seeded) and streaks.
+- [ ] 3.2 Accessibility and performance pass on iPhone.
