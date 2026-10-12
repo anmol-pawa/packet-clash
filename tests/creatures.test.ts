@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
+import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, BRAIDWYRM];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM];
 
 describe("creature art", () => {
   for (const c of CREATURES) {

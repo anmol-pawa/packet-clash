@@ -120,6 +120,14 @@ export const sfx = {
   defeat() {
     [392, 330, 262, 196].forEach((f, i) => tone(f, 0.5, { type: "sawtooth", gain: 0.06, delay: i * 0.2 }));
   },
+  /** One rising chime per shape swap during the evolve morph. */
+  evolveTick(i: number) {
+    tone(440 * 2 ** (Math.min(i, 14) / 12), 0.09, { type: "square", gain: 0.04 });
+  },
+  evolved() {
+    [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.35, { type: "triangle", gain: 0.1, delay: i * 0.09 }));
+    noise(0.6, { gain: 0.08, freq: 3000, sweep: 8000 });
+  },
   blip() {
     tone(1200, 0.025, { type: "square", gain: 0.03 });
   },

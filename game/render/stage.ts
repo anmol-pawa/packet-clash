@@ -13,6 +13,7 @@ import { copperfield } from "@/game/art/backgrounds/copperfield";
 import type { BattleBackground } from "@/game/art/backgrounds/types";
 import { PACKET, SPARK } from "@/game/art/effects";
 import type { AnimSet } from "@/game/art/creature";
+import { evolveSchedule } from "@/game/art/evolve";
 import { Camera } from "./fx";
 import { Particles } from "./particles";
 import { PixelActor, pixelTexture } from "./pixelTex";
@@ -310,6 +311,54 @@ export class BattleStage {
     await this.tw.wait(0.2);
     await a.play("faint", 0.22);
     await this.tw.to(a.body, { y: 24, alpha: 0 }, 0.6, ease.inCubic);
+  }
+
+  /**
+   * Evolution: the creature turns into a white silhouette that swaps with the
+   * new form's silhouette faster and faster, dissolves into it, then a flash
+   * reveals the new form in colour. `onSwap(i)` fires on every shape change
+   * (for the rising chime).
+   */
+  async evolve(side: Side, to: FighterArt, onSwap?: (i: number) => void) {
+    const a = this.actor(side);
+    const fromDef = a.idleFrame;
+    const toDef = to.anims.idle[0];
+    const cx = a.homeX;
+    const cy = a.homeY - a.height * 0.5;
+    const sparkle = (n: number) => {
+      for (let i = 0; i < n * this.fx.scale; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const r = 18 + Math.random() * 16;
+        this.fx.emit({ x: cx + Math.cos(ang) * r, y: cy + Math.sin(ang) * r, vx: -Math.cos(ang) * 14, vy: -26 - Math.random() * 20, size: 2, life: 0.6, color: Math.random() < 0.5 ? 0xffffff : 0xffe45c });
+      }
+    };
+    // glow up into white
+    await this.tw.run(0.5, (k) => {
+      a.flash = k;
+      sparkle(0.4);
+    });
+    const steps = evolveSchedule(fromDef, toDef);
+    let swaps = 0;
+    for (const st of steps) {
+      if (st.stretch !== 1) {
+        onSwap?.(swaps++);
+        a.body.scale.set(2 - st.stretch, st.stretch);
+        this.tw.to(a.body.scale, { x: 1, y: 1 }, Math.min(st.dur, 0.12), ease.outQuad);
+      }
+      a.showSilhouette(st.sprite);
+      sparkle(2);
+      await this.tw.wait(st.dur);
+    }
+    // reveal
+    a.body.scale.set(1);
+    a.setAnims(to.anims, to.fps);
+    a.showSilhouette(null);
+    a.flash = 1;
+    this.cam.flash(0.9, 0xffffff);
+    this.cam.shake(2);
+    this.fx.burst(cx, cy, { count: 28, speed: 80, size: 2, life: 0.7, color: 0xffe45c });
+    await this.tw.run(0.6, (k) => (a.flash = 1 - k), ease.outQuad);
+    a.flash = 0;
   }
 
   setReducedMotion(on: boolean) {

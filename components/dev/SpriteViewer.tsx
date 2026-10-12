@@ -6,10 +6,12 @@ import { copperfield } from "@/game/art/backgrounds/copperfield";
 import { ANIMS, type CreatureArt } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
+import { TRACEVIX } from "@/game/art/creatures/tracevix";
+import { EVOLUTIONS, morphFrames } from "@/game/art/evolve";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT, BRAIDWYRM];
+const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, BRAIDWYRM];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus
@@ -62,6 +64,8 @@ export function SpriteViewer() {
         </section>
       ))}
 
+      <EvolveSection scale={scale} />
+
       <BackgroundSection scale={scale} />
 
       <section className="flex flex-col gap-3">
@@ -78,6 +82,38 @@ export function SpriteViewer() {
         </div>
       </section>
     </main>
+  );
+}
+
+/** Each evolution: the looping morph (colour → silhouette dissolve → colour) and its silhouette frames. */
+function EvolveSection({ scale }: { scale: number }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-pixel text-xs text-white">EVOLUTIONS</h2>
+      {EVOLUTIONS.map(({ from, to }) => {
+        const morph = morphFrames(from.front.idle[0], to.front.idle[0], 8);
+        const loop = [from.front.idle[0], ...morph, to.front.idle[0], to.front.idle[0]];
+        return (
+          <div key={from.id} className="flex flex-col gap-2">
+            <h3 className="font-pixel text-[10px] text-[#9ab]">
+              {from.name.toUpperCase()} → {to.name.toUpperCase()}
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              <figure className="sprite-cell flex flex-col items-center gap-1 p-2">
+                <PixelSprite frames={loop} scale={scale} frameMs={220} label={`${from.name} evolving into ${to.name}`} />
+                <figcaption className="font-pixel text-[9px] text-[#cde]">morph loop</figcaption>
+              </figure>
+              {morph.map((f, i) => (
+                <figure key={i} className="sprite-cell flex flex-col items-center gap-1 p-2">
+                  <PixelSprite frames={[f]} scale={Math.max(1, scale - 1)} label={`morph frame ${i + 1}`} />
+                  <figcaption className="font-pixel text-[9px] text-[#cde]">{i + 1}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 

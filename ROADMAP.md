@@ -6,11 +6,11 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 
 - [x] 0.1 Scaffold Next.js 16 + TypeScript + Tailwind 4 + Vitest + ESLint, copying configs from Query Clash. Static export with `BASE_PATH=/packet-clash`, the PWA manifest and icons (an original "PC" pixel icon), the offline service worker (with the worker-fragment fix), and `ci.yml` + `pages.yml`. Ship a placeholder title screen that deploys and installs.
 - [x] 0.2 Port the Pixi battle engine (stage, tweens, particles, camera, audio synth, battle reducer, UI kit, save) and get a demo battle running.
-- [ ] 0.3 Sprite system and first art (see the Art quality bar in CLAUDE.md): a starter creature and one boss with full idle/attack/hurt/faint animations, plus one illustrated battle background.
+- [x] 0.3 Sprite system and first art (see the Art quality bar in CLAUDE.md): a starter creature and one boss with full idle/attack/hurt/faint animations, plus one illustrated battle background.
   - [x] 0.3a Shaded-primitive pixel painter (`lib/paint.ts`), the starter **Pingkit** (64×64 front + back, idle/attack/hurt/faint frames), named animations on the stage actor, and the `/dev/sprites` viewer.
   - [x] 0.3b A 96×96 boss creature (front + back, full animations) replacing the Glitchling stand-in as the demo foe.
   - [x] 0.3c An illustrated battle background (sky, terrain, props) drawn as pixel art, replacing the vector-ish demo field.
-  - [ ] 0.3d Evolve animation on the stage (white silhouette morph between two forms) and a second Pingkit form to evolve into.
+  - [x] 0.3d Evolve animation on the stage (white silhouette morph between two forms) and a second Pingkit form to evolve into.
 - [ ] 0.4 GBA-style battle screen: foe front sprite on a platform top-right, player creature back sprite bottom-left, HP/XP boxes, typed-out message box, and a move menu of 4 answer options (tap-friendly).
 
 ## 1. Game structure

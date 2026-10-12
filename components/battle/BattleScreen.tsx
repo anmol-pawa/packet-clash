@@ -6,6 +6,7 @@ import { DEMO_QUESTIONS } from "@/content/demo";
 import { sfx } from "@/game/audio/synth";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
+import { evolutionOf } from "@/game/art/evolve";
 import { initialState, reducer, type Fighter } from "@/game/engine/battle";
 import type { BattleStage } from "@/game/render/stage";
 import { HpBox } from "./HpBox";
@@ -13,6 +14,9 @@ import { useTyped } from "./useTyped";
 
 const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60 };
 const FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100 };
+const EVOLVED = evolutionOf(PINGKIT.id)!;
+
+type Evo = "none" | "evolving" | "done";
 
 /**
  * The demo battle: a wild foe, one networking question per turn. A right
@@ -26,9 +30,15 @@ export function BattleScreen() {
   const [hp, setHp] = useState({ player: PLAYER.hp, foe: FOE.hp });
   const [msg, setMsg] = useState("");
   const [explain, setExplain] = useState<string | null>(null);
+  // Beating the boss evolves the starter (a demo of the evolve morph).
+  const [evo, setEvo] = useState<Evo>("none");
   const q = DEMO_QUESTIONS[s.questionIndex];
   const text =
-    s.phase === "menu"
+    evo === "evolving"
+      ? `What? ${PLAYER.name.toUpperCase()} is evolving!`
+      : evo === "done"
+        ? `Congratulations! Your ${PLAYER.name.toUpperCase()} evolved into ${EVOLVED.name.toUpperCase()}!`
+        : s.phase === "menu"
       ? q.prompt
       : s.phase === "victory"
         ? `The wild ${FOE.name.toUpperCase()} fainted! You win!`
@@ -95,8 +105,25 @@ export function BattleScreen() {
     })();
   }, [s, q.explain]);
 
+  // After the victory message, the starter evolves (once).
+  const evolving = useRef(false);
+  useEffect(() => {
+    if (s.phase !== "victory" || evolving.current) return;
+    const id = setTimeout(async () => {
+      const st = stage.current;
+      if (!st) return;
+      evolving.current = true;
+      setEvo("evolving");
+      await st.evolve("player", { anims: EVOLVED.back, scale: 1, fps: EVOLVED.idleFps }, (i) => sfx.evolveTick(i));
+      if (stage.current !== st) return;
+      sfx.evolved();
+      setEvo("done");
+    }, 2200);
+    return () => clearTimeout(id);
+  }, [s.phase]);
+
   const answered = s.phase === "player-move" || s.phase === "foe-move";
-  const over = s.phase === "victory" || s.phase === "defeat";
+  const over = s.phase === "defeat" || (s.phase === "victory" && evo === "done");
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4">
@@ -112,7 +139,7 @@ export function BattleScreen() {
         {s.phase !== "loading" && (
           <>
             <HpBox f={{ ...s.foe, hp: hp.foe }} className="absolute left-[3%] top-[4%] w-[44%]" />
-            <HpBox f={{ ...s.player, hp: hp.player }} showNumbers className="absolute bottom-[3%] right-[3%] w-[46%]" />
+            <HpBox f={{ ...s.player, name: evo === "done" ? EVOLVED.name : s.player.name, hp: hp.player }} showNumbers className="absolute bottom-[3%] right-[3%] w-[46%]" />
           </>
         )}
       </div>

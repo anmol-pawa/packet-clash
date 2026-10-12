@@ -45,6 +45,7 @@ export class PixelActor {
   private acc = 0;
   private frameDur: number;
   private done: (() => void) | null = null;
+  private silhouetteOnly = false;
   homeX = 0;
   homeY = 0;
 
@@ -78,6 +79,11 @@ export class PixelActor {
     return this.sprite.height;
   }
 
+  /** The first idle frame of the current creature (what evolution morphs from). */
+  get idleFrame(): SpriteDef {
+    return this.anims.idle[0];
+  }
+
   get current(): AnimName {
     return this.anim;
   }
@@ -93,7 +99,32 @@ export class PixelActor {
     return new Promise((resolve) => (this.done = resolve));
   }
 
+  /** Swaps in another creature's animations (evolution) and restarts its idle loop. */
+  setAnims(anims: AnimSet, fps: number) {
+    this.anims = anims;
+    this.fps = fps;
+    this.anim = "idle";
+    this.frame = 0;
+    this.acc = 0;
+    this.frameDur = 1 / fps;
+    this.show();
+  }
+
+  /**
+   * Shows only a white silhouette `def` (already white, e.g. an evolve morph
+   * frame) in place of the creature; `null` brings the coloured sprite back.
+   */
+  showSilhouette(def: SpriteDef | null) {
+    this.silhouetteOnly = !!def;
+    this.sprite.alpha = def ? 0 : 1;
+    if (def) {
+      this.white.texture = pixelTexture(def);
+      this.white.alpha = 1;
+    } else this.show();
+  }
+
   private show() {
+    if (this.silhouetteOnly) return;
     const f = this.anims[this.anim][this.frame];
     this.sprite.texture = pixelTexture(f);
     this.white.texture = pixelTexture(f, true);
