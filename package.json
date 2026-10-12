@@ -1,6 +1,6 @@
 {
   "name": "packet-clash",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Packet Clash — a creature-battler that teaches computer networks",
   "scripts": {

@@ -56,3 +56,14 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 11 new (Tracevix goes through the shared creature checks; the evolution map; the silhouettes differ; the morph starts and ends on the two silhouettes, all white, moves monotonically, the middle frame is a real mix, shared pixels stay lit, bottom-centre padding; the schedule accelerates and lasts 2–5 s).
 - Verified: lint, typecheck, 48 tests, `build:pages` (74 files precached). Playwright on the static export at 1280×800 and iPhone 14: played the demo battle to victory and watched the whole evolution (mid-dissolve and finished screenshots), plus the sprite viewer; no console errors, no horizontal overflow; screenshots reviewed.
 - Next: 0.4 GBA-style battle screen polish (XP box, menu layout per the roadmap item).
+
+## 2026-10-12 (21:30 IST): 0.4 handheld battle screen
+- Note: the 13:02 UTC run left its routine lock in place without a progress entry; the lock was stale (>70 min) so this run took it over.
+- **Status boxes** (`HpBox`): separate foe/player shapes, a dark HP track, the HP counter drains step by step with the bar (`useStepTo`), and the player box has a blue **EXP bar**.
+- **XP and levels** (`game/engine/xp.ts`, pure): total XP to reach a level is level³, `xpReward` scales with the foe's level (bosses ×1.5), plus `levelFor`, `xpProgress` and `gainXp` (lists each level reached). After the boss falls the demo now runs win → "PINGKIT gained 205 EXP. Points!" (bar fills, sweep sound) → "grew to Lv 6!" → "grew to Lv 7!" (level-up jingle) → the evolution. Each step auto-advances or advances on a tap of the message box.
+- **Message box** (`MessageBox`): typed text, tap to finish, and a bouncing ▼ when there is more to read.
+- **FIGHT panel** (`MoveMenu`): the four answers in one handheld window with a ▶ cursor (hover/focus), keys 1–4 or arrows + Enter, and an info strip (QUESTION n/6 · PICK A MOVE / STREAK ×n / CORRECT! / MISSED!).
+- Layout: on wide screens (`lg`) the message box sits left of the move panel, so the whole battle fits at 1280×800; phones keep the stacked layout.
+- Tests: 5 new for XP (level³ table, `levelFor` inverts it, rewards, progress, the demo's 150 + 205 XP → Lv 7 with [6, 7]).
+- Verified: lint, typecheck, 53 tests, `build:pages` (74 files precached). Playwright on the static export at 1280×800 (one answer by keyboard) and iPhone 14: played to victory through EXP, both level-ups and the evolution; no console errors, no horizontal overflow; screenshots reviewed.
+- Next: 1.1 the overworld map (towns = subnets, routes = links, 9 gyms) — split it into sub-tasks first.

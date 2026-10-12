@@ -128,6 +128,13 @@ export const sfx = {
     [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.35, { type: "triangle", gain: 0.1, delay: i * 0.09 }));
     noise(0.6, { gain: 0.08, freq: 3000, sweep: 8000 });
   },
+  /** A rising sweep while the EXP bar fills. */
+  xpFill() {
+    tone(440, 0.9, { type: "square", gain: 0.035, slide: 4 });
+  },
+  levelUp() {
+    [659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.18, { type: "square", gain: 0.06, delay: i * 0.08 }));
+  },
   blip() {
     tone(1200, 0.025, { type: "square", gain: 0.03 });
   },

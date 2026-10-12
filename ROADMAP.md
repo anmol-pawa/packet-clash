@@ -11,7 +11,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 0.3b A 96×96 boss creature (front + back, full animations) replacing the Glitchling stand-in as the demo foe.
   - [x] 0.3c An illustrated battle background (sky, terrain, props) drawn as pixel art, replacing the vector-ish demo field.
   - [x] 0.3d Evolve animation on the stage (white silhouette morph between two forms) and a second Pingkit form to evolve into.
-- [ ] 0.4 GBA-style battle screen: foe front sprite on a platform top-right, player creature back sprite bottom-left, HP/XP boxes, typed-out message box, and a move menu of 4 answer options (tap-friendly).
+- [x] 0.4 GBA-style battle screen: foe front sprite on a platform top-right, player creature back sprite bottom-left, HP/XP boxes, typed-out message box, and a move menu of 4 answer options (tap-friendly).
 
 ## 1. Game structure
 
