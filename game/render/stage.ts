@@ -99,7 +99,7 @@ export class BattleStage {
     this.player.homeY = 166;
     this.foe = new PixelActor(this.opts.foe.anims, this.opts.foe.scale, this.opts.foe.fps, -1);
     this.foe.homeX = 190;
-    this.foe.homeY = 92;
+    this.foe.homeY = 102;
     for (const a of [this.player, this.foe]) a.root.position.set(a.homeX, a.homeY);
     this.fighters.addChild(this.foe.root, this.player.root);
 
@@ -204,7 +204,7 @@ export class BattleStage {
     }
 
     // platforms: pixel ellipses with a lit rim and a shaded underside
-    this.platform(land, 190, 90, 46, 9);
+    this.platform(land, 190, 97, 50, 10);
     this.platform(land, 68, 164, 56, 11);
 
     this.bg.addChild(land, ...this.leds);

@@ -3,11 +3,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { ANIMS, type CreatureArt } from "@/game/art/creature";
+import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT];
+const CREATURES: CreatureArt[] = [PINGKIT, BRAIDWYRM];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus

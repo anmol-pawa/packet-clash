@@ -4,15 +4,15 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { pressStart } from "@/app/fonts";
 import { DEMO_QUESTIONS } from "@/content/demo";
 import { sfx } from "@/game/audio/synth";
+import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
-import { GLITCHLING_ANIMS } from "@/game/art/mascot";
 import { initialState, reducer, type Fighter } from "@/game/engine/battle";
 import type { BattleStage } from "@/game/render/stage";
 import { HpBox } from "./HpBox";
 import { useTyped } from "./useTyped";
 
 const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60 };
-const FOE: Fighter = { name: "Glitchling", level: 4, hp: 100, maxHp: 100 };
+const FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100 };
 
 /**
  * The demo battle: a wild foe, one networking question per turn. A right
@@ -48,7 +48,7 @@ export function BattleScreen() {
       if (cancelled || !host.current) return;
       st = await BattleStage.create(host.current, {
         player: { anims: PINGKIT.back, scale: 1, fps: PINGKIT.idleFps },
-        foe: { anims: GLITCHLING_ANIMS, scale: 2, fps: 3 },
+        foe: { anims: BRAIDWYRM.front, scale: 1, fps: BRAIDWYRM.idleFps },
         reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         font: pressStart.style.fontFamily,
       });
@@ -83,7 +83,7 @@ export function BattleScreen() {
         });
         if (foe.hp <= 0) await st.faint("foe");
       } else {
-        setMsg(`Not quite! ${FOE.name.toUpperCase()} used CORRUPT!`);
+        setMsg(`Not quite! ${FOE.name.toUpperCase()} used SPARK COIL!`);
         sfx.miss();
         await st.attack("foe", last.damage, false, () => {
           sfx.hurt();

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
+import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT];
+const CREATURES = [PINGKIT, BRAIDWYRM];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -50,6 +51,20 @@ describe("creature art", () => {
       });
     });
   }
+});
+
+describe("bosses", () => {
+  it("Braidwyrm is a 96×96 boss whose drawing fits the frame with room to rear up", () => {
+    expect(BRAIDWYRM.size).toBe(96);
+    for (const view of [BRAIDWYRM.front, BRAIDWYRM.back])
+      for (const a of ANIMS)
+        for (const f of view[a]) {
+          // nothing touches the top 8 rows, so the attack rear-up never clips
+          expect(f.rows.slice(0, 8).every((r) => /^\.+$/.test(r)), a).toBe(true);
+          // the coil sits on the bottom of the frame (anchored to the platform)
+          expect(f.rows.slice(84).some((r) => /[^.]/.test(r)), a).toBe(true);
+        }
+  });
 });
 
 describe("painter", () => {
