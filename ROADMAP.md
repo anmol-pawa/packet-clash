@@ -16,6 +16,10 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 ## 1. Game structure
 
 - [ ] 1.1 Overworld map shaped like a network (towns = subnets, routes = links) with 9 gyms, one per chapter below, and an original boss creature per gym (e.g. a cable-serpent for the physical layer, a collision beetle for MAC, a router owl, a handshake twin-creature for TCP, a DNS oracle…). Badges are earned per gym.
+  - [x] 1.1a World data (9 towns as /24 subnets joined by /30 point-to-point routes, one gym per chapter, badges, unlock order) with an IPv4/CIDR helper under test, and a painted pixel overworld map page (`/map`) with tappable towns, a badge case and a town info window.
+  - [ ] 1.1b Walk the map: an animated player sprite that travels along routes between unlocked towns, water shimmer and blinking router lights on the map.
+  - [ ] 1.1c Gym flow: enter a gym from its town, fight its boss, earn and save the badge, unlock the next town (with a badge-get screen).
+  - [ ] 1.1d–i Boss creatures for the other gyms (one per run, 96×96, full animations), each wired to its gym.
 - [ ] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
 - [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.

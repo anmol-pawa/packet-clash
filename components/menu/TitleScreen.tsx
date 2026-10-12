@@ -46,7 +46,7 @@ export function TitleScreen() {
       </div>
 
       <div className="mt-auto flex w-full max-w-sm flex-col items-center gap-4 pt-10">
-        <Link href="/battle" className="pixel-button flex min-h-14 w-full items-center justify-center gap-2 px-6 py-4 text-base">
+        <Link href="/map" className="pixel-button flex min-h-14 w-full items-center justify-center gap-2 px-6 py-4 text-base">
           <span className="blink">▶</span> PRESS START
         </Link>
         <p className="font-pixel text-[10px] text-[#9d93d6]">v0.2 · learn networks by battling</p>
