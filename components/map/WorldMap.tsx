@@ -275,6 +275,9 @@ export function WorldMap() {
         <Link href="/battle" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-4 py-3 text-xs">
           DEMO BATTLE
         </Link>
+        <Link href="/types" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-4 py-3 text-xs">
+          TYPES
+        </Link>
       </nav>
     </main>
   );

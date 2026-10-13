@@ -16,6 +16,8 @@ import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { EVOLUTIONS, morphFrames } from "@/game/art/evolve";
+import { TYPE_ICONS } from "@/game/art/typeIcons";
+import { TYPES } from "@/game/engine/types";
 import { badgeFrames } from "@/game/art/world/badges";
 import { COURIER } from "@/game/art/world/courier";
 import { TOWNS } from "@/content/world";
@@ -81,6 +83,18 @@ export function SpriteViewer() {
       <BadgeSection scale={scale} />
 
       <BackgroundSection scale={scale} />
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-pixel text-xs text-white">TYPE ICONS</h2>
+        <div className="flex flex-wrap gap-3">
+          {TYPES.map((t) => (
+            <figure key={t} className="sprite-cell flex flex-col items-center gap-1 p-2">
+              <PixelSprite frames={[TYPE_ICONS[t]]} scale={scale + 2} label={`${t} type icon`} />
+              <figcaption className="font-pixel text-[9px] text-[#cde]">{t.toLowerCase()}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-pixel text-xs text-white">MOVE EFFECTS</h2>

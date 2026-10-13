@@ -19,6 +19,7 @@ import { BadgeGet } from "./BadgeGet";
 import { HpBox } from "./HpBox";
 import { MessageBox } from "./MessageBox";
 import { MoveMenu } from "./MoveMenu";
+import { TypeChart } from "@/components/types/TypeChart";
 
 const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60, types: typesOf(PINGKIT.id) };
 const DEMO_FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100, types: typesOf(BRAIDWYRM.id) };
@@ -214,6 +215,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   const badgeGet = gym && s.phase === "victory" && after.kind === "badge";
   const over = s.phase === "defeat" || evolved;
   const opened = gym ? unlockedBy(gym.gym) : null;
+  const [chart, setChart] = useState(false);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4">
@@ -221,8 +223,13 @@ export function BattleScreen({ gym }: { gym?: Town }) {
         <Link href={gym ? "/map" : "/"} className="py-2 hover:text-white">
           {gym ? "◀ MAP" : "◀ TITLE"}
         </Link>
-        <span>
-          {gym ? `${gym.name.toUpperCase()} GYM` : "DEMO BATTLE"} · TURN {Math.max(1, s.turn)}
+        <span className="flex items-center gap-3">
+          <span>
+            {gym ? `${gym.name.toUpperCase()} GYM` : "DEMO BATTLE"} · TURN {Math.max(1, s.turn)}
+          </span>
+          <button type="button" className="pixel-button px-2 py-2 text-[9px] pointer-coarse:min-h-11" onClick={() => setChart(true)} data-testid="open-type-chart">
+            TYPES
+          </button>
         </span>
       </div>
 
@@ -290,6 +297,20 @@ export function BattleScreen({ gym }: { gym?: Town }) {
           </div>
         )}
       </div>
+
+      {chart && (
+        <div role="dialog" aria-modal="true" aria-label="Type chart" className="fixed inset-0 z-40 overflow-y-auto bg-[#120e2a] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="mx-auto flex max-w-2xl flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-pixel text-xs text-[#ffd257] sm:text-sm">TYPE CHART</h2>
+              <button type="button" className="pixel-button min-h-11 px-3 py-2 text-[10px]" onClick={() => setChart(false)} autoFocus>
+                CLOSE ✕
+              </button>
+            </div>
+            <TypeChart highlight={q.type && s.foe.types?.length ? { atk: q.type, def: s.foe.types } : undefined} />
+          </div>
+        </div>
+      )}
 
       {badgeGet && <BadgeGet town={gym} leader={FOE.name} opened={opened} />}
     </main>

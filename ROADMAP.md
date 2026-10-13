@@ -27,9 +27,9 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 1.1i Keyvern, the gym 7 boss (Cipher Keep): a padlocked wyvern whose wing-wrist gems trade key shares through a TLS 1.3 handshake until its shackle snaps shut.
   - [x] 1.1j Fetchimera, the gym 8 boss (Waypoint): a hound/ram/serpent chimera whose harness lamps light DNS → TCP → TLS → HTTP before its hound head fetches the page.
   - [x] 1.1k Gigaroc, the gym 9 boss (Backbone Summit): a crimson storm roc on the summit crag whose wing fibre carries a light pulse from shoulder to wingtip (propagation delay), and fills the whole link on the attack (bandwidth-delay product).
-- [ ] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
+- [x] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
   - [x] 1.2a Type engine: six types, a chart built on "each layer serves the one above it" plus a security triangle (with a reason per matchup), creature types, typed moves in the battle reducer (question type → player move, foe's first type → its hit), "It's super effective!" messages with the reason, and type chips in the HP boxes and move menu.
-  - [ ] 1.2b Pixel type icons (one small drawn emblem per type, used in the chips) and a type chart screen reachable from the map and the battle, showing the grid and each matchup's reason.
+  - [x] 1.2b Pixel type icons (one small drawn emblem per type, used in the chips) and a type chart screen reachable from the map and the battle, showing the grid and each matchup's reason.
 - [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.
 - [ ] 1.5 **Packet animations**: attacks are packets travelling between creatures, with headers that visibly encapsulate and decapsulate layer by layer.

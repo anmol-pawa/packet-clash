@@ -107,3 +107,11 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
 
 /** A creature's types (Network if it isn't listed). */
 export const typesOf = (id: string): readonly PacketType[] => CREATURE_TYPES[id] ?? ["NETWORK"];
+
+/** Why one type hits another as it does: the chart's reason, or why it's neutral. */
+export function matchupReason(atk: PacketType, def: PacketType): string {
+  const m = CHART.find((c) => c.atk === atk && c.def === def);
+  if (m) return m.why;
+  if (atk === def) return "Same layer, same footing: neither side has an edge.";
+  return "Neither one rides on the other, so the hit lands normally.";
+}
