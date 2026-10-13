@@ -3,6 +3,7 @@ import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
+import { NAME_SERVERS, ORACLYNX, ORB_POS, STONE_POS, messageCount, resolveIteratively } from "@/game/art/creatures/oraclynx";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { HANDSHAKE_STATES, LAMP_POS, STATE_LAMP, SYNACKLE, handshake } from "@/game/art/creatures/synackle";
@@ -10,7 +11,7 @@ import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -59,7 +60,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -315,5 +316,54 @@ describe("painter", () => {
   it("silhouette() whitens every colour", () => {
     const s = silhouette(PINGKIT.front.idle[0]);
     expect(new Set(Object.values(s.palette))).toEqual(new Set(["#ffffff"]));
+  });
+});
+
+describe("Oraclynx's lookup", () => {
+  it("resolves gaia.cs.umass.edu like Kurose & Ross: root, then the edu TLD, then umass.edu's authoritative server", () => {
+    expect(resolveIteratively("gaia.cs.umass.edu")).toEqual([
+      { server: "a.root-servers.net", zone: ".", reply: { kind: "referral", zone: "edu.", server: "a.edu-servers.net" } },
+      { server: "a.edu-servers.net", zone: "edu.", reply: { kind: "referral", zone: "umass.edu.", server: "dns.umass.edu" } },
+      { server: "dns.umass.edu", zone: "umass.edu.", reply: { kind: "answer", address: "128.119.245.12" } },
+    ]);
+    // the textbook counts eight DNS messages for this lookup
+    expect(messageCount(resolveIteratively("gaia.cs.umass.edu"))).toBe(8);
+    // names are case-insensitive and the trailing root dot is optional
+    expect(resolveIteratively("GAIA.cs.umass.edu.").at(-1)!.reply).toEqual({ kind: "answer", address: "128.119.245.12" });
+  });
+
+  it("follows the longest matching delegation and stops at a server that has no answer", () => {
+    // umass.edu, not a sibling zone whose name is a plain string suffix
+    const servers = [
+      ...NAME_SERVERS.filter((s) => s.zone !== "edu."),
+      { name: "a.edu-servers.net", zone: "edu.", delegations: { "umass.edu.": "dns.umass.edu", "ss.edu.": "ns.ss.edu" }, records: {} },
+    ];
+    expect(resolveIteratively("gaia.cs.umass.edu", servers)[1].reply).toMatchObject({ zone: "umass.edu." });
+    expect(resolveIteratively("www.example.org").map((s) => s.reply.kind)).toEqual(["nxdomain"]);
+    expect(resolveIteratively("nope.umass.edu").map((s) => s.reply.kind)).toEqual(["referral", "referral", "nxdomain"]);
+  });
+
+  const at = (f: { rows: string[] }, [x, y]: readonly [number, number]) => f.rows[y][x];
+  const stones = (f: { rows: string[] }) => (["root", "tld", "auth"] as const).map((k) => at(f, STONE_POS[k]));
+
+  it("lights the stone being asked on each idle frame, in lookup order, then the answer lands in the orb", () => {
+    const order = resolveIteratively("gaia.cs.umass.edu").map((s) => s.zone);
+    expect(order).toEqual([".", "edu.", "umass.edu."]);
+    for (const view of [ORACLYNX.front, ORACLYNX.back]) {
+      expect(view.idle).toHaveLength(order.length + 1);
+      view.idle.forEach((f, i) => {
+        expect(stones(f), `idle ${i}`).toEqual([0, 1, 2].map((s) => (s === i ? "v" : "f")));
+        expect(at(f, ORB_POS) === "g", `idle ${i}`).toBe(i === 3);
+      });
+    }
+  });
+
+  it("lights every stone and the orb on the attack, and goes dark when hurt or fainting", () => {
+    for (const view of [ORACLYNX.front, ORACLYNX.back]) {
+      for (const f of view.attack) expect(stones(f)).toEqual(["v", "v", "v"]);
+      for (const f of [...view.hurt, ...view.faint]) {
+        expect(f.rows.join("")).not.toMatch(/[vg]/);
+      }
+    }
   });
 });
