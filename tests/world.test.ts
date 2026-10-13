@@ -75,5 +75,6 @@ describe("world map", () => {
     expect(town("resolvia").bossSprite).toBe("oraclynx");
     expect(town("cipher-keep").bossSprite).toBe("keyvern");
     expect(town("waypoint").bossSprite).toBe("fetchimera");
+    expect(town("backbone-summit").bossSprite).toBe("gigaroc");
   });
 });

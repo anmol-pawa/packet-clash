@@ -15,7 +15,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 
 ## 1. Game structure
 
-- [ ] 1.1 Overworld map shaped like a network (towns = subnets, routes = links) with 9 gyms, one per chapter below, and an original boss creature per gym (e.g. a cable-serpent for the physical layer, a collision beetle for MAC, a router owl, a handshake twin-creature for TCP, a DNS oracle…). Badges are earned per gym.
+- [x] 1.1 Overworld map shaped like a network (towns = subnets, routes = links) with 9 gyms, one per chapter below, and an original boss creature per gym (e.g. a cable-serpent for the physical layer, a collision beetle for MAC, a router owl, a handshake twin-creature for TCP, a DNS oracle…). Badges are earned per gym.
   - [x] 1.1a World data (9 towns as /24 subnets joined by /30 point-to-point routes, one gym per chapter, badges, unlock order) with an IPv4/CIDR helper under test, and a painted pixel overworld map page (`/map`) with tappable towns, a badge case and a town info window.
   - [x] 1.1b Walk the map: an animated player sprite that travels along routes between unlocked towns, water shimmer and blinking router lights on the map.
   - [x] 1.1c Gym flow: enter a gym from its town, fight its boss, earn and save the badge, unlock the next town (with a badge-get screen).
@@ -26,7 +26,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 1.1h Oraclynx, the gym 6 boss (Resolvia): a seer lynx whose floating rune stones light root → TLD → authoritative in an iterative DNS lookup, with the answer landing in its orb.
   - [x] 1.1i Keyvern, the gym 7 boss (Cipher Keep): a padlocked wyvern whose wing-wrist gems trade key shares through a TLS 1.3 handshake until its shackle snaps shut.
   - [x] 1.1j Fetchimera, the gym 8 boss (Waypoint): a hound/ram/serpent chimera whose harness lamps light DNS → TCP → TLS → HTTP before its hound head fetches the page.
-  - [ ] 1.1k Gigaroc, the gym 9 boss (Backbone Summit, 96×96, full animations), wired like the others (`bossSprite` in `content/world.ts` + `game/art/bosses.ts`, plus a `signature` move). Front art faces right (the stage mirrors foes).
+  - [x] 1.1k Gigaroc, the gym 9 boss (Backbone Summit): a crimson storm roc on the summit crag whose wing fibre carries a light pulse from shoulder to wingtip (propagation delay), and fills the whole link on the attack (bandwidth-delay product).
 - [ ] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
 - [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.

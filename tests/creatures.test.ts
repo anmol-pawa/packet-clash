@@ -3,6 +3,7 @@ import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
+import { GIGAROC, PULSE_POS, bandwidthDelayProduct, bitWidth, nodalDelay, propagationDelay, storeAndForward, transmissionDelay } from "@/game/art/creatures/gigaroc";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
 import { GEM_POS, KEYHOLE_POS, KEYVERN, SHACKLE_POS, TLS13_HANDSHAKE, diffieHellman, lockState } from "@/game/art/creatures/keyvern";
 import { NAME_SERVERS, ORACLYNX, ORB_POS, STONE_POS, messageCount, resolveIteratively } from "@/game/art/creatures/oraclynx";
@@ -13,7 +14,7 @@ import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -62,7 +63,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -471,6 +472,66 @@ describe("Fetchimera's URL journey", () => {
       for (const f of view.attack)
         for (const { lamp } of JOURNEY) expect(f.rows.join("").split(lamp).length - 1, lamp).toBeGreaterThanOrEqual(15);
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[dtsg]/);
+    }
+  });
+});
+
+describe("Gigaroc's backbone link", () => {
+  it("solves Kurose & Ross P25: bandwidth-delay product and the width of a bit", () => {
+    // two hosts 20,000 km apart, R = 2 Mbps, s = 2.5·10^8 m/s
+    const R = 2e6;
+    const m = 2e7;
+    const s = 2.5e8;
+    expect(propagationDelay(m, s)).toBeCloseTo(0.08, 12);
+    expect(bandwidthDelayProduct(R, m, s)).toBeCloseTo(160_000, 6);
+    // an 800,000-bit file sent at once: at most R·d_prop bits are ever on the link
+    expect(Math.min(800_000, bandwidthDelayProduct(R, m, s))).toBeCloseTo(160_000, 6);
+    expect(bitWidth(R, s)).toBe(125);
+    expect(m / bandwidthDelayProduct(R, m, s)).toBeCloseTo(125, 9);
+  });
+
+  it("times store-and-forward like Kurose & Ross §1.3.1 and P31", () => {
+    const L = 1500 * 8;
+    // §1.3.1: three packets over source → router → destination arrive by 4L/R
+    expect(storeAndForward({ messageBits: 3 * L, packetBits: L, rate: 1e6, links: 2 })).toBeCloseTo((4 * L) / 1e6, 12);
+    // P31: an 8·10^6-bit message over 3 links of 2 Mbps
+    const msg = { messageBits: 8e6, rate: 2e6, links: 3 };
+    expect(transmissionDelay(8e6, 2e6)).toBe(4); // one hop, unsegmented
+    expect(storeAndForward({ ...msg, packetBits: 8e6 })).toBeCloseTo(12, 9);
+    // segmented into 800 packets of 10,000 bits: the first lands at 15 ms, the last at 4.01 s
+    expect(storeAndForward({ ...msg, messageBits: 1e4, packetBits: 1e4 })).toBeCloseTo(0.015, 12);
+    expect(storeAndForward({ ...msg, packetBits: 1e4 })).toBeCloseTo(4.01, 9);
+  });
+
+  it("adds up nodal delay from its four parts", () => {
+    // a 1500-byte packet on 10 Mbps is 1.2 ms of transmission; 2,000 km of fibre is 10 ms of propagation
+    expect(transmissionDelay(12_000, 10e6)).toBeCloseTo(0.0012, 12);
+    expect(nodalDelay({ bits: 12_000, rate: 10e6, metres: 2e6, speed: 2e8 })).toBeCloseTo(0.0112, 12);
+    expect(nodalDelay({ bits: 12_000, rate: 10e6, metres: 2e6, speed: 2e8, queuing: 0.003, processing: 0.0001 })).toBeCloseTo(0.0143, 12);
+  });
+
+  const at = (f: { rows: string[] }, [x, y]: readonly [number, number]) => f.rows[y][x];
+
+  it("sends one light pulse from shoulder to wingtip across the idle loop", () => {
+    // positions run from the shoulder (lower right) up the wing to the tip (upper left)
+    for (let i = 1; i < PULSE_POS.length; i++) {
+      expect(PULSE_POS[i][0]).toBeLessThan(PULSE_POS[i - 1][0]);
+      expect(PULSE_POS[i][1]).toBeLessThan(PULSE_POS[i - 1][1]);
+    }
+    for (const view of [GIGAROC.front, GIGAROC.back]) {
+      expect(view.idle).toHaveLength(PULSE_POS.length);
+      view.idle.forEach((f, i) => {
+        PULSE_POS.forEach((pos, j) => expect(at(f, pos), `idle ${i} pos ${j}`).toBe(j === i ? "y" : "f"));
+        // the fibre ends on its tail glow while it idles
+        expect(f.rows.join("")).toMatch(/c/);
+      });
+    }
+  });
+
+  it("fills the whole link on the attack and goes dark when hurt or fainting", () => {
+    for (const view of [GIGAROC.front, GIGAROC.back]) {
+      for (const f of view.attack) expect(f.rows.join("").split("y").length - 1).toBeGreaterThanOrEqual(PULSE_POS.length);
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[cy]/);
     }
   });
 });
