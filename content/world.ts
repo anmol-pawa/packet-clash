@@ -42,7 +42,7 @@ export interface Route {
 }
 
 export const TOWNS: Town[] = [
-  { gym: 1, id: "layer-landing", name: "Layer Landing", subnet: "10.0.1.0/24", chapter: "2.1", topic: "OSI & TCP/IP models, encapsulation, delay", boss: "Stackadon", bossSprite: null, badge: "Layer Badge", badgeColor: "#7fd6f5", roof: "#3a7fd5", x: 44, y: 182 },
+  { gym: 1, id: "layer-landing", name: "Layer Landing", subnet: "10.0.1.0/24", chapter: "2.1", topic: "OSI & TCP/IP models, encapsulation, delay", boss: "Stackadon", bossSprite: "stackadon", badge: "Layer Badge", badgeColor: "#7fd6f5", roof: "#3a7fd5", x: 44, y: 182 },
   { gym: 2, id: "copperfield", name: "Copperfield", subnet: "10.0.2.0/24", chapter: "2.2", topic: "Physical & data link: CRC, MAC, Ethernet, ARP", boss: "Braidwyrm", bossSprite: "braidwyrm", badge: "Frame Badge", badgeColor: "#f0a35a", roof: "#d0584c", x: 112, y: 196 },
   { gym: 3, id: "octet-harbor", name: "Octet Harbor", subnet: "10.0.3.0/24", chapter: "2.3", topic: "IPv4, subnetting & CIDR, NAT, ICMP, IPv6", boss: "Cidrab", bossSprite: null, badge: "Mask Badge", badgeColor: "#ff7096", roof: "#c24f8a", x: 184, y: 176 },
   { gym: 4, id: "hopwood", name: "Hopwood", subnet: "10.0.4.0/24", chapter: "2.4", topic: "Routing: Dijkstra, Bellman-Ford, OSPF, BGP", boss: "Hootpath", bossSprite: null, badge: "Route Badge", badgeColor: "#8ee07a", roof: "#3f8f4a", x: 92, y: 124 },

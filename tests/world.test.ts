@@ -67,6 +67,7 @@ describe("world map", () => {
       expect(y).toBeGreaterThanOrEqual(24);
       expect(y).toBeLessThanOrEqual(212);
     }
+    expect(town("layer-landing").bossSprite).toBe("stackadon");
     expect(town("copperfield").bossSprite).toBe("braidwyrm");
   });
 });

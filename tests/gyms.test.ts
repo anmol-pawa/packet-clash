@@ -26,6 +26,8 @@ describe("gyms", () => {
       expect(gymOpen(t)).toBe(t.bossSprite !== null);
       if (t.bossSprite) expect(BOSS_ART[t.bossSprite]?.size).toBe(96);
     }
+    // a fresh save can challenge gym 1 and earn its first badge
+    expect(gymOpen(gymTown(1)!)).toBe(true);
     expect(gymOpen(gymTown(2)!)).toBe(true);
   });
 

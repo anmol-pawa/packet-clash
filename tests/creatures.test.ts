@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
+import { STACKADON } from "@/game/art/creatures/stackadon";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -55,9 +56,11 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  it("Braidwyrm is a 96×96 boss whose drawing fits the frame with room to rear up", () => {
-    expect(BRAIDWYRM.size).toBe(96);
-    for (const view of [BRAIDWYRM.front, BRAIDWYRM.back])
+  for (const boss of [BRAIDWYRM, STACKADON])
+  it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
+    expect(boss.size).toBe(96);
+    expect(boss.signature).toMatch(/^[A-Z ]+$/);
+    for (const view of [boss.front, boss.back])
       for (const a of ANIMS)
         for (const f of view[a]) {
           // nothing touches the top 8 rows, so the attack rear-up never clips
@@ -65,6 +68,19 @@ describe("bosses", () => {
           // the coil sits on the bottom of the frame (anchored to the platform)
           expect(f.rows.slice(84).some((r) => /[^.]/.test(r)), a).toBe(true);
         }
+  });
+
+  it("Stackadon's idle loop lights one layer per frame, climbing link → application", () => {
+    // seam colours per layer (bright), bottom → top
+    const lit = ["a", "c", "e", "g"];
+    for (const view of [STACKADON.front, STACKADON.back]) {
+      view.idle.forEach((f, i) => {
+        const text = f.rows.join("");
+        lit.forEach((ch, layer) => expect(text.includes(ch), `frame ${i} layer ${layer}`).toBe(layer === i));
+      });
+      // hurt and faint frames go dark
+      for (const f of [...view.hurt, ...view.faint]) expect(/[aceg]/.test(f.rows.join(""))).toBe(false);
+    }
   });
 });
 

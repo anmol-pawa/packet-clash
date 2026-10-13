@@ -321,5 +321,6 @@ export const BRAIDWYRM: CreatureArt = {
   front: anims(false),
   back: anims(true),
   idleFps: 3,
+  signature: "SPARK COIL",
   blurb: "Guardian of the Physical layer. It hums at the line rate, and its copper bands spit sparks whenever the signal gets noisy.",
 };

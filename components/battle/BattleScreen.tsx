@@ -143,7 +143,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
         });
         if (foe.hp <= 0) await st.faint("foe");
       } else {
-        setMsg(`Not quite! ${foe.name.toUpperCase()} used SPARK COIL!`);
+        setMsg(`Not quite! ${foe.name.toUpperCase()} used ${art.signature ?? "TACKLE"}!`);
         sfx.miss();
         await st.attack("foe", last.damage, false, () => {
           sfx.hurt();
@@ -153,7 +153,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       }
       setExplain(q.explain);
     })();
-  }, [s, q.explain]);
+  }, [s, q.explain, art.signature]);
 
   // Each post-victory step: apply it, then move on after a pause (or a tap on the message).
   const steps = AFTER.length;

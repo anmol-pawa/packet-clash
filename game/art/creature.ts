@@ -17,6 +17,8 @@ export interface CreatureArt {
   back: AnimSet;
   /** Frames per second of the idle loop. */
   idleFps: number;
+  /** The move it uses when it hits back (bosses only). */
+  signature?: string;
   /** One-line flavour text for the Packetdex / sprite viewer. */
   blurb: string;
 }
