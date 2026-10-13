@@ -3,6 +3,7 @@ import { BRAIDWYRM } from "./creatures/braidwyrm";
 import { CIDRAB } from "./creatures/cidrab";
 import { HOOTPATH } from "./creatures/hootpath";
 import { STACKADON } from "./creatures/stackadon";
+import { SYNACKLE } from "./creatures/synackle";
 
 /** Gym leaders' art by `Town.bossSprite` id. */
 export const BOSS_ART: Record<string, CreatureArt> = {
@@ -10,4 +11,5 @@ export const BOSS_ART: Record<string, CreatureArt> = {
   [BRAIDWYRM.id]: BRAIDWYRM,
   [CIDRAB.id]: CIDRAB,
   [HOOTPATH.id]: HOOTPATH,
+  [SYNACKLE.id]: SYNACKLE,
 };

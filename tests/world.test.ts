@@ -71,5 +71,6 @@ describe("world map", () => {
     expect(town("octet-harbor").bossSprite).toBe("cidrab");
     expect(town("copperfield").bossSprite).toBe("braidwyrm");
     expect(town("hopwood").bossSprite).toBe("hootpath");
+    expect(town("handshake-harbor").bossSprite).toBe("synackle");
   });
 });

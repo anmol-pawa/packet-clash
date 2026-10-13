@@ -5,11 +5,12 @@ import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
+import { HANDSHAKE_STATES, LAMP_POS, STATE_LAMP, SYNACKLE, handshake } from "@/game/art/creatures/synackle";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -58,7 +59,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -192,6 +193,81 @@ describe("Hootpath's route lamps", () => {
       for (const f of [...view.hurt, ...view.faint]) {
         expect(f.rows.join("")).not.toMatch(/[eh]/);
       }
+    }
+  });
+});
+
+describe("Synackle's handshake", () => {
+  it("numbers the three segments like Kurose & Ross: SYN x, SYN-ACK y / x+1, ACK x+1 / y+1", () => {
+    // the textbook's Telnet example uses client ISN 42 and server ISN 79
+    expect(handshake(42, 79)).toEqual([
+      { from: "client", flags: ["SYN"], seq: 42, ack: null },
+      { from: "server", flags: ["SYN", "ACK"], seq: 79, ack: 43 },
+      { from: "client", flags: ["ACK"], seq: 43, ack: 80 },
+    ]);
+    // sequence numbers are 32-bit and wrap
+    expect(handshake(2 ** 32 - 1, 0)[1].ack).toBe(0);
+    expect(handshake(5, 2 ** 32 - 1)[2]).toMatchObject({ seq: 6, ack: 0 });
+  });
+
+  it("steps both ends through the RFC 793 states", () => {
+    expect(HANDSHAKE_STATES).toEqual([
+      { client: "CLOSED", server: "LISTEN" },
+      { client: "SYN_SENT", server: "LISTEN" },
+      { client: "SYN_SENT", server: "SYN_RCVD" },
+      { client: "ESTABLISHED", server: "SYN_RCVD" },
+      { client: "ESTABLISHED", server: "ESTABLISHED" },
+    ]);
+    // each step changes exactly one end: the one that just sent a segment
+    const segs = handshake(0, 0);
+    for (let i = 1; i < HANDSHAKE_STATES.length - 1; i++) {
+      const [a, b] = [HANDSHAKE_STATES[i - 1], HANDSHAKE_STATES[i]];
+      expect(a.client !== b.client ? "client" : "server").toBe(segs[i - 1].from);
+      expect(a.client !== b.client && a.server !== b.server).toBe(false);
+    }
+  });
+
+  /** Lamp colours (client, server) at the lamp centres; the back view sits flipped. */
+  const lamps = (f: { rows: string[] }, front: boolean) =>
+    (["client", "server"] as const).map((w) => {
+      const [x, y] = LAMP_POS[w];
+      return f.rows[y][front ? x : 96 - x];
+    });
+
+  it("lights the lamps for each idle frame's state, ending ESTABLISHED on both", () => {
+    for (const [view, front] of [
+      [SYNACKLE.front, true],
+      [SYNACKLE.back, false],
+    ] as const)
+      view.idle.forEach((f, i) => {
+        const s = HANDSHAKE_STATES[i + 1];
+        expect(lamps(f, front), `idle ${i}`).toEqual([STATE_LAMP[s.client], STATE_LAMP[s.server]]);
+      });
+  });
+
+  it("sends a segment along the arch on the first three idle frames only, from the right twin", () => {
+    // the segment's white core sits on the client's half for SYN and ACK, the server's for SYN-ACK
+    const coreX = (f: { rows: string[] }) => {
+      const xs: number[] = [];
+      f.rows.slice(0, 50).forEach((r) => [...r].forEach((ch, x) => ch === "g" && xs.push(x)));
+      return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+    };
+    const segs = handshake(0, 0);
+    SYNACKLE.front.idle.slice(0, 3).forEach((f, i) => {
+      const x = coreX(f)!;
+      expect(x, `idle ${i}`).not.toBeNull();
+      // a segment in flight has just left its sender, so it's on the sender's half
+      expect(x < 48 ? "client" : "server", `idle ${i}`).toBe(segs[i].from);
+    });
+    expect(coreX(SYNACKLE.front.idle[3])).toBeNull();
+  });
+
+  it("is all green on the attack and dark when hurt or fainting", () => {
+    // two 3×3 lamps; the lunge moves them, so count colours instead of reading a spot
+    const count = (f: { rows: string[] }, ch: string) => f.rows.join("").split(ch).length - 1;
+    for (const view of [SYNACKLE.front, SYNACKLE.back]) {
+      for (const f of view.attack) expect([count(f, "e"), count(f, "a"), count(f, "b"), count(f, "f")]).toEqual([18, 0, 0, 0]);
+      for (const f of [...view.hurt, ...view.faint]) expect([count(f, "e"), count(f, "a"), count(f, "b"), count(f, "f")]).toEqual([0, 0, 0, 18]);
     }
   });
 });

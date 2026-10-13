@@ -7,6 +7,7 @@ import { ANIMS, type CreatureArt } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { HOOTPATH } from "@/game/art/creatures/hootpath";
+import { SYNACKLE } from "@/game/art/creatures/synackle";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
@@ -17,7 +18,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH];
+const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus
