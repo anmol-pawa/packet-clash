@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
+import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -57,7 +58,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -128,6 +129,69 @@ describe("Cidrab's bit-lamps", () => {
     for (const view of [CIDRAB.front, CIDRAB.back]) {
       for (const f of view.attack) expect(lamps(f)).toEqual({ on: 8, off: 0 });
       for (const f of [...view.hurt, ...view.faint]) expect(lamps(f)).toEqual({ on: 0, off: 8 });
+    }
+  });
+});
+
+describe("Hootpath's route lamps", () => {
+  /** Every simple path's cost from S, minimised: a brute-force check on Dijkstra. */
+  const bruteForce = (target: string): number => {
+    let best = Infinity;
+    const walk = (at: string, seen: Set<string>, cost: number) => {
+      if (at === target) best = Math.min(best, cost);
+      for (const [a, b, w] of ROUTE_LINKS) {
+        const next = a === at ? b : b === at ? a : null;
+        if (next && !seen.has(next)) walk(next, new Set([...seen, next]), cost + w);
+      }
+    };
+    walk("S", new Set(["S"]), 0);
+    return best;
+  };
+
+  it("runs Dijkstra from S: settles S, B, A, C at distances 0, 1, 3, 4", () => {
+    const order = dijkstra();
+    expect(order).toEqual([
+      { node: "S", dist: 0, via: null },
+      { node: "B", dist: 1, via: "S" },
+      { node: "A", dist: 3, via: "B" },
+      { node: "C", dist: 4, via: "A" },
+    ]);
+    // the cheapest route to A is two hops (S→B→A = 3), not the direct link (4)
+    expect(ROUTE_LINKS.find(([a, b]) => a === "S" && b === "A")![2]).toBeGreaterThan(order[2].dist);
+    for (const { node, dist } of order) expect(dist).toBe(bruteForce(node));
+    // distances never decrease in settle order
+    expect(order.map((o) => o.dist)).toEqual([...order.map((o) => o.dist)].sort((a, b) => a - b));
+  });
+
+  /** Which node lamps are lit in a frame, read at the lamp centres (front art is mirrored). */
+  const lit = (f: { rows: string[] }, front: boolean) =>
+    ROUTE_NODES.filter((n) => {
+      const [x, y] = NODE_POS[n];
+      const ch = f.rows[y][front ? 95 - x : 96 - x];
+      expect("ef").toContain(ch);
+      return ch === "e";
+    });
+
+  it("settles one more node per idle frame, in Dijkstra order, lighting the tree edges", () => {
+    const order = dijkstra().map((o) => o.node);
+    for (const [view, front] of [
+      [HOOTPATH.front, true],
+      [HOOTPATH.back, false],
+    ] as const)
+      view.idle.forEach((f, i) => {
+        expect(lit(f, front).sort(), `idle ${i}`).toEqual(order.slice(0, i + 1).sort());
+        // lit links appear once a node has been reached through one
+        expect(f.rows.join("").includes("h"), `idle ${i}`).toBe(i > 0);
+      });
+  });
+
+  it("lights the whole network on the attack and goes dark when hurt or fainting", () => {
+    for (const view of [HOOTPATH.front, HOOTPATH.back]) {
+      // every lamp is 3×3: a glint and eight lit pixels
+      for (const f of view.attack) expect(f.rows.join("").split("e").length - 1).toBe(4 * 8);
+      for (const f of [...view.hurt, ...view.faint]) {
+        expect(f.rows.join("")).not.toMatch(/[eh]/);
+      }
     }
   });
 });
