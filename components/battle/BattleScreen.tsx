@@ -11,6 +11,7 @@ import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { evolutionOf } from "@/game/art/evolve";
 import { initialState, reducer, type Fighter } from "@/game/engine/battle";
+import { effectMessage, effectReasons, TYPE_INFO, typesOf } from "@/game/engine/types";
 import { gainXp, xpProgress, xpReward, xpTotal, type XpGain } from "@/game/engine/xp";
 import { updateSave } from "@/lib/save";
 import type { BattleStage } from "@/game/render/stage";
@@ -19,8 +20,8 @@ import { HpBox } from "./HpBox";
 import { MessageBox } from "./MessageBox";
 import { MoveMenu } from "./MoveMenu";
 
-const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60 };
-const DEMO_FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100 };
+const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60, types: typesOf(PINGKIT.id) };
+const DEMO_FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100, types: typesOf(BRAIDWYRM.id) };
 const EVOLVED = evolutionOf(PINGKIT.id)!;
 /** The starter's total XP at the start of the battle (part-way through Lv 5). */
 const START_XP = 150;
@@ -134,20 +135,30 @@ export function BattleScreen({ gym }: { gym?: Town }) {
     played.current = s.turn;
     const { last, foe, player } = s;
     (async () => {
+      // After the hit: "It's super effective!" and why, from the type chart.
+      const effect = (used: string) => {
+        if (!last.moveType || last.effect === 1) return;
+        const target = s.phase === "player-move" ? foe : player;
+        setMsg(`${used} ${effectMessage(last.effect)} ${effectReasons(last.moveType, target.types ?? []).join(" ")}`);
+      };
       if (s.phase === "player-move") {
-        setMsg(`Correct! ${PLAYER.name.toUpperCase()} used PACKET TOSS!`);
+        const used = `Correct! ${PLAYER.name.toUpperCase()} used ${last.moveType ? TYPE_INFO[last.moveType].move : "PACKET TOSS"}!`;
+        setMsg(used);
         sfx.cast(660);
         await st.attack("player", last.damage, last.crit, () => {
           sfx.hit(last.crit);
           setHp((h) => ({ ...h, foe: foe.hp }));
+          effect(used);
         });
         if (foe.hp <= 0) await st.faint("foe");
       } else {
-        setMsg(`Not quite! ${foe.name.toUpperCase()} used ${art.signature ?? "TACKLE"}!`);
+        const used = `Not quite! ${foe.name.toUpperCase()} used ${art.signature ?? "TACKLE"}!`;
+        setMsg(used);
         sfx.miss();
         await st.attack("foe", last.damage, false, () => {
           sfx.hurt();
           setHp((h) => ({ ...h, player: player.hp }));
+          effect(used);
         });
         if (player.hp <= 0) await st.faint("player");
       }
@@ -193,9 +204,9 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       if (s.phase !== "menu") return;
       sfx.unlock();
       sfx.click();
-      dispatch({ type: "answer", correct: i === q.answer, choice: i });
+      dispatch({ type: "answer", correct: i === q.answer, choice: i, moveType: q.type });
     },
-    [s.phase, q.answer],
+    [s.phase, q.answer, q.type],
   );
 
   const answered = s.phase === "player-move" || s.phase === "foe-move";
@@ -244,6 +255,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
               locked={s.phase !== "menu"}
               correct={q.answer}
               chosen={s.last?.choice}
+              moveType={q.type}
               info={[`QUESTION ${s.questionIndex + 1}/${DEMO_QUESTIONS.length}`, answered ? (s.last?.kind === "correct" ? "CORRECT!" : "MISSED!") : s.stats.streak > 1 ? `STREAK ×${s.stats.streak}` : "PICK A MOVE"]}
               onPick={pick}
             />

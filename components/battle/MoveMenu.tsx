@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { TYPE_INFO, type PacketType } from "@/game/engine/types";
+import { TypeChip } from "./TypeChip";
 
 /**
  * The FIGHT panel: four answers in a 2×2 grid inside one handheld window,
@@ -12,6 +14,7 @@ export function MoveMenu({
   correct,
   chosen,
   info,
+  moveType,
   onPick,
 }: {
   options: readonly string[];
@@ -20,6 +23,8 @@ export function MoveMenu({
   correct: number;
   chosen?: number;
   info: [string, string];
+  /** The type of the move a right answer fires. */
+  moveType?: PacketType;
   onPick: (i: number) => void;
 }) {
   const [cursor, setCursor] = useState(0);
@@ -66,8 +71,13 @@ export function MoveMenu({
           );
         })}
       </div>
-      <div className="mt-2 flex items-center justify-between border-t-2 border-[#3b3175] px-1 pt-1.5 font-pixel text-[9px] text-[#c9c1ff] sm:text-[10px]">
+      <div className="mt-2 flex items-center justify-between gap-2 whitespace-nowrap border-t-2 border-[#3b3175] px-1 pt-1.5 font-pixel text-[9px] text-[#c9c1ff] sm:text-[10px]">
         <span>{info[0]}</span>
+        {moveType && (
+          <span className="flex items-center" data-testid="move-type" title={TYPE_INFO[moveType].move}>
+            <TypeChip type={moveType} className="text-[7px] sm:text-[8px]" />
+          </span>
+        )}
         <span className="text-[#ffd257]">{info[1]}</span>
       </div>
     </div>

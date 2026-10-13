@@ -3,6 +3,7 @@
  * question engine (1.4); these exist to exercise the battle loop end to end.
  */
 import { transmissionDelay, usableHosts } from "@/lib/net/basics";
+import type { PacketType } from "@/game/engine/types";
 
 export interface DemoQuestion {
   id: string;
@@ -11,6 +12,8 @@ export interface DemoQuestion {
   options: [string, string, string, string];
   answer: 0 | 1 | 2 | 3;
   explain: string;
+  /** The layer the question is about: the type of the move a right answer fires. */
+  type: PacketType;
 }
 
 const hosts26 = usableHosts(26);
@@ -19,6 +22,7 @@ const delayMs = transmissionDelay(1000, 1_000_000) * 1000;
 export const DEMO_QUESTIONS: readonly DemoQuestion[] = [
   {
     id: "router-layer",
+    type: "NETWORK",
     prompt: "Which OSI layer does a router mainly work at?",
     options: ["Data link (L2)", "Network (L3)", "Transport (L4)", "Physical (L1)"],
     answer: 1,
@@ -26,6 +30,7 @@ export const DEMO_QUESTIONS: readonly DemoQuestion[] = [
   },
   {
     id: "arp",
+    type: "LINK",
     prompt: "Which protocol finds the MAC address for an IPv4 address on the local network?",
     options: ["DNS", "DHCP", "ARP", "ICMP"],
     answer: 2,
@@ -33,6 +38,7 @@ export const DEMO_QUESTIONS: readonly DemoQuestion[] = [
   },
   {
     id: "hosts-26",
+    type: "NETWORK",
     prompt: "How many usable host addresses does a /26 subnet have?",
     options: ["64", `${hosts26}`, "30", "126"],
     answer: 1,
@@ -40,6 +46,7 @@ export const DEMO_QUESTIONS: readonly DemoQuestion[] = [
   },
   {
     id: "syn-reply",
+    type: "TRANSPORT",
     prompt: "In TCP's 3-way handshake, what does the server send back after a SYN?",
     options: ["ACK", "FIN", "RST", "SYN-ACK"],
     answer: 3,
@@ -47,6 +54,7 @@ export const DEMO_QUESTIONS: readonly DemoQuestion[] = [
   },
   {
     id: "tx-delay",
+    type: "PHYSICAL",
     prompt: "Transmission delay of a 1,000-byte packet on a 1 Mbps link?",
     options: [`${delayMs} ms`, "1 ms", "0.8 ms", "80 ms"],
     answer: 0,
@@ -54,6 +62,7 @@ export const DEMO_QUESTIONS: readonly DemoQuestion[] = [
   },
   {
     id: "tcp-pdu",
+    type: "TRANSPORT",
     prompt: "What is a TCP-layer PDU called?",
     options: ["Frame", "Packet", "Segment", "Bit"],
     answer: 2,

@@ -1,5 +1,6 @@
 import { TOWNS, type Town } from "./world";
 import type { Fighter } from "@/game/engine/battle";
+import { typesOf } from "@/game/engine/types";
 
 /**
  * Gym battles: each town's leader is a boss fight. Winning earns the gym's
@@ -17,7 +18,7 @@ export function gymTown(n: number | string | null | undefined): Town | null {
 /** The leader's fighter stats: later gyms are tougher. Gym 2 is the Lv 8, 100 HP Braidwyrm of the demo. */
 export function gymFoe(t: Town): Fighter {
   const hp = 80 + 10 * t.gym;
-  return { name: t.boss, level: 4 + 2 * t.gym, hp, maxHp: hp };
+  return { name: t.boss, level: 4 + 2 * t.gym, hp, maxHp: hp, ...(t.bossSprite ? { types: typesOf(t.bossSprite) } : {}) };
 }
 
 /** A gym can be challenged once its boss has art (the other leaders are still being drawn). */

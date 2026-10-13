@@ -1,5 +1,6 @@
 "use client";
 import type { Fighter } from "@/game/engine/battle";
+import { TypeChip } from "./TypeChip";
 import { useStepTo } from "./useStepTo";
 
 /**
@@ -25,6 +26,13 @@ export function HpBox({ f, side, xp, className = "" }: { f: Fighter; side: "foe"
           {f.level}
         </span>
       </div>
+      {!!f.types?.length && (
+        <div className="mt-0.5 flex gap-1" aria-label={`Type ${f.types.join(" and ")}`}>
+          {f.types.map((t) => (
+            <TypeChip key={t} type={t} className="text-[6px] sm:text-[8px]" />
+          ))}
+        </div>
+      )}
       <div className="hp-track mt-1 flex items-center gap-1 rounded-sm px-1 py-[2px]">
         <span className="font-pixel text-[7px] text-[#ffb43b] sm:text-[9px]">HP</span>
         <div className="h-[6px] flex-1 border-[1.5px] border-[#1a1433] bg-[#4a4560] sm:h-[8px] sm:border-2">

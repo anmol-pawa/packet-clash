@@ -13,7 +13,7 @@ describe("gyms", () => {
   });
 
   it("makes later leaders tougher, with gym 2 matching the demo Braidwyrm", () => {
-    expect(gymFoe(gymTown(2)!)).toEqual({ name: "Braidwyrm", level: 8, hp: 100, maxHp: 100 });
+    expect(gymFoe(gymTown(2)!)).toEqual({ name: "Braidwyrm", level: 8, hp: 100, maxHp: 100, types: ["PHYSICAL"] });
     for (let g = 2; g <= 9; g++) {
       const [a, b] = [gymFoe(gymTown(g - 1)!), gymFoe(gymTown(g)!)];
       expect(b.level).toBeGreaterThan(a.level);

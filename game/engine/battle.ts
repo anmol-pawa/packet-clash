@@ -5,7 +5,10 @@
  *
  * Each turn the player answers one question. A right answer lets their
  * creature use a move on the foe; a wrong one gives the foe a free hit.
+ * Moves are typed (see ./types): the player's move has the question's type,
+ * the foe's has its own first type, and the type chart scales the damage.
  */
+import { effectiveness, type PacketType } from "./types";
 
 export type Phase = "loading" | "intro" | "menu" | "player-move" | "foe-move" | "victory" | "defeat";
 
@@ -14,6 +17,8 @@ export interface Fighter {
   level: number;
   hp: number;
   maxHp: number;
+  /** One or two types; untyped fighters take neutral damage. */
+  types?: readonly PacketType[];
 }
 
 export interface BattleStats {
@@ -33,14 +38,15 @@ export interface BattleState {
   questionIndex: number;
   player: Fighter;
   foe: Fighter;
-  last?: { kind: "correct" | "wrong"; damage: number; crit: boolean; choice: number };
+  last?: { kind: "correct" | "wrong"; damage: number; crit: boolean; choice: number; moveType?: PacketType; effect: number };
   stats: BattleStats;
 }
 
 export type Action =
   | { type: "load"; player: Fighter; foe: Fighter; questionCount: number }
   | { type: "ready" }
-  | { type: "answer"; correct: boolean; choice: number }
+  /** `moveType` is the question's type: the type of the player's move if the answer is right. */
+  | { type: "answer"; correct: boolean; choice: number; moveType?: PacketType }
   | { type: "resolve" };
 
 export const emptyStats = (): BattleStats => ({ correct: 0, wrong: 0, streak: 0, bestStreak: 0, crits: 0, damageDealt: 0, damageTaken: 0 });
@@ -65,6 +71,11 @@ export function playerDamage(level: number, streak: number): { damage: number; c
   return { damage: Math.round(base * streakBonus * (crit ? 1.5 : 1)), crit };
 }
 
+/** A move's type multiplier against a fighter (neutral if either is untyped). */
+export function moveEffect(moveType: PacketType | undefined, target: Fighter): number {
+  return moveType && target.types?.length ? effectiveness(moveType, target.types) : 1;
+}
+
 /** Damage of the foe's free hit after a wrong answer. */
 export function foeDamage(level: number): number {
   return 10 + level * 2;
@@ -80,12 +91,15 @@ export function reducer(s: BattleState, a: Action): BattleState {
       if (s.phase !== "menu") return s;
       if (a.correct) {
         const streak = s.stats.streak + 1;
-        const { damage, crit } = playerDamage(s.player.level, streak);
+        const hit = playerDamage(s.player.level, streak);
+        const effect = moveEffect(a.moveType, s.foe);
+        const damage = Math.max(1, Math.round(hit.damage * effect));
+        const crit = hit.crit;
         return {
           ...s,
           phase: "player-move",
           foe: { ...s.foe, hp: Math.max(0, s.foe.hp - damage) },
-          last: { kind: "correct", damage, crit, choice: a.choice },
+          last: { kind: "correct", damage, crit, choice: a.choice, moveType: a.moveType, effect },
           stats: {
             ...s.stats,
             correct: s.stats.correct + 1,
@@ -96,12 +110,14 @@ export function reducer(s: BattleState, a: Action): BattleState {
           },
         };
       }
-      const damage = foeDamage(s.foe.level);
+      const moveType = s.foe.types?.[0];
+      const effect = moveEffect(moveType, s.player);
+      const damage = Math.max(1, Math.round(foeDamage(s.foe.level) * effect));
       return {
         ...s,
         phase: "foe-move",
         player: { ...s.player, hp: Math.max(0, s.player.hp - damage) },
-        last: { kind: "wrong", damage, crit: false, choice: a.choice },
+        last: { kind: "wrong", damage, crit: false, choice: a.choice, moveType, effect },
         stats: { ...s.stats, wrong: s.stats.wrong + 1, streak: 0, damageTaken: s.stats.damageTaken + damage },
       };
     }
