@@ -73,5 +73,6 @@ describe("world map", () => {
     expect(town("hopwood").bossSprite).toBe("hootpath");
     expect(town("handshake-harbor").bossSprite).toBe("synackle");
     expect(town("resolvia").bossSprite).toBe("oraclynx");
+    expect(town("cipher-keep").bossSprite).toBe("keyvern");
   });
 });

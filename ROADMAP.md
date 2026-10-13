@@ -24,7 +24,8 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 1.1f Hootpath, the gym 4 boss (Hopwood): a router owl whose chest network lights node by node in Dijkstra's settle order.
   - [x] 1.1g Synackle, the gym 5 boss (Synport): twin otters sharing one tail whose idle loop runs TCP's three-way handshake, with RFC 793 state lamps.
   - [x] 1.1h Oraclynx, the gym 6 boss (Resolvia): a seer lynx whose floating rune stones light root → TLD → authoritative in an iterative DNS lookup, with the answer landing in its orb.
-  - [ ] 1.1i–k Boss creatures for the other gyms (one per run, 96×96, full animations), each wired to its gym (`bossSprite` in `content/world.ts` + `game/art/bosses.ts`, plus a `signature` move): Keyvern (7), Fetchimera (8), Gigaroc (9). Front art faces right (the stage mirrors foes).
+  - [x] 1.1i Keyvern, the gym 7 boss (Cipher Keep): a padlocked wyvern whose wing-wrist gems trade key shares through a TLS 1.3 handshake until its shackle snaps shut.
+  - [ ] 1.1j–k Boss creatures for the other gyms (one per run, 96×96, full animations), each wired to its gym (`bossSprite` in `content/world.ts` + `game/art/bosses.ts`, plus a `signature` move): Fetchimera (8), Gigaroc (9). Front art faces right (the stage mirrors foes).
 - [ ] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
 - [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.

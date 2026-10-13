@@ -3,6 +3,7 @@ import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
+import { GEM_POS, KEYHOLE_POS, KEYVERN, SHACKLE_POS, TLS13_HANDSHAKE, diffieHellman, lockState } from "@/game/art/creatures/keyvern";
 import { NAME_SERVERS, ORACLYNX, ORB_POS, STONE_POS, messageCount, resolveIteratively } from "@/game/art/creatures/oraclynx";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
@@ -11,7 +12,7 @@ import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -60,7 +61,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -364,6 +365,57 @@ describe("Oraclynx's lookup", () => {
       for (const f of [...view.hurt, ...view.faint]) {
         expect(f.rows.join("")).not.toMatch(/[vg]/);
       }
+    }
+  });
+});
+
+describe("Keyvern's handshake", () => {
+  it("computes Diffie-Hellman key shares and a shared secret like Stallings's worked example", () => {
+    // q = 353, α = 3, X_A = 97, X_B = 233 → Y_A = 40, Y_B = 248, K = 160
+    expect(diffieHellman(353, 3, 97, 233)).toEqual({ A: 40, B: 248, clientSecret: 160, serverSecret: 160 });
+    // the small p = 23, g = 5 example: A = 4, B = 10, s = 18
+    expect(diffieHellman(23, 5, 4, 3)).toEqual({ A: 4, B: 10, clientSecret: 18, serverSecret: 18 });
+    // both sides always agree
+    for (let a = 1; a < 30; a++) {
+      const k = diffieHellman(101, 2, a, 31 - a);
+      expect(k.clientSecret).toBe(k.serverSecret);
+    }
+  });
+
+  it("follows RFC 8446's 1-RTT handshake: everything after the ServerHello is encrypted", () => {
+    expect(TLS13_HANDSHAKE.map((f) => f.from)).toEqual(["client", "server", "client", "client"]);
+    const all = TLS13_HANDSHAKE.flatMap((f) => f.messages);
+    expect(all.slice(0, 2)).toEqual(["ClientHello + key_share", "ServerHello + key_share"]);
+    for (const m of all.slice(2)) expect(m).toMatch(/^[{[].*[}\]]$/);
+    // the certificate is proven with CertificateVerify, then each side sends Finished
+    expect(TLS13_HANDSHAKE[1].messages.slice(2)).toEqual(["{Certificate}", "{CertificateVerify}", "{Finished}"]);
+    expect([0, 1, 2, 3].map((i) => lockState(i))).toEqual([
+      { client: true, server: false, secret: false, locked: false },
+      { client: true, server: true, secret: true, locked: false },
+      { client: true, server: true, secret: true, locked: false },
+      { client: true, server: true, secret: true, locked: true },
+    ]);
+  });
+
+  const at = (f: { rows: string[] }, [x, y]: readonly [number, number]) => f.rows[y][x];
+
+  it("lights the gems, keyhole and shackle to match each idle frame's handshake step", () => {
+    for (const view of [KEYVERN.front, KEYVERN.back]) {
+      expect(view.idle).toHaveLength(TLS13_HANDSHAKE.length);
+      view.idle.forEach((f, i) => {
+        const s = lockState(i);
+        expect(at(f, GEM_POS.client), `idle ${i}`).toBe(s.client ? "c" : "f");
+        expect(at(f, GEM_POS.server), `idle ${i}`).toBe(s.server ? "s" : "f");
+        expect(at(f, KEYHOLE_POS) === "y", `idle ${i}`).toBe(s.secret);
+        expect("hi".includes(at(f, SHACKLE_POS)), `idle ${i}`).toBe(s.locked);
+      });
+    }
+  });
+
+  it("blazes on the attack and goes dark when hurt or fainting", () => {
+    for (const view of [KEYVERN.front, KEYVERN.back]) {
+      for (const f of view.attack) expect(f.rows.join("")).toMatch(/c[^]*s|s[^]*c/);
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[csy]/);
     }
   });
 });
