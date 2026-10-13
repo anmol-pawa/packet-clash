@@ -1,5 +1,6 @@
 import type { CreatureArt } from "./creature";
 import { BRAIDWYRM } from "./creatures/braidwyrm";
+import { FETCHIMERA } from "./creatures/fetchimera";
 import { CIDRAB } from "./creatures/cidrab";
 import { HOOTPATH } from "./creatures/hootpath";
 import { KEYVERN } from "./creatures/keyvern";
@@ -16,4 +17,5 @@ export const BOSS_ART: Record<string, CreatureArt> = {
   [SYNACKLE.id]: SYNACKLE,
   [ORACLYNX.id]: ORACLYNX,
   [KEYVERN.id]: KEYVERN,
+  [FETCHIMERA.id]: FETCHIMERA,
 };

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
+import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
 import { GEM_POS, KEYHOLE_POS, KEYVERN, SHACKLE_POS, TLS13_HANDSHAKE, diffieHellman, lockState } from "@/game/art/creatures/keyvern";
 import { NAME_SERVERS, ORACLYNX, ORB_POS, STONE_POS, messageCount, resolveIteratively } from "@/game/art/creatures/oraclynx";
@@ -12,7 +13,7 @@ import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -61,7 +62,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -416,6 +417,60 @@ describe("Keyvern's handshake", () => {
     for (const view of [KEYVERN.front, KEYVERN.back]) {
       for (const f of view.attack) expect(f.rows.join("")).toMatch(/c[^]*s|s[^]*c/);
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[csy]/);
+    }
+  });
+});
+
+describe("Fetchimera's URL journey", () => {
+  it("parses URLs with the scheme's default port", () => {
+    expect(parseUrl("https://Example.com/index.html?q=1")).toEqual({ scheme: "https", host: "example.com", port: 443, path: "/index.html?q=1" });
+    expect(parseUrl("http://gaia.cs.umass.edu")).toEqual({ scheme: "http", host: "gaia.cs.umass.edu", port: 80, path: "/" });
+    expect(parseUrl("http://localhost:8080/api").port).toBe(8080);
+    expect(() => parseUrl("ftp://x.org/")).toThrow();
+    expect(journeyFor("https://example.com/")).toEqual(["DNS", "TCP", "TLS", "HTTP"]);
+    expect(journeyFor("http://example.com/")).toEqual(["DNS", "TCP", "HTTP"]);
+  });
+
+  it("times page loads like Kurose & Ross chapter 2, P7 and P8", () => {
+    const dnsRtts = [3, 5, 7]; // RTT1..RTTn, summing to 15
+    const rtt = 10; // RTT0
+    const t = (objects: number, mode: Parameters<typeof pageLoadTime>[0]["mode"], parallel?: number) =>
+      pageLoadTime({ dnsRtts, rtt, objects, mode, parallel });
+    // P7: one object → RTT1 + … + RTTn + 2·RTT0
+    expect(t(0, "non-persistent")).toBe(15 + 2 * rtt);
+    // P8: eight more small objects on the same server
+    expect(t(8, "non-persistent")).toBe(15 + 18 * rtt); // serial, no parallel connections
+    expect(t(8, "non-persistent-parallel", 5)).toBe(15 + 6 * rtt); // 5 parallel connections
+    expect(t(8, "persistent")).toBe(15 + 10 * rtt); // persistent, no pipelining
+    expect(t(8, "persistent-pipelined")).toBe(15 + 3 * rtt); // persistent with pipelining
+    // a cached address skips DNS; the K&R response time for one file is 2 RTT
+    expect(pageLoadTime({ dnsRtts: [], rtt, objects: 0, mode: "persistent" })).toBe(2 * rtt);
+    // https adds TLS to each new connection: TLS 1.3 one RTT, TLS 1.2 two
+    expect(pageLoadTime({ dnsRtts: [], rtt, objects: 0, mode: "persistent", tlsRtts: 1 })).toBe(3 * rtt);
+    expect(pageLoadTime({ dnsRtts: [], rtt, objects: 0, mode: "persistent", tlsRtts: 2 })).toBe(4 * rtt);
+    expect(pageLoadTime({ dnsRtts: [], rtt, objects: 2, mode: "non-persistent", tlsRtts: 1 })).toBe(9 * rtt);
+  });
+
+  const at = (f: { rows: string[] }, [x, y]: readonly [number, number]) => f.rows[y][x];
+
+  it("lights one more stage lamp per idle frame and fetches the page on the last", () => {
+    expect(JOURNEY.map((j) => j.stage)).toEqual(["DNS", "TCP", "TLS", "HTTP"]);
+    for (const view of [FETCHIMERA.front, FETCHIMERA.back]) {
+      expect(view.idle).toHaveLength(JOURNEY.length);
+      view.idle.forEach((f, i) => {
+        JOURNEY_LAMPS.forEach((pos, j) => expect(at(f, pos), `idle ${i} lamp ${j}`).toBe(j <= i ? JOURNEY[j].lamp : "f"));
+        // the envelope's green seal sits at the page centre only once HTTP has answered
+        expect(at(f, PAGE_POS) === "g", `idle ${i}`).toBe(i === JOURNEY.length - 1);
+      });
+    }
+  });
+
+  it("lights every lamp on the attack and goes dark when hurt or fainting", () => {
+    for (const view of [FETCHIMERA.front, FETCHIMERA.back]) {
+      // the body moves on the attack, so look for each lamp's full 5×5 glow anywhere
+      for (const f of view.attack)
+        for (const { lamp } of JOURNEY) expect(f.rows.join("").split(lamp).length - 1, lamp).toBeGreaterThanOrEqual(15);
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[dtsg]/);
     }
   });
 });

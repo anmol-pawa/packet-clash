@@ -49,7 +49,7 @@ export const TOWNS: Town[] = [
   { gym: 5, id: "handshake-harbor", name: "Synport", subnet: "10.0.5.0/24", chapter: "2.5", topic: "TCP & UDP, handshakes, windows, congestion", boss: "Synackle", bossSprite: "synackle", badge: "Window Badge", badgeColor: "#ffd257", roof: "#d99a2b", x: 180, y: 110 },
   { gym: 6, id: "resolvia", name: "Resolvia", subnet: "10.0.6.0/24", chapter: "2.6", topic: "DNS, HTTP, DHCP, email", boss: "Oraclynx", bossSprite: "oraclynx", badge: "Lookup Badge", badgeColor: "#c49bff", roof: "#7a52c9", x: 270, y: 140 },
   { gym: 7, id: "cipher-keep", name: "Cipher Keep", subnet: "10.0.7.0/24", chapter: "2.7", topic: "TLS, PKI, crypto, firewalls, attacks", boss: "Keyvern", bossSprite: "keyvern", badge: "Cipher Badge", badgeColor: "#e8e8f0", roof: "#56607a", x: 262, y: 66 },
-  { gym: 8, id: "waypoint", name: "Waypoint", subnet: "10.0.8.0/24", chapter: "2.8", topic: "What happens when you type a URL", boss: "Fetchimera", bossSprite: null, badge: "Journey Badge", badgeColor: "#5fe0c8", roof: "#2a9c8c", x: 172, y: 50 },
+  { gym: 8, id: "waypoint", name: "Waypoint", subnet: "10.0.8.0/24", chapter: "2.8", topic: "What happens when you type a URL", boss: "Fetchimera", bossSprite: "fetchimera", badge: "Journey Badge", badgeColor: "#5fe0c8", roof: "#2a9c8c", x: 172, y: 50 },
   { gym: 9, id: "backbone-summit", name: "Backbone Summit", subnet: "10.0.9.0/24", chapter: "2.9", topic: "Interview gauntlet", boss: "Gigaroc", bossSprite: null, badge: "Backbone Badge", badgeColor: "#ffe17a", roof: "#9c3a3a", x: 70, y: 46 },
 ];
 

@@ -74,5 +74,6 @@ describe("world map", () => {
     expect(town("handshake-harbor").bossSprite).toBe("synackle");
     expect(town("resolvia").bossSprite).toBe("oraclynx");
     expect(town("cipher-keep").bossSprite).toBe("keyvern");
+    expect(town("waypoint").bossSprite).toBe("fetchimera");
   });
 });
