@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
+import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON];
+const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -56,7 +57,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -80,6 +81,53 @@ describe("bosses", () => {
       });
       // hurt and faint frames go dark
       for (const f of [...view.hurt, ...view.faint]) expect(/[aceg]/.test(f.rows.join(""))).toBe(false);
+    }
+  });
+});
+
+describe("Cidrab's bit-lamps", () => {
+  /** Reads the eight lamps (3×2 each, 5 px apart) along the shell, left → right as drawn. */
+  const lamps = (f: { rows: string[] }) => {
+    const lit = f.rows.join("").split("e").length - 1;
+    const dark = f.rows.join("").split("f").length - 1;
+    // every lamp is 6 px: a lit one shows 5 "e" plus a glint, a dark one 6 "f"
+    return { on: lit / 5, off: dark / 6 };
+  };
+  // a /n mask's last octet: the top (n − 24) bits set
+  const lastOctet = (n: number) => (0xff << (32 - n)) & 0xff;
+
+  it("borrows one host bit per idle frame: /25, /26, /27, /28", () => {
+    const masks = [25, 26, 27, 28];
+    expect(masks.map(lastOctet)).toEqual([128, 192, 224, 240]);
+    for (const view of [CIDRAB.front, CIDRAB.back])
+      view.idle.forEach((f, i) => {
+        // the number of lit lamps is the popcount of the mask's last octet
+        const ones = lastOctet(masks[i]).toString(2).split("1").length - 1;
+        expect(lamps(f), `idle ${i}`).toEqual({ on: ones, off: 8 - ones });
+      });
+  });
+
+  it("lights the network bits as one contiguous run from bit 7, like a real mask", () => {
+    // both finished views have bit 7 on the right (the front is mirrored to face the player)
+    for (const view of [CIDRAB.front, CIDRAB.back])
+      for (const f of view.idle) {
+        const row = f.rows.findLast((r) => /[ef]/.test(r))!;
+        const bits = row
+          .replace(/[^ef]+/g, " ")
+          .trim()
+          .split(" ")
+          .map((lamp) => (lamp === "eee" ? "1" : lamp === "fff" ? "0" : "?"))
+          .reverse()
+          .join("");
+        expect(bits).toMatch(/^1+0+$/);
+        expect(bits).toHaveLength(8);
+      }
+  });
+
+  it("flares every lamp on the attack and goes dark when hurt or fainting", () => {
+    for (const view of [CIDRAB.front, CIDRAB.back]) {
+      for (const f of view.attack) expect(lamps(f)).toEqual({ on: 8, off: 0 });
+      for (const f of [...view.hurt, ...view.faint]) expect(lamps(f)).toEqual({ on: 0, off: 8 });
     }
   });
 });
