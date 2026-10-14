@@ -33,7 +33,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 - [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
   - [x] 1.3a Saved partner creature: species, level and total XP in the save, gym battles fought with it, boss EXP and level-ups kept after a win, evolution when a milestone gym's badge is won (Pingkit → Tracevix at badge 3), and a partner card on the world map.
   - [x] 1.3b A second starter line, base form: an original 64×64 creature (front/back, idle/attack/hurt/faint) of another layer's type. (Framadillo, Link: an armadillo whose shell bands are an Ethernet II frame.)
-  - [ ] 1.3c A third starter line, base form, of a third type (so the three starters form a type triangle).
+  - [x] 1.3c A third starter line, base form, of a third type (so the three starters form a type triangle).
   - [ ] 1.3d Starter choice screen for a new save (three starters on pedestals, type chips and blurbs), stored as the partner.
   - [ ] 1.3e Evolved forms for the two new starters, with their gym milestones.
   - [ ] 1.3f The Packetdex: seen/caught records from battles and a dex page with each creature's sprite, types and blurb (unseen ones as silhouettes).

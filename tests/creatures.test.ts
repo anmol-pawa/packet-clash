@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
+import { ACKORN, IDLE_BASE, SEGMENTS, WINDOW, lampPositions, maxWindow, segmentState, windowThroughput } from "@/game/art/creatures/ackorn";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { ETHERNET, FIELDS, FRAMADILLO, IDLE_FIELDS, LAMP_POS as FRAME_LAMPS, ethernetFrame } from "@/game/art/creatures/framadillo";
@@ -16,7 +17,7 @@ import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, ACKORN, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -608,5 +609,69 @@ describe("Framadillo's frame shell", () => {
     expect(() => ethernetFrame(1501)).toThrow(RangeError);
     expect(() => ethernetFrame(-1)).toThrow(RangeError);
     expect(() => ethernetFrame(1.5)).toThrow(RangeError);
+  });
+});
+
+describe("Ackorn's sliding-window tail", () => {
+  /** Centre pixel of segment `s`'s lamp in an idle frame. */
+  const lamp = (f: { rows: string[] }, i: number, s: number) => {
+    const pose = { dy: i === 1 || i === 2 ? 1 : 0, tail: [0, 1, 2, 1][i] };
+    const [x, y] = lampPositions(pose)[s];
+    return f.rows[y + 1][x + 1];
+  };
+  const STATE_PIXEL = { acked: "a", flight: "m", unsent: "x", lost: "r" } as const;
+
+  it("slides a 3-segment window one ACK per idle frame", () => {
+    expect(SEGMENTS).toBe(6);
+    expect(WINDOW).toBe(3);
+    expect(IDLE_BASE).toEqual([0, 1, 2, 3]);
+    // the last frame's window ends on the last segment
+    expect(IDLE_BASE[3] + WINDOW).toBe(SEGMENTS);
+    expect([0, 1, 2, 3, 4, 5].map((s) => segmentState({ kind: "window", base: 2 }, s))).toEqual(["acked", "acked", "flight", "flight", "flight", "unsent"]);
+    expect(segmentState({ kind: "lost", base: 1, lost: 2 }, 2)).toBe("lost");
+    expect(segmentState({ kind: "lost", base: 1, lost: 2 }, 3)).toBe("flight");
+  });
+
+  it("draws each idle frame's window on the tail", () => {
+    for (const view of ["front", "back"] as const)
+      ACKORN[view].idle.forEach((f, i) => {
+        for (let s = 0; s < SEGMENTS; s++) {
+          const want = STATE_PIXEL[segmentState({ kind: "window", base: IDLE_BASE[i] }, s)];
+          expect(lamp(f, i, s), `${view} frame ${i} segment ${s}`).toBe(want);
+        }
+      });
+  });
+
+  it("has the whole stream in flight on the attack, a lost segment when hurt and goes dark when fainting", () => {
+    for (const view of ["front", "back"] as const) {
+      for (const f of ACKORN[view].attack) expect(f.rows.join("")).not.toMatch(/[xar]/);
+      for (const f of ACKORN[view].hurt) expect(f.rows.join("").split("r").length - 1).toBe(5);
+      for (const f of ACKORN[view].faint) expect(f.rows.join("")).not.toMatch(/[myYacr]/);
+    }
+  });
+
+  it("is Transport type, so the starters are Link, Network and Transport", () => {
+    expect(typesOf("ackorn")).toEqual(["TRANSPORT"]);
+  });
+
+  it("caps the window by the sequence-number space (Kurose & Ross)", () => {
+    // 3-bit sequence numbers (0–7): Go-Back-N can send 7, Selective Repeat 4.
+    expect(maxWindow(3, "GBN")).toBe(7);
+    expect(maxWindow(3, "SR")).toBe(4);
+    // Stop-and-wait is a 1-bit sequence number with a window of 1.
+    expect(maxWindow(1, "GBN")).toBe(1);
+    expect(maxWindow(1, "SR")).toBe(1);
+    expect(() => maxWindow(0, "SR")).toThrow();
+  });
+
+  it("limits throughput to one window per round trip", () => {
+    // The classic 64 KB receive window over a 100 ms RTT: about 5.24 Mbps.
+    const t = windowThroughput(65535, 0.1, 1e9);
+    expect(t.bps).toBeCloseTo(5_242_800, 0);
+    expect(t.utilisation).toBeCloseTo(0.0052428, 6);
+    // Stop-and-wait, 1 KB frames, 30 ms RTT on a 1 Gbps link (Kurose & Ross 3.4.2: 8000 bits / 30.008 ms ≈ 267 kbps).
+    expect(windowThroughput(1000, 0.030008, 1e9).bps).toBeCloseTo(266_595, -1);
+    expect(windowThroughput(1e9, 0.01, 1e9).utilisation).toBe(1);
+    expect(() => windowThroughput(0, 0.1)).toThrow();
   });
 });

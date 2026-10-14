@@ -93,6 +93,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   tracevix: ["NETWORK"],
   // Its shell is an Ethernet frame.
   framadillo: ["LINK"],
+  // Its tail lamps are a TCP sliding window.
+  ackorn: ["TRANSPORT"],
   // Its stack runs from the link slab at the bottom to the application slab on top.
   stackadon: ["LINK", "APPLICATION"],
   braidwyrm: ["PHYSICAL"],
