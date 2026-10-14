@@ -4,6 +4,7 @@
  * try/catch so private windows and blocked storage just mean "no saves".
  */
 import { useSyncExternalStore } from "react";
+import type { Partner } from "@/game/engine/party";
 
 export interface Settings {
   volume: number;
@@ -19,6 +20,7 @@ export interface SaveData {
   seen: string[]; // creature ids seen (Packetdex)
   caught: string[]; // creature ids caught
   mapTown: string | null; // where the courier stands on the overworld (null = the first town)
+  partner: Partner | null; // the player's creature (null = the starter, see STARTER)
   settings: Settings;
 }
 
@@ -31,6 +33,7 @@ const DEFAULT: SaveData = {
   seen: [],
   caught: [],
   mapTown: null,
+  partner: null,
   settings: { volume: 0.6, music: true, reducedMotion: false, zen: false },
 };
 
@@ -76,5 +79,3 @@ export function useSave(): SaveData {
     () => DEFAULT,
   );
 }
-
-export const level = (xp: number) => Math.floor(Math.sqrt(xp / 120)) + 1;

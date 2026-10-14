@@ -10,10 +10,12 @@ import { BOSS_ART } from "@/game/art/bosses";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { evolutionOf } from "@/game/art/evolve";
+import { PARTNER_ART } from "@/game/art/partners";
 import { initialState, reducer, type Fighter } from "@/game/engine/battle";
 import { effectMessage, effectReasons, TYPE_INFO, typesOf } from "@/game/engine/types";
-import { gainXp, xpProgress, xpReward, xpTotal, type XpGain } from "@/game/engine/xp";
-import { updateSave } from "@/lib/save";
+import { partnerFighter, validPartner, winBattle, type Partner } from "@/game/engine/party";
+import { xpProgress, xpTotal, type XpGain } from "@/game/engine/xp";
+import { getSave, updateSave } from "@/lib/save";
 import type { BattleStage } from "@/game/render/stage";
 import { BadgeGet } from "./BadgeGet";
 import { HpBox } from "./HpBox";
@@ -21,33 +23,33 @@ import { MessageBox } from "./MessageBox";
 import { MoveMenu } from "./MoveMenu";
 import { TypeChart } from "@/components/types/TypeChart";
 
-const PLAYER: Fighter = { name: PINGKIT.name, level: 5, hp: 60, maxHp: 60, types: typesOf(PINGKIT.id) };
 const DEMO_FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100, types: typesOf(BRAIDWYRM.id) };
-const EVOLVED = evolutionOf(PINGKIT.id)!;
-/** The starter's total XP at the start of the battle (part-way through Lv 5). */
-const START_XP = 150;
+/** The demo's Pingkit: Lv 5, part-way through the level. It always evolves after the win. */
+const DEMO_PARTNER: Partner = { species: PINGKIT.id, level: 5, xp: 150 };
 
 /**
  * What happens after the boss faints, one message each: the win, the EXP
- * gain, every level reached, then the evolution (demo) or the badge (gym).
+ * gain, every level reached, the evolution (always in the demo, at gym
+ * milestones in a gym), then the badge (gym).
  */
 type After = { kind: "win" } | { kind: "xp" } | { kind: "level"; level: number } | { kind: "evolving" } | { kind: "done" } | { kind: "badge" };
-function afterSteps(levels: number[], gym: boolean): After[] {
+function afterSteps(levels: number[], gym: boolean, evolves: boolean): After[] {
   return [
     { kind: "win" },
     { kind: "xp" },
     ...levels.map((level) => ({ kind: "level" as const, level })),
-    ...(gym ? [{ kind: "badge" as const }] : [{ kind: "evolving" as const }, { kind: "done" as const }]),
+    ...(evolves ? [{ kind: "evolving" as const }, { kind: "done" as const }] : []),
+    ...(gym ? [{ kind: "badge" as const }] : []),
   ];
 }
-/** The starter's level and total XP as shown during post-victory step `a`. */
-function shownXp(phase: string, a: After, gain: XpGain): { level: number; total: number } {
-  if (phase !== "victory" || a.kind === "win") return { level: PLAYER.level, total: START_XP };
-  if (a.kind === "xp") return { level: PLAYER.level, total: Math.min(gain.xp, xpTotal(PLAYER.level + 1)) };
+/** The partner's level and total XP as shown during post-victory step `a`. */
+function shownXp(phase: string, a: After, start: Partner, gain: XpGain): { level: number; total: number } {
+  if (phase !== "victory" || a.kind === "win") return { level: start.level, total: start.xp };
+  if (a.kind === "xp") return { level: start.level, total: Math.min(gain.xp, xpTotal(start.level + 1)) };
   if (a.kind === "level") return { level: a.level, total: Math.min(gain.xp, xpTotal(a.level + 1)) };
   return { level: gain.level, total: gain.xp };
 }
-const AFTER_MS: Record<After["kind"], number> = { win: 2000, xp: 2200, level: 1800, evolving: 0, done: 0, badge: 0 };
+const AFTER_MS: Record<After["kind"], number> = { win: 2000, xp: 2200, level: 1800, evolving: 0, done: 2400, badge: 0 };
 
 /**
  * A battle: one networking question per turn. A right answer is your
@@ -56,12 +58,25 @@ const AFTER_MS: Record<After["kind"], number> = { win: 2000, xp: 2200, level: 18
  * town's gym leader, and winning saves the badge and opens the next town.
  */
 export function BattleScreen({ gym }: { gym?: Town }) {
-  const { art, FOE, REWARD, GAIN, AFTER } = useMemo(() => {
+  // A gym battle uses the saved partner (GymGate only renders on the client, so the save is there).
+  const { art, FOE, START, PLAYER, MINE, EVOLVED, WIN, AFTER } = useMemo(() => {
     const FOE = gym ? gymFoe(gym) : DEMO_FOE;
-    const REWARD = xpReward(FOE.level, true);
-    const GAIN = gainXp(PLAYER.level, START_XP, REWARD);
-    return { art: (gym?.bossSprite && BOSS_ART[gym.bossSprite]) || BRAIDWYRM, FOE, REWARD, GAIN, AFTER: afterSteps(GAIN.levelsGained, !!gym) };
+    const START = gym ? validPartner(getSave().partner) : DEMO_PARTNER;
+    const WIN = winBattle(START, FOE.level, true, gym ? winBadge(getSave().badges, gym.gym) : []);
+    const evolvesTo = gym ? WIN.evolvedTo : evolutionOf(START.species)?.id;
+    const EVOLVED = evolvesTo ? PARTNER_ART[evolvesTo] : null;
+    return {
+      art: (gym?.bossSprite && BOSS_ART[gym.bossSprite]) || BRAIDWYRM,
+      FOE,
+      START,
+      PLAYER: partnerFighter(START),
+      MINE: PARTNER_ART[START.species] ?? PINGKIT,
+      EVOLVED,
+      WIN,
+      AFTER: afterSteps(WIN.gain.levelsGained, !!gym, !!EVOLVED),
+    };
   }, [gym]);
+  const REWARD = WIN.reward;
   const FOE_NAME = gym ? `LEADER ${FOE.name.toUpperCase()}` : `The wild ${FOE.name.toUpperCase()}`;
   const host = useRef<HTMLDivElement>(null);
   const stage = useRef<BattleStage | null>(null);
@@ -73,7 +88,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   // After a win: EXP, level-ups, then the starter evolves (a demo of the evolve morph).
   const [step, setStep] = useState(0);
   const after = AFTER[step];
-  const xp = shownXp(s.phase, after, GAIN);
+  const xp = shownXp(s.phase, after, START, WIN.gain);
   const q = DEMO_QUESTIONS[s.questionIndex];
   const NAME = PLAYER.name.toUpperCase();
   const text =
@@ -90,7 +105,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
               ? `You received the ${gym.badge.toUpperCase()}!`
               : after.kind === "evolving"
                 ? `What? ${NAME} is evolving!`
-                : `Congratulations! Your ${NAME} evolved into ${EVOLVED.name.toUpperCase()}!`
+                : `Congratulations! Your ${NAME} evolved into ${EVOLVED?.name.toUpperCase()}!`
       : s.phase === "menu"
         ? q.prompt
         : s.phase === "defeat"
@@ -107,7 +122,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       const { BattleStage } = await import("@/game/render/stage");
       if (cancelled || !host.current) return;
       st = await BattleStage.create(host.current, {
-        player: { anims: PINGKIT.back, scale: 1, fps: PINGKIT.idleFps },
+        player: { anims: MINE.back, scale: 1, fps: MINE.idleFps },
         foe: { anims: art.front, scale: 1, fps: art.idleFps },
         reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         font: pressStart.style.fontFamily,
@@ -165,16 +180,16 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       }
       setExplain(q.explain);
     })();
-  }, [s, q.explain, art.signature]);
+  }, [s, q.explain, art.signature, PLAYER.name]);
 
   // Each post-victory step: apply it, then move on after a pause (or a tap on the message).
   const steps = AFTER.length;
   const advance = useCallback(() => setStep((i) => (AFTER_MS[AFTER[i]?.kind] > 0 ? Math.min(steps - 1, i + 1) : i)), [AFTER, steps]);
   const evolving = useRef(false);
-  // A gym win is saved the moment the leader faints: the badge opens the next town.
+  // A gym win is saved the moment the leader faints: the badge opens the next town, and the partner keeps its EXP (and evolution).
   useEffect(() => {
-    if (s.phase === "victory" && gym) updateSave((sv) => ({ ...sv, badges: winBadge(sv.badges, gym.gym) }));
-  }, [s.phase, gym]);
+    if (s.phase === "victory" && gym) updateSave((sv) => ({ ...sv, badges: winBadge(sv.badges, gym.gym), partner: WIN.partner }));
+  }, [s.phase, gym, WIN]);
   useEffect(() => {
     if (s.phase !== "victory") return;
     if (after.kind === "badge") {
@@ -186,7 +201,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
     } else if (after.kind === "evolving" && !evolving.current) {
       evolving.current = true;
       const st = stage.current;
-      if (!st) return;
+      if (!st || !EVOLVED) return;
       (async () => {
         await st.evolve("player", { anims: EVOLVED.back, scale: 1, fps: EVOLVED.idleFps }, (i) => sfx.evolveTick(i));
         if (stage.current !== st) return;
@@ -198,7 +213,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
     if (!ms) return;
     const id = setTimeout(advance, ms);
     return () => clearTimeout(id);
-  }, [s.phase, after, advance]);
+  }, [s.phase, after, advance, EVOLVED]);
 
   const pick = useCallback(
     (i: number) => {
@@ -211,9 +226,10 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   );
 
   const answered = s.phase === "player-move" || s.phase === "foe-move";
-  const evolved = s.phase === "victory" && after.kind === "done";
+  // Once the morph has played, the HP box shows the new form's name.
+  const evolved = s.phase === "victory" && !!EVOLVED && AFTER.slice(0, step).some((a) => a.kind === "evolving");
   const badgeGet = gym && s.phase === "victory" && after.kind === "badge";
-  const over = s.phase === "defeat" || evolved;
+  const over = s.phase === "defeat" || (!gym && s.phase === "victory" && after.kind === "done");
   const opened = gym ? unlockedBy(gym.gym) : null;
   const [chart, setChart] = useState(false);
 
@@ -239,7 +255,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
           <>
             <HpBox f={{ ...s.foe, hp: hp.foe }} side="foe" className="absolute left-[3%] top-[4%] w-[44%]" />
             <HpBox
-              f={{ ...s.player, name: evolved ? EVOLVED.name : s.player.name, level: xp.level, hp: hp.player }}
+              f={{ ...s.player, name: evolved && EVOLVED ? EVOLVED.name : s.player.name, level: xp.level, hp: hp.player }}
               side="player"
               xp={xpProgress(xp.level, xp.total)}
               className="absolute bottom-[3%] right-[3%] w-[46%]"
@@ -251,7 +267,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       {/* Phones: message, moves, buttons stacked. Wide screens: message left, moves right. */}
       <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div className="lg:col-start-1 lg:row-start-1">
-          <MessageBox text={text} more={s.phase === "victory" && AFTER_MS[after.kind] > 0} onAdvance={advance} />
+          <MessageBox text={text} more={s.phase === "victory" && step < steps - 1 && AFTER_MS[after.kind] > 0} onAdvance={advance} />
         </div>
 
         {(s.phase === "menu" || answered) && (

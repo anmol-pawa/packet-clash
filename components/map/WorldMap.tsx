@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { gymOpen } from "@/content/gyms";
 import { currentTown, isRouteOpen, isUnlocked, ROUTES, town, TOWNS, townCidr, type Town } from "@/content/world";
 import { PixelSprite } from "@/components/ui/PixelSprite";
+import { validPartner } from "@/game/engine/party";
+import { PartnerCard } from "./PartnerCard";
 import { badgeSprite } from "@/game/art/world/badges";
 import { COURIER, COURIER_FEET } from "@/game/art/world/courier";
 import { MAP_TICK_MS, mapFrame } from "@/game/art/world/mapAnim";
@@ -176,6 +178,8 @@ export function WorldMap() {
           ))}
         </div>
       </header>
+
+      <PartnerCard p={validPartner(save.partner)} />
 
       <div className="relative w-full overflow-hidden rounded-md border-4 border-[#f4f1ff] shadow-[0_0_0_4px_#0b0818,6px_6px_0_4px_#0b0818]" style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }}>
         <MapCanvas />
