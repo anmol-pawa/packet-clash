@@ -6,6 +6,7 @@ import { copperfield } from "@/game/art/backgrounds/copperfield";
 import { ANIMS, type CreatureArt } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
+import { FRAMADILLO } from "@/game/art/creatures/framadillo";
 import { HOOTPATH } from "@/game/art/creatures/hootpath";
 import { FETCHIMERA } from "@/game/art/creatures/fetchimera";
 import { GIGAROC } from "@/game/art/creatures/gigaroc";
@@ -24,7 +25,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus

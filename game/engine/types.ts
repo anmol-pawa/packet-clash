@@ -91,6 +91,8 @@ export function effectReasons(atk: PacketType, def: readonly PacketType[]): stri
 export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   pingkit: ["NETWORK"],
   tracevix: ["NETWORK"],
+  // Its shell is an Ethernet frame.
+  framadillo: ["LINK"],
   // Its stack runs from the link slab at the bottom to the application slab on top.
   stackadon: ["LINK", "APPLICATION"],
   braidwyrm: ["PHYSICAL"],

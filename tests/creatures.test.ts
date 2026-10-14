@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ANIMS } from "@/game/art/creature";
 import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
+import { ETHERNET, FIELDS, FRAMADILLO, IDLE_FIELDS, LAMP_POS as FRAME_LAMPS, ethernetFrame } from "@/game/art/creatures/framadillo";
 import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
 import { GIGAROC, PULSE_POS, bandwidthDelayProduct, bitWidth, nodalDelay, propagationDelay, storeAndForward, transmissionDelay } from "@/game/art/creatures/gigaroc";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
@@ -11,10 +12,11 @@ import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { HANDSHAKE_STATES, LAMP_POS, STATE_LAMP, SYNACKLE, handshake } from "@/game/art/creatures/synackle";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
+import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -533,5 +535,78 @@ describe("Gigaroc's backbone link", () => {
       for (const f of view.attack) expect(f.rows.join("").split("y").length - 1).toBeGreaterThanOrEqual(PULSE_POS.length);
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[cy]/);
     }
+  });
+});
+
+describe("Framadillo's frame shell", () => {
+  /** The 3×3 lamp of band `b`: its centre pixel. */
+  const lamp = (f: { rows: string[] }, view: "front" | "back", b: number, dy = 0) => {
+    const [x, y] = FRAME_LAMPS[view][b];
+    return f.rows[y + 1 + dy][x + 1];
+  };
+
+  it("has the six Ethernet II fields in transmission order", () => {
+    expect(FIELDS).toEqual(["preamble", "destination MAC", "source MAC", "EtherType", "payload", "FCS"]);
+    // every field goes out exactly once across the idle loop, in order
+    expect(IDLE_FIELDS.flat()).toEqual([0, 1, 2, 3, 4, 5]);
+    // lamps run from the head (right) back to the tail
+    for (const view of ["front", "back"] as const) {
+      const xs = FRAME_LAMPS[view].map(([x]) => x);
+      for (let i = 1; i < xs.length; i++) expect(xs[i]).toBeLessThan(xs[i - 1]);
+    }
+  });
+
+  it("idles by sending its fields onto the wire, with a green FCS at the end", () => {
+    for (const view of ["front", "back"] as const) {
+      FRAMADILLO[view].idle.forEach((f, i) => {
+        // idle frames 1 and 2 bob down a pixel
+        const dy = i === 1 || i === 2 ? 1 : 0;
+        FIELDS.forEach((_, b) => {
+          const lit = IDLE_FIELDS[i].includes(b);
+          expect(lamp(f, view, b, dy), `${view} frame ${i} band ${b}`).toBe(lit ? "m" : "x");
+        });
+        expect(f.rows.join("").includes("g")).toBe(i === 3);
+      });
+    }
+  });
+
+  it("lights every field on the attack, fails the CRC when hurt and goes dark when fainting", () => {
+    for (const view of ["front", "back"] as const) {
+      for (const f of FRAMADILLO[view].attack) {
+        FIELDS.forEach((_, b) => expect(lamp(f, view, b)).toBe("m"));
+        expect(f.rows.join("").includes("g")).toBe(true);
+      }
+      for (const f of FRAMADILLO[view].hurt) {
+        const t = f.rows.join("");
+        expect(t.includes("r")).toBe(true);
+        expect(/[megf]/.test(t)).toBe(false);
+      }
+      for (const f of FRAMADILLO[view].faint) expect(/[megfr]/.test(f.rows.join(""))).toBe(false);
+    }
+  });
+
+  it("is Link type", () => {
+    expect(typesOf("framadillo")).toEqual(["LINK"]);
+  });
+
+  it("pads short Ethernet payloads to the 64-byte minimum frame", () => {
+    // Header 14 + FCS 4: a 46-byte payload is the smallest frame, 64 bytes.
+    expect(ethernetFrame(46)).toMatchObject({ pad: 0, frame: 64, wire: 84 });
+    // A 1-byte payload is padded with 45 bytes.
+    expect(ethernetFrame(1)).toMatchObject({ pad: 45, frame: 64 });
+    // A TCP ACK in IPv4 (20 + 20 = 40 bytes) needs 6 bytes of padding.
+    expect(ethernetFrame(40)).toMatchObject({ pad: 6, frame: 64 });
+    expect(ethernetFrame(0).pad).toBe(ETHERNET.minPayload);
+  });
+
+  it("caps frames at 1518 bytes and 1538 on the wire, about 97.5% efficient", () => {
+    const full = ethernetFrame(1500);
+    expect(full).toMatchObject({ pad: 0, frame: 1518, wire: 1538 });
+    expect(full.efficiency).toBeCloseTo(0.9753, 4);
+    // a minimum frame carries 46 bytes in 84 on the wire
+    expect(ethernetFrame(46).efficiency).toBeCloseTo(46 / 84, 6);
+    expect(() => ethernetFrame(1501)).toThrow(RangeError);
+    expect(() => ethernetFrame(-1)).toThrow(RangeError);
+    expect(() => ethernetFrame(1.5)).toThrow(RangeError);
   });
 });
