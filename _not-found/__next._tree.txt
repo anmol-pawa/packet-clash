@@ -1,0 +1,5 @@
+:HL["/packet-clash/_next/static/chunks/0nzcr_mh85ghf.css","style"]
+:HL["/packet-clash/_next/static/chunks/1wp66z49suli7.css","style"]
+2:[["children",{"s":"__PAGE__","h":160}]]
+1:[["children",{"s":"/_not-found","h":96,"c":"$Q2"}]]
+0:{"b":"-RIY15V0Vl4Qle6osHvyX","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
