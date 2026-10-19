@@ -1,10 +1,15 @@
 import type { SpriteDef } from "@/lib/pixel";
 import type { CreatureArt } from "./creature";
+import { FRAMADILLO } from "./creatures/framadillo";
 import { PINGKIT } from "./creatures/pingkit";
 import { TRACEVIX } from "./creatures/tracevix";
+import { TRUNKADILLO } from "./creatures/trunkadillo";
 
 /** Who evolves into whom. */
-export const EVOLUTIONS: { from: CreatureArt; to: CreatureArt }[] = [{ from: PINGKIT, to: TRACEVIX }];
+export const EVOLUTIONS: { from: CreatureArt; to: CreatureArt }[] = [
+  { from: PINGKIT, to: TRACEVIX },
+  { from: FRAMADILLO, to: TRUNKADILLO },
+];
 
 export function evolutionOf(id: string): CreatureArt | undefined {
   return EVOLUTIONS.find((e) => e.from.id === id)?.to;

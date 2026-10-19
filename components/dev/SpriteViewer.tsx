@@ -17,6 +17,7 @@ import { SYNACKLE } from "@/game/art/creatures/synackle";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
+import { TRUNKADILLO } from "@/game/art/creatures/trunkadillo";
 import { EVOLUTIONS, morphFrames } from "@/game/art/evolve";
 import { TYPE_ICONS } from "@/game/art/typeIcons";
 import { TYPES } from "@/game/engine/types";
@@ -26,7 +27,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, ACKORN, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus

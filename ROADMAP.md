@@ -36,6 +36,8 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 1.3c A third starter line, base form, of a third type (so the three starters form a type triangle).
   - [x] 1.3d Starter choice screen for a new save (three starters on pedestals, type chips and blurbs), stored as the partner.
   - [ ] 1.3e Evolved forms for the two new starters, with their gym milestones.
+    - [x] 1.3e1 Trunkadillo, Framadillo's evolved form at badge 3 (Link): its shell gains the 802.1Q VLAN tag band.
+    - [ ] 1.3e2 Ackorn's evolved form, with its badge milestone.
   - [ ] 1.3f The Packetdex: seen/caught records from battles and a dex page with each creature's sprite, types and blurb (unseen ones as silhouettes).
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.
 - [ ] 1.5 **Packet animations**: attacks are packets travelling between creatures, with headers that visibly encapsulate and decapsulate layer by layer.

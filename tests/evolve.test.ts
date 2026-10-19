@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { FRAMADILLO } from "@/game/art/creatures/framadillo";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
+import { TRUNKADILLO } from "@/game/art/creatures/trunkadillo";
 import { EVOLUTIONS, evolutionOf, evolveSchedule, morphFrames } from "@/game/art/evolve";
 import { silhouette } from "@/lib/pixel";
 
@@ -16,6 +18,16 @@ describe("evolution", () => {
     const diff = a.join("").split("").filter((ch, i) => (ch === ".") !== (b.join("")[i] === ".")).length;
     // the silhouettes differ in a good share of their area (the twin tails, the ruff, the legs)
     expect(diff).toBeGreaterThan(filled(a) * 0.2);
+  });
+
+  it("Framadillo evolves into Trunkadillo, a spikier, horned shape at the same size", () => {
+    expect(evolutionOf(FRAMADILLO.id)).toBe(TRUNKADILLO);
+    expect(evolutionOf(TRUNKADILLO.id)).toBeUndefined();
+    expect(TRUNKADILLO.size).toBe(FRAMADILLO.size);
+    const a = silhouette(FRAMADILLO.front.idle[0]).rows.join("");
+    const b = silhouette(TRUNKADILLO.front.idle[0]).rows.join("");
+    const diff = a.split("").filter((ch, i) => (ch === ".") !== (b[i] === ".")).length;
+    expect(diff).toBeGreaterThan(filled([a]) * 0.15);
   });
 
   it("every evolution has front and back art", () => {

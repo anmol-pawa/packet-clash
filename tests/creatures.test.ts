@@ -13,11 +13,12 @@ import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { STACKADON } from "@/game/art/creatures/stackadon";
 import { HANDSHAKE_STATES, LAMP_POS, STATE_LAMP, SYNACKLE, handshake } from "@/game/art/creatures/synackle";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
+import { DOT1Q, LAMP_POS as TAG_LAMPS, TAGGED_FIELDS, TAGGED_IDLE, TRUNKADILLO, taggedFrame, vlanTci } from "@/game/art/creatures/trunkadillo";
 import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, ACKORN, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -609,6 +610,75 @@ describe("Framadillo's frame shell", () => {
     expect(() => ethernetFrame(1501)).toThrow(RangeError);
     expect(() => ethernetFrame(-1)).toThrow(RangeError);
     expect(() => ethernetFrame(1.5)).toThrow(RangeError);
+  });
+});
+
+describe("Trunkadillo's tagged-frame shell", () => {
+  const lamp = (f: { rows: string[] }, view: "front" | "back", b: number, dy = 0) => {
+    const [x, y] = TAG_LAMPS[view][b];
+    return f.rows[y + 1 + dy][x + 1];
+  };
+  const TAG = TAGGED_FIELDS.indexOf("802.1Q tag");
+
+  it("inserts the 802.1Q tag between the source MAC and the EtherType", () => {
+    expect([...TAGGED_FIELDS]).toEqual(["preamble", "destination MAC", "source MAC", "802.1Q tag", "EtherType", "payload", "FCS"]);
+    expect(TAGGED_FIELDS.filter((f) => f !== "802.1Q tag")).toEqual([...FIELDS]);
+    expect(TAGGED_IDLE.flat()).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    for (const view of ["front", "back"] as const) {
+      const xs = TAG_LAMPS[view].map(([x]) => x);
+      for (let i = 1; i < xs.length; i++) expect(xs[i]).toBeLessThan(xs[i - 1]);
+    }
+  });
+
+  it("idles by sending the tagged frame field by field, the tag in violet and a green FCS last", () => {
+    for (const view of ["front", "back"] as const) {
+      TRUNKADILLO[view].idle.forEach((f, i) => {
+        const dy = i === 1 || i === 2 ? 1 : 0;
+        TAGGED_FIELDS.forEach((_, b) => expect(lamp(f, view, b, dy), `${view} frame ${i} band ${b}`).toBe(TAGGED_IDLE[i].includes(b) ? "m" : "x"));
+        const t = f.rows.join("");
+        expect(t.includes("v"), `${view} frame ${i}`).toBe(TAGGED_IDLE[i].includes(TAG));
+        expect(t.includes("g")).toBe(i === 3);
+      });
+    }
+  });
+
+  it("lights every field on the attack, fails the CRC when hurt and goes dark when fainting", () => {
+    for (const view of ["front", "back"] as const) {
+      for (const f of TRUNKADILLO[view].attack) {
+        TAGGED_FIELDS.forEach((_, b) => expect(lamp(f, view, b)).toBe("m"));
+        expect(/v/.test(f.rows.join("")) && /g/.test(f.rows.join(""))).toBe(true);
+      }
+      for (const f of TRUNKADILLO[view].hurt) {
+        const t = f.rows.join("");
+        expect(t.includes("r")).toBe(true);
+        expect(/[megfv]/.test(t)).toBe(false);
+      }
+      for (const f of TRUNKADILLO[view].faint) expect(/[megfvr]/.test(f.rows.join(""))).toBe(false);
+    }
+  });
+
+  it("is Link type, like Framadillo", () => {
+    expect(typesOf("trunkadillo")).toEqual(["LINK"]);
+  });
+
+  it("packs priority, DEI and the VLAN ID into the tag's TCI", () => {
+    expect(DOT1Q.tpid).toBe(0x8100);
+    expect(vlanTci(0, 0, 100)).toBe(0x0064);
+    expect(vlanTci(5, 0, 10)).toBe(0xa00a);
+    expect(vlanTci(7, 1, 4094)).toBe(0xfffe);
+    expect(vlanTci(0, 1, 1)).toBe(0x1001);
+    expect(() => vlanTci(0, 0, 0)).toThrow(RangeError);
+    expect(() => vlanTci(0, 0, 4095)).toThrow(RangeError);
+    expect(() => vlanTci(8, 0, 1)).toThrow(RangeError);
+  });
+
+  it("keeps the 64-byte minimum (42-byte payload) and allows 1522-byte tagged frames", () => {
+    expect(taggedFrame(42)).toMatchObject({ pad: 0, frame: 64, wire: 84 });
+    expect(taggedFrame(40)).toMatchObject({ pad: 2, frame: 64 });
+    expect(taggedFrame(1500)).toMatchObject({ pad: 0, frame: DOT1Q.maxFrame, wire: 1542 });
+    // the tag costs 4 bytes over the untagged frame once no padding is needed
+    expect(taggedFrame(1000).frame - ethernetFrame(1000).frame).toBe(4);
+    expect(() => taggedFrame(1501)).toThrow(RangeError);
   });
 });
 

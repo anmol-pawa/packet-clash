@@ -19,7 +19,7 @@ export interface Partner {
 }
 
 /** Display names of the creatures that can be partners. */
-export const PARTNER_NAMES: Record<string, string> = { pingkit: "Pingkit", tracevix: "Tracevix", framadillo: "Framadillo", ackorn: "Ackorn" };
+export const PARTNER_NAMES: Record<string, string> = { pingkit: "Pingkit", tracevix: "Tracevix", framadillo: "Framadillo", trunkadillo: "Trunkadillo", ackorn: "Ackorn" };
 
 /** The level every starter begins at. */
 export const STARTER_LEVEL = 5;
@@ -42,7 +42,10 @@ export const STARTER: Partner = starterPartner("pingkit");
 export const needsStarter = (s: { partner: unknown; badges: readonly number[] }): boolean => s.partner == null && s.badges.length === 0;
 
 /** Who evolves into whom, and which gym's badge sets it off. */
-export const EVOLVE_MILESTONES: { from: string; to: string; badge: number }[] = [{ from: "pingkit", to: "tracevix", badge: 3 }];
+export const EVOLVE_MILESTONES: { from: string; to: string; badge: number }[] = [
+  { from: "pingkit", to: "tracevix", badge: 3 },
+  { from: "framadillo", to: "trunkadillo", badge: 3 },
+];
 
 /** A saved partner, repaired if the save was edited or is from an older version. */
 export function validPartner(p: unknown): Partner {

@@ -110,10 +110,20 @@ describe("starter choice", () => {
     expect(needsStarter({ partner: null, badges: [1] })).toBe(false);
   });
 
-  it("lets a non-Pingkit starter win battles without evolving yet", () => {
-    const w = winBattle(starterPartner("framadillo"), 6, true, [1, 2, 3]);
+  it("evolves Framadillo into Trunkadillo at the gym 3 badge, keeping its Link type", () => {
+    expect(winBattle(starterPartner("framadillo"), 8, true, [1, 2]).evolvedTo).toBeNull();
+    const w = winBattle(starterPartner("framadillo"), 10, true, [1, 2, 3]);
+    expect(w.evolvedTo).toBe("trunkadillo");
+    expect(w.partner.species).toBe("trunkadillo");
+    expect(PARTNER_ART.trunkadillo.name).toBe(PARTNER_NAMES.trunkadillo);
+    expect(partnerFighter(w.partner)).toMatchObject({ name: "Trunkadillo", types: ["LINK"] });
+    expect(evolutionDue("trunkadillo", [1, 2, 3, 4])).toBeNull(); // final form
+  });
+
+  it("lets Ackorn win battles without evolving yet", () => {
+    const w = winBattle(starterPartner("ackorn"), 10, true, [1, 2, 3]);
     expect(w.evolvedTo).toBeNull();
-    expect(w.partner.species).toBe("framadillo");
+    expect(w.partner.species).toBe("ackorn");
     expect(partnerFighter(starterPartner("ackorn")).types).toEqual(["TRANSPORT"]);
   });
 });
