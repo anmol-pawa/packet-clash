@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { BITLING, BITLING_DIM } from "@/game/art/mascot";
+import { needsStarter } from "@/game/engine/party";
+import { useSave } from "@/lib/save";
 
 const MASCOT_FRAMES = [BITLING, BITLING, BITLING_DIM];
 
@@ -11,6 +13,7 @@ const STARS = [
 ];
 
 export function TitleScreen() {
+  const save = useSave();
   return (
     <main className="relative flex min-h-dvh flex-col items-center overflow-hidden px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]">
       {/* Banded night sky: hard colour steps instead of a smooth gradient. */}
@@ -46,7 +49,7 @@ export function TitleScreen() {
       </div>
 
       <div className="mt-auto flex w-full max-w-sm flex-col items-center gap-4 pt-10">
-        <Link href="/map" className="pixel-button flex min-h-14 w-full items-center justify-center gap-2 px-6 py-4 text-base">
+        <Link href={needsStarter(save) ? "/starter" : "/map"} className="pixel-button flex min-h-14 w-full items-center justify-center gap-2 px-6 py-4 text-base">
           <span className="blink">▶</span> PRESS START
         </Link>
         <p className="font-pixel text-[10px] text-[#9d93d6]">v0.2 · learn networks by battling</p>

@@ -19,10 +19,27 @@ export interface Partner {
 }
 
 /** Display names of the creatures that can be partners. */
-export const PARTNER_NAMES: Record<string, string> = { pingkit: "Pingkit", tracevix: "Tracevix" };
+export const PARTNER_NAMES: Record<string, string> = { pingkit: "Pingkit", tracevix: "Tracevix", framadillo: "Framadillo", ackorn: "Ackorn" };
 
-/** The partner every new save starts with: Pingkit at Lv 5. */
-export const STARTER: Partner = { species: "pingkit", level: 5, xp: xpTotal(5) };
+/** The level every starter begins at. */
+export const STARTER_LEVEL = 5;
+
+/** The three starters offered to a new save, in pedestal order: Link → Network → Transport, each one beating the next. */
+export const STARTERS = ["framadillo", "pingkit", "ackorn"] as const;
+export type StarterId = (typeof STARTERS)[number];
+
+/** A starter at Lv 5 with exactly Lv 5's XP. */
+export const starterPartner = (species: StarterId): Partner => ({ species, level: STARTER_LEVEL, xp: xpTotal(STARTER_LEVEL) });
+
+/** The partner a save falls back to when it has none (saves from before the starter choice): Pingkit at Lv 5. */
+export const STARTER: Partner = starterPartner("pingkit");
+
+/**
+ * Whether a save still has to pick its starter: it has no partner and no
+ * badges. (A save with badges but no partner is from before the choice
+ * existed and already played as Pingkit.)
+ */
+export const needsStarter = (s: { partner: unknown; badges: readonly number[] }): boolean => s.partner == null && s.badges.length === 0;
 
 /** Who evolves into whom, and which gym's badge sets it off. */
 export const EVOLVE_MILESTONES: { from: string; to: string; badge: number }[] = [{ from: "pingkit", to: "tracevix", badge: 3 }];

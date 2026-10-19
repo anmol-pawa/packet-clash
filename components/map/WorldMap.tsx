@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gymOpen } from "@/content/gyms";
 import { currentTown, isRouteOpen, isUnlocked, ROUTES, town, TOWNS, townCidr, type Town } from "@/content/world";
 import { PixelSprite } from "@/components/ui/PixelSprite";
-import { validPartner } from "@/game/engine/party";
+import { needsStarter, validPartner } from "@/game/engine/party";
 import { PartnerCard } from "./PartnerCard";
 import { badgeSprite } from "@/game/art/world/badges";
 import { COURIER, COURIER_FEET } from "@/game/art/world/courier";
@@ -13,7 +14,7 @@ import { MAP_H, MAP_W, overworld } from "@/game/art/world/overworld";
 import { doorstep, journey, walker, type Journey } from "@/game/world/travel";
 import { formatIp, hostRange, parseCidr, usableHosts } from "@/lib/net/ipv4";
 import { parseSprite, type PixelGrid } from "@/lib/pixel";
-import { updateSave, useSave } from "@/lib/save";
+import { getSave, updateSave, useSave } from "@/lib/save";
 
 /** Map pixels per second the courier walks. */
 const WALK_SPEED = 64;
@@ -135,6 +136,11 @@ function Badge({ t, earned }: { t: Town; earned: boolean }) {
 
 export function WorldMap() {
   const save = useSave();
+  const router = useRouter();
+  // A new save picks its starter first (read the real save: the hook's first render is the server default).
+  useEffect(() => {
+    if (needsStarter(getSave())) router.replace("/starter");
+  }, [router]);
   const badges = save.badges;
   const here = currentTown(badges);
   const [picked, setPicked] = useState<string | null>(null);

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { gymFoe, gymTown, winBadge } from "@/content/gyms";
 import { evolutionOf } from "@/game/art/evolve";
 import { PARTNER_ART } from "@/game/art/partners";
-import { EVOLVE_MILESTONES, evolutionDue, PARTNER_NAMES, partnerFighter, partnerMaxHp, STARTER, validPartner, winBattle } from "@/game/engine/party";
-import { typesOf } from "@/game/engine/types";
+import { EVOLVE_MILESTONES, evolutionDue, needsStarter, PARTNER_NAMES, partnerFighter, partnerMaxHp, STARTER, starterPartner, STARTERS, validPartner, winBattle } from "@/game/engine/party";
+import { typeMult, typesOf } from "@/game/engine/types";
 import { levelFor, xpReward, xpTotal } from "@/game/engine/xp";
 
 describe("partner creature", () => {
@@ -78,5 +78,42 @@ describe("partner creature", () => {
     expect(w.partner.species).toBe("tracevix");
     // a rematch after evolving does not evolve again
     expect(winBattle(w.partner, 12, true, [1, 2, 3, 4]).evolvedTo).toBeNull();
+  });
+});
+
+describe("starter choice", () => {
+  it("offers Framadillo, Pingkit and Ackorn at Lv 5, each with art and a name", () => {
+    expect([...STARTERS]).toEqual(["framadillo", "pingkit", "ackorn"]);
+    for (const id of STARTERS) {
+      expect(starterPartner(id)).toEqual({ species: id, level: 5, xp: 125 });
+      expect(PARTNER_ART[id].name).toBe(PARTNER_NAMES[id]);
+      expect(validPartner(starterPartner(id))).toEqual(starterPartner(id));
+    }
+    expect(STARTER).toEqual(starterPartner("pingkit"));
+  });
+
+  it("orders the pedestals so each starter's type beats the next one's (Link → Network → Transport)", () => {
+    const [a, b, c] = STARTERS.map((id) => typesOf(id)[0]);
+    expect([a, b, c]).toEqual(["LINK", "NETWORK", "TRANSPORT"]);
+    expect(typeMult(a, b)).toBe(2);
+    expect(typeMult(b, c)).toBe(2);
+    expect(typeMult(c, a)).toBe(1); // the chart has no true cycle
+    expect(typeMult(b, a)).toBe(0.5);
+    expect(typeMult(c, b)).toBe(0.5);
+  });
+
+  it("asks only a brand-new save to choose", () => {
+    expect(needsStarter({ partner: null, badges: [] })).toBe(true);
+    expect(needsStarter({ partner: undefined, badges: [] })).toBe(true);
+    expect(needsStarter({ partner: starterPartner("ackorn"), badges: [] })).toBe(false);
+    // A save from before the choice already played as Pingkit.
+    expect(needsStarter({ partner: null, badges: [1] })).toBe(false);
+  });
+
+  it("lets a non-Pingkit starter win battles without evolving yet", () => {
+    const w = winBattle(starterPartner("framadillo"), 6, true, [1, 2, 3]);
+    expect(w.evolvedTo).toBeNull();
+    expect(w.partner.species).toBe("framadillo");
+    expect(partnerFighter(starterPartner("ackorn")).types).toEqual(["TRANSPORT"]);
   });
 });
