@@ -26,6 +26,8 @@ import { badgeFrames } from "@/game/art/world/badges";
 import { COURIER } from "@/game/art/world/courier";
 import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
+import { chipSprite, tagSprite } from "@/game/art/headers";
+import { encapsulate } from "@/game/engine/encap";
 import { silhouette } from "@/lib/pixel";
 
 const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
@@ -113,6 +115,7 @@ export function SpriteViewer() {
           </figure>
         </div>
       </section>
+      <EncapSection scale={scale} />
     </main>
   );
 }
@@ -224,6 +227,32 @@ function BackgroundSection({ scale }: { scale: number }) {
       <div className="max-w-full overflow-x-auto">
         <PixelSprite frames={[bg.image]} scale={1} label={`${bg.name} full area`} />
       </div>
+    </section>
+  );
+}
+
+/** Every move type's PDU at each step down the stack, as the header chips the battle animates. */
+function EncapSection({ scale }: { scale: number }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-pixel text-xs text-white">ENCAPSULATION</h2>
+      {TYPES.map((t) => (
+        <figure key={t} className="sprite-cell flex flex-col gap-2 p-2">
+          <figcaption className="font-pixel text-[9px] text-[#cde]">{t.toLowerCase()} move</figcaption>
+          {encapsulate(t).map((step) => (
+            <div key={step.pdu} className="flex flex-wrap items-center gap-2">
+              <PixelSprite frames={[tagSprite(step.pdu.toUpperCase(), step.layer)]} scale={Math.max(2, scale - 1)} label={step.pdu} />
+              <div className="flex">
+                {step.blocks.map((b, i) => (
+                  <span key={b.label} style={{ marginLeft: i ? -Math.max(2, scale - 1) : 0 }}>
+                    <PixelSprite frames={[chipSprite(b)]} scale={Math.max(2, scale - 1)} label={`${b.label} ${b.bytes} B`} />
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </figure>
+      ))}
     </section>
   );
 }

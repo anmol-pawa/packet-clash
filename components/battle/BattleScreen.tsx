@@ -174,7 +174,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
           sfx.hit(last.crit);
           setHp((h) => ({ ...h, foe: foe.hp }));
           effect(used);
-        });
+        }, last.moveType);
         if (foe.hp <= 0) await st.faint("foe");
       } else {
         const used = `Not quite! ${foe.name.toUpperCase()} used ${art.signature ?? "TACKLE"}!`;
@@ -184,7 +184,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
           sfx.hurt();
           setHp((h) => ({ ...h, player: player.hp }));
           effect(used);
-        });
+        }, last.moveType);
         if (player.hp <= 0) await st.faint("player");
       }
       setExplain(true);

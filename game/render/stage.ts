@@ -11,11 +11,15 @@
 import { Application, Container, Graphics, Sprite, Text } from "pixi.js";
 import { copperfield } from "@/game/art/backgrounds/copperfield";
 import type { BattleBackground } from "@/game/art/backgrounds/types";
-import { PACKET, SPARK } from "@/game/art/effects";
+import { SPARK } from "@/game/art/effects";
+import { bitSprite } from "@/game/art/headers";
+import { encapsulate } from "@/game/engine/encap";
+import type { PacketType } from "@/game/engine/types";
 import type { AnimSet } from "@/game/art/creature";
 import { evolveSchedule } from "@/game/art/evolve";
 import { Camera } from "./fx";
 import { Particles } from "./particles";
+import { PduView } from "./pdu";
 import { PixelActor, pixelTexture } from "./pixelTex";
 import { Tweener, ease } from "./tween";
 
@@ -215,8 +219,13 @@ export class BattleStage {
     await Promise.all([this.tw.to(this.foe.body, { x: 0 }, 0.6, ease.outCubic), this.tw.to(this.player.body, { x: 0 }, 0.6, ease.outCubic)]);
   }
 
-  /** `side` uses a move on the other side: lunge, packet flies, spark + shake + damage number. */
-  async attack(side: Side, damage: number, crit: boolean, onHit?: () => void) {
+  /**
+   * `side` uses a move of `type` on the other side: lunge, then the move's PDU
+   * is encapsulated header by header above the attacker, flies across as bits
+   * on the wire, and is decapsulated layer by layer at the target until the
+   * move's own PDU hits (spark + shake + damage number).
+   */
+  async attack(side: Side, damage: number, crit: boolean, onHit?: () => void, type: PacketType = "NETWORK") {
     const me = this.actor(side);
     const them = this.actor(side === "player" ? "foe" : "player");
     const dir = side === "player" ? 1 : -1;
@@ -226,28 +235,51 @@ export class BattleStage {
     await this.tw.to(me.body, { x: 10 * dir }, 0.08, ease.inQuad);
     this.tw.to(me.body, { x: 0 }, 0.25, ease.outCubic);
 
-    const from = { x: me.homeX + 18 * dir, y: me.homeY - me.height * 0.55 };
+    const from = { x: me.homeX + 18 * dir, y: me.homeY - me.height - 8 };
     const to = { x: them.homeX, y: them.homeY - them.height * 0.5 };
-    const pkt = new Sprite(pixelTexture(PACKET));
-    pkt.anchor.set(0.5);
-    pkt.roundPixels = true;
-    pkt.scale.set(side === "player" ? 1.5 : 1.25);
-    this.top.addChild(pkt);
+    const down = encapsulate(type);
+    const up = [...down].reverse();
+    const reduced = this.opts.reducedMotion;
+    const pdu = new PduView(this.tw, from);
+    this.top.addChild(pdu.root);
+    // down the sender's stack
+    for (const [i, step] of (reduced ? down.slice(-1) : down).entries()) {
+      if (i) await this.tw.wait(0.12);
+      await pdu.show(step, i === 0 ? "pop" : "wrap");
+    }
+    await this.tw.wait(0.12);
+    // across the wire, shedding bits
+    const start = { ...pdu.at };
     await this.tw.run(
       0.42,
       (k) => {
-        const x = from.x + (to.x - from.x) * k;
-        const y = from.y + (to.y - from.y) * k - Math.sin(k * Math.PI) * 18;
-        pkt.position.set(Math.round(x), Math.round(y));
-        pkt.rotation = Math.round(Math.sin(k * Math.PI * 4) * 2) * 0.1;
-        if (Math.random() < 0.7 * this.fx.scale) this.fx.emit({ x, y, vx: -dir * 20, vy: (Math.random() - 0.5) * 20, size: 3, life: 0.3, color: 0xffd257 });
+        const x = start.x + (to.x - start.x) * k;
+        const y = start.y + (to.y - start.y) * k - Math.sin(k * Math.PI) * 14;
+        pdu.moveTo(x, y);
+        if (Math.random() < 0.5 * this.fx.scale) this.trailBit(x - dir * pdu.width * 0.5, y);
       },
-      ease.inQuad,
+      ease.inOutCubic,
     );
-    pkt.destroy();
+    // up the receiver's stack
+    for (const step of reduced ? up.slice(-1) : up.slice(1)) {
+      await this.tw.wait(0.1);
+      await pdu.show(step, "strip");
+    }
+    await this.tw.wait(0.08);
+    await pdu.hit();
     onHit?.();
     this.impact(them, to, damage, crit, side === "player" ? 0xffffff : 0xff6a6a);
     await this.tw.wait(0.6);
+  }
+
+  /** A 0 or 1 that falls off the packet in flight and fades. */
+  private trailBit(x: number, y: number) {
+    const b = new Sprite(pixelTexture(bitSprite(Math.random() < 0.5 ? 0 : 1)));
+    b.anchor.set(0.5);
+    b.roundPixels = true;
+    b.position.set(Math.round(x), Math.round(y + (Math.random() - 0.5) * 8));
+    this.top.addChildAt(b, 0);
+    this.tw.to(b, { alpha: 0, y: b.y + 6 }, 0.4).then(() => b.destroy());
   }
 
   private impact(target: PixelActor, at: { x: number; y: number }, damage: number, crit: boolean, num: number) {
