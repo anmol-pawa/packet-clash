@@ -71,15 +71,22 @@ export function MoveMenu({
           );
         })}
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2 whitespace-nowrap border-t-2 border-[#3b3175] px-1 pt-1.5 font-pixel text-[9px] text-[#c9c1ff] sm:text-[10px]">
-        <span>{info[0]}</span>
-        {moveType && (
-          <span className="flex items-center" data-testid="move-type" title={TYPE_INFO[moveType].move}>
-            <TypeChip type={moveType} className="text-[7px] sm:text-[8px]" />
-          </span>
-        )}
-        <span className="text-[#ffd257]">{info[1]}</span>
-      </div>
+      <InfoStrip info={info} moveType={moveType} />
+    </div>
+  );
+}
+
+/** The strip under every question panel: progress, the move's type, and the status. */
+export function InfoStrip({ info, moveType }: { info: [string, string]; moveType?: PacketType }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-2 whitespace-nowrap border-t-2 border-[#3b3175] px-1 pt-1.5 font-pixel text-[9px] text-[#c9c1ff] sm:text-[10px]">
+      <span>{info[0]}</span>
+      {moveType && (
+        <span className="flex items-center" data-testid="move-type" title={TYPE_INFO[moveType].move}>
+          <TypeChip type={moveType} className="text-[7px] sm:text-[8px]" />
+        </span>
+      )}
+      <span className="text-[#ffd257]">{info[1]}</span>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { pressStart } from "@/app/fonts";
-import { DEMO_QUESTIONS } from "@/content/demo";
+import { demoDeck, gymDeck } from "@/content/questions/decks";
 import { gymFoe, winBadge, unlockedBy } from "@/content/gyms";
 import type { Town } from "@/content/world";
 import { sfx } from "@/game/audio/synth";
@@ -16,13 +16,19 @@ import { effectMessage, effectReasons, TYPE_INFO, typesOf } from "@/game/engine/
 import { partnerFighter, validPartner, winBattle, type Partner } from "@/game/engine/party";
 import { xpProgress, xpTotal, type XpGain } from "@/game/engine/xp";
 import { dexRecord, recordEncounter, recordWin } from "@/game/engine/dex";
-import { getSave, updateSave } from "@/lib/save";
+import { startSession } from "@/game/engine/leitner";
+import { grade, type Response } from "@/game/engine/questions";
+import { getSave, recordReview, updateSave } from "@/lib/save";
 import type { BattleStage } from "@/game/render/stage";
 import { BadgeGet } from "./BadgeGet";
 import { HpBox } from "./HpBox";
 import { MessageBox } from "./MessageBox";
-import { MoveMenu } from "./MoveMenu";
+import { ExplainBox } from "./ExplainBox";
+import { QuestionPanel } from "./QuestionPanel";
 import { TypeChart } from "@/components/types/TypeChart";
+
+/** The demo always asks the same deck, so the prerendered page and the client agree. */
+const DEMO_SEED = 7;
 
 const DEMO_FOE: Fighter = { name: BRAIDWYRM.name, level: 8, hp: 100, maxHp: 100, types: typesOf(BRAIDWYRM.id) };
 /** The demo's Pingkit: Lv 5, part-way through the level. It always evolves after the win. */
@@ -77,6 +83,9 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       AFTER: afterSteps(WIN.gain.levelsGained, !!gym, !!EVOLVED),
     };
   }, [gym]);
+  // A gym battle is one Leitner session: due questions from its chapter come first.
+  const [seed] = useState(() => (gym ? Math.floor(Math.random() * 2 ** 31) : DEMO_SEED));
+  const DECK = useMemo(() => (gym ? gymDeck(startSession(getSave().leitner), gym.gym, seed) : demoDeck(seed)), [gym, seed]);
   const REWARD = WIN.reward;
   const FOE_NAME = gym ? `LEADER ${FOE.name.toUpperCase()}` : `The wild ${FOE.name.toUpperCase()}`;
   const host = useRef<HTMLDivElement>(null);
@@ -85,12 +94,13 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   const [s, dispatch] = useReducer(reducer, undefined, initialState);
   const [hp, setHp] = useState({ player: PLAYER.hp, foe: FOE.hp });
   const [msg, setMsg] = useState("");
-  const [explain, setExplain] = useState<string | null>(null);
+  const [explain, setExplain] = useState(false);
+  const [response, setResponse] = useState<Response | undefined>();
   // After a win: EXP, level-ups, then the starter evolves (a demo of the evolve morph).
   const [step, setStep] = useState(0);
   const after = AFTER[step];
   const xp = shownXp(s.phase, after, START, WIN.gain);
-  const q = DEMO_QUESTIONS[s.questionIndex];
+  const q = DECK[s.questionIndex];
   const NAME = PLAYER.name.toUpperCase();
   const text =
     s.phase === "victory"
@@ -111,9 +121,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
         ? q.prompt
         : s.phase === "defeat"
           ? `${NAME} fainted… Study up and try again!`
-          : explain
-            ? `${msg} ${explain}`
-            : msg;
+          : msg;
 
   // Stage lifetime + intro.
   useEffect(() => {
@@ -130,7 +138,7 @@ export function BattleScreen({ gym }: { gym?: Town }) {
       });
       if (cancelled) return st.destroy();
       stage.current = st;
-      dispatch({ type: "load", player: PLAYER, foe: FOE, questionCount: DEMO_QUESTIONS.length });
+      dispatch({ type: "load", player: PLAYER, foe: FOE, questionCount: DECK.length });
       await st.intro();
       if (cancelled) return;
       setMsg(gym ? `GYM LEADER ${FOE.name.toUpperCase()} wants to battle! Win the ${gym.badge.toUpperCase()}!` : `A wild ${FOE.name.toUpperCase()} appeared!`);
@@ -179,9 +187,9 @@ export function BattleScreen({ gym }: { gym?: Town }) {
         });
         if (player.hp <= 0) await st.faint("player");
       }
-      setExplain(q.explain);
+      setExplain(true);
     })();
-  }, [s, q.explain, art.signature, PLAYER.name]);
+  }, [s, art.signature, PLAYER.name]);
 
   // Each post-victory step: apply it, then move on after a pause (or a tap on the message).
   const steps = AFTER.length;
@@ -189,6 +197,12 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   const evolving = useRef(false);
   // A gym win is saved the moment the leader faints: the badge opens the next town, and the partner keeps its EXP (and evolution).
   // The Packetdex: a gym leader is seen when the battle starts and caught when it faints.
+  const sessionStarted = useRef(false);
+  useEffect(() => {
+    if (!gym || sessionStarted.current) return;
+    sessionStarted.current = true;
+    updateSave((sv) => ({ ...sv, leitner: startSession(sv.leitner) }));
+  }, [gym]);
   useEffect(() => {
     if (gym?.bossSprite) updateSave((sv) => ({ ...sv, ...recordEncounter(dexRecord(sv), gym.bossSprite!, START.species) }));
   }, [gym, START]);
@@ -226,14 +240,18 @@ export function BattleScreen({ gym }: { gym?: Town }) {
     return () => clearTimeout(id);
   }, [s.phase, after, advance, EVOLVED]);
 
-  const pick = useCallback(
-    (i: number) => {
+  const submit = useCallback(
+    (r: Response) => {
       if (s.phase !== "menu") return;
       sfx.unlock();
       sfx.click();
-      dispatch({ type: "answer", correct: i === q.answer, choice: i, moveType: q.type });
+      const correct = grade(q, r);
+      // Gym answers move the question's card in the Leitner box; the demo leaves the save alone.
+      if (gym) recordReview(q.id, correct);
+      setResponse(r);
+      dispatch({ type: "answer", correct, choice: r.kind === "mcq" ? r.choice : -1, moveType: q.type });
     },
-    [s.phase, q.answer, q.type],
+    [s.phase, q, gym],
   );
 
   const answered = s.phase === "player-move" || s.phase === "foe-move";
@@ -283,16 +301,21 @@ export function BattleScreen({ gym }: { gym?: Town }) {
 
         {(s.phase === "menu" || answered) && (
           <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <MoveMenu
+            <QuestionPanel
               key={s.turn}
-              options={q.options}
+              q={q}
+              seed={seed + s.turn}
               locked={s.phase !== "menu"}
-              correct={q.answer}
-              chosen={s.last?.choice}
-              moveType={q.type}
-              info={[`QUESTION ${s.questionIndex + 1}/${DEMO_QUESTIONS.length}`, answered ? (s.last?.kind === "correct" ? "CORRECT!" : "MISSED!") : s.stats.streak > 1 ? `STREAK ×${s.stats.streak}` : "PICK A MOVE"]}
-              onPick={pick}
+              response={response}
+              info={[`QUESTION ${s.questionIndex + 1}/${DECK.length}`, answered ? (s.last?.kind === "correct" ? "CORRECT!" : "MISSED!") : s.stats.streak > 1 ? `STREAK ×${s.stats.streak}` : q.kind === "mcq" ? "PICK A MOVE" : "ANSWER!"]}
+              onSubmit={submit}
             />
+          </div>
+        )}
+
+        {answered && explain && (
+          <div className="lg:col-start-1">
+            <ExplainBox q={q} correct={s.last?.kind === "correct"} />
           </div>
         )}
 
@@ -302,7 +325,8 @@ export function BattleScreen({ gym }: { gym?: Town }) {
             className="pixel-button min-h-12 px-4 py-3 text-sm lg:col-start-1"
             onClick={() => {
               sfx.click();
-              setExplain(null);
+              setExplain(false);
+              setResponse(undefined);
               setMsg("");
               if (s.foe.hp <= 0) sfx.victory();
               else if (s.player.hp <= 0) sfx.defeat();
