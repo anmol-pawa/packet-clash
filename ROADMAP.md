@@ -41,7 +41,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 1.3f The Packetdex: seen/caught records from battles and a dex page with each creature's sprite, types and blurb (unseen ones as silhouettes).
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.
   - [x] 1.4a Question model and pure grader (MCQ, multi-select, numeric with unit and tolerance, order-the-steps), seeded generators answered by `lib/net` solvers (delays, bandwidth-delay product, subnet sizes, network/broadcast addresses), decks, and a starter bank of each kind.
-  - [ ] 1.4b Leitner box: a pure 5-box engine (promote on right, back to box 1 on wrong, due by session), saved per question id, and a deck picker that prefers due questions.
+  - [x] 1.4b Leitner box: a pure 5-box engine (promote on right, back to box 1 on wrong, due by session), saved per question id, and a deck picker that prefers due questions.
   - [ ] 1.4c Battle UI for every kind (multi-select toggles, a numeric keypad, tap-to-move order steps) and an explanation box after every answer, with gym battles drawing their questions from the bank and generators.
 - [ ] 1.5 **Packet animations**: attacks are packets travelling between creatures, with headers that visibly encapsulate and decapsulate layer by layer.
 

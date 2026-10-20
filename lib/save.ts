@@ -5,6 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import type { Partner } from "@/game/engine/party";
+import { EMPTY_LEITNER, normalizeLeitner, review, startSession, type LeitnerState } from "@/game/engine/leitner";
 
 export interface Settings {
   volume: number;
@@ -21,6 +22,7 @@ export interface SaveData {
   caught: string[]; // creature ids caught
   mapTown: string | null; // where the courier stands on the overworld (null = the first town)
   partner: Partner | null; // the player's creature (null = the starter, see STARTER)
+  leitner: LeitnerState; // spaced-repetition boxes, keyed by question id (see cardKey)
   settings: Settings;
 }
 
@@ -34,6 +36,7 @@ const DEFAULT: SaveData = {
   caught: [],
   mapTown: null,
   partner: null,
+  leitner: EMPTY_LEITNER,
   settings: { volume: 0.6, music: true, reducedMotion: false, zen: false },
 };
 
@@ -44,7 +47,10 @@ function load(): SaveData {
   if (cache) return cache;
   try {
     const raw = localStorage.getItem(KEY);
-    cache = raw ? { ...DEFAULT, ...JSON.parse(raw), settings: { ...DEFAULT.settings, ...(JSON.parse(raw).settings ?? {}) } } : { ...DEFAULT };
+    const parsed = raw ? JSON.parse(raw) : null;
+    cache = parsed
+      ? { ...DEFAULT, ...parsed, leitner: normalizeLeitner(parsed.leitner), settings: { ...DEFAULT.settings, ...(parsed.settings ?? {}) } }
+      : { ...DEFAULT };
   } catch {
     cache = { ...DEFAULT };
   }
@@ -63,6 +69,16 @@ export function updateSave(fn: (s: SaveData) => SaveData) {
     /* storage unavailable */
   }
   listeners.forEach((l) => l());
+}
+
+/** A battle begins: one Leitner session passes. */
+export function startLeitnerSession() {
+  updateSave((s) => ({ ...s, leitner: startSession(s.leitner) }));
+}
+
+/** Record one answer in the Leitner box. */
+export function recordReview(questionId: string, correct: boolean) {
+  updateSave((s) => ({ ...s, leitner: review(s.leitner, questionId, correct) }));
 }
 
 export function resetSave() {
