@@ -14,11 +14,12 @@ import { STACKADON } from "@/game/art/creatures/stackadon";
 import { HANDSHAKE_STATES, LAMP_POS, STATE_LAMP, SYNACKLE, handshake } from "@/game/art/creatures/synackle";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { DOT1Q, LAMP_POS as TAG_LAMPS, TAGGED_FIELDS, TAGGED_IDLE, TRUNKADILLO, taggedFrame, vlanTci } from "@/game/art/creatures/trunkadillo";
+import { CWND_IDLE, HURT_LOST, OAKWIND, SEGMENTS as OAK_SEGMENTS, cwndTrace, lampPositions as oakLamps, segmentState as oakState } from "@/game/art/creatures/oakwind";
 import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -743,5 +744,71 @@ describe("Ackorn's sliding-window tail", () => {
     expect(windowThroughput(1000, 0.030008, 1e9).bps).toBeCloseTo(266_595, -1);
     expect(windowThroughput(1e9, 0.01, 1e9).utilisation).toBe(1);
     expect(() => windowThroughput(0, 0.1)).toThrow();
+  });
+});
+
+describe("Oakwind's congestion-window tail", () => {
+  /** Centre pixel of segment `s`'s lamp for a pose. */
+  const lamp = (f: { rows: string[] }, pose: { dy?: number; tail?: number }, s: number) => {
+    const [x, y] = oakLamps(pose)[s];
+    return f.rows[y + 1][x + 1];
+  };
+  const IDLE_POSE = [0, 1, 2, 3].map((i) => ({ dy: i === 1 || i === 2 ? 1 : 0, tail: [0, 1, 2, 1][i] }));
+  const STATE_PIXEL = { flight: "m", unsent: "x", lost: "r" } as const;
+
+  it("puts eight separate lamps on the tail, root to tip", () => {
+    expect(OAK_SEGMENTS).toBe(8);
+    for (const pose of IDLE_POSE) {
+      const ps = oakLamps(pose);
+      for (let a = 0; a < ps.length; a++)
+        for (let b = a + 1; b < ps.length; b++) expect(Math.max(Math.abs(ps[a][0] - ps[b][0]), Math.abs(ps[a][1] - ps[b][1]))).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it("idles through slow start: the window doubles every round trip", () => {
+    expect(CWND_IDLE).toEqual([1, 2, 4, 8]);
+    expect(cwndTrace(4, { ssthresh: 64, variant: "reno" }).map((r) => r.cwnd)).toEqual(CWND_IDLE);
+    for (const view of ["front", "back"] as const)
+      OAKWIND[view].idle.forEach((f, i) => {
+        for (let s = 0; s < OAK_SEGMENTS; s++) expect(lamp(f, IDLE_POSE[i], s), `${view} frame ${i} segment ${s}`).toBe(s < CWND_IDLE[i] ? "m" : "x");
+      });
+  });
+
+  it("sends the whole window on the attack, halves it around a lost segment when hurt and goes dark when fainting", () => {
+    const lost = { kind: "lost", cwnd: 4, lost: HURT_LOST } as const;
+    expect([0, 1, 2, 3, 4, 5, 6, 7].map((s) => oakState(lost, s))).toEqual(["flight", "flight", "flight", "flight", "lost", "unsent", "unsent", "unsent"]);
+    for (const view of ["front", "back"] as const) {
+      const poses = { attack: [{ tail: -2 }, { tail: 3 }], hurt: [{ tail: -1 }, {}], faint: [{ dy: 2, tail: -1 }, { dy: 3, tail: -2 }] };
+      OAKWIND[view].attack.forEach((f, i) => {
+        for (let s = 0; s < OAK_SEGMENTS; s++) expect(lamp(f, poses.attack[i], s)).toBe("m");
+      });
+      OAKWIND[view].hurt.forEach((f, i) => {
+        for (let s = 0; s < OAK_SEGMENTS; s++) expect(lamp(f, poses.hurt[i], s), `${view} hurt ${i} segment ${s}`).toBe(STATE_PIXEL[oakState(lost, s)]);
+      });
+      for (const f of OAKWIND[view].faint) expect(/[myYr]/.test(f.rows.join(""))).toBe(false);
+    }
+  });
+
+  it("is Transport type, like Ackorn", () => {
+    expect(typesOf("oakwind")).toEqual(["TRANSPORT"]);
+  });
+
+  it("traces Kurose & Ross's Reno example: slow start to ssthresh 8, then a triple duplicate ACK at cwnd 12", () => {
+    const reno = cwndTrace(12, { ssthresh: 8, variant: "reno", events: { 8: "3dup" } });
+    expect(reno.map((r) => r.cwnd)).toEqual([1, 2, 4, 8, 9, 10, 11, 12, 9, 10, 11, 12]);
+    // once cwnd reaches ssthresh (round 4) it grows linearly
+    expect(reno.slice(0, 3).every((r) => r.phase === "slow start")).toBe(true);
+    expect(reno.slice(3).every((r) => r.phase === "congestion avoidance")).toBe(true);
+    expect(reno[8].ssthresh).toBe(6);
+  });
+
+  it("drops to 1 MSS on a Tahoe triple duplicate ACK and on any timeout, and slow-starts back to the new ssthresh", () => {
+    const tahoe = cwndTrace(14, { ssthresh: 8, variant: "tahoe", events: { 8: "3dup" } });
+    expect(tahoe.map((r) => r.cwnd)).toEqual([1, 2, 4, 8, 9, 10, 11, 12, 1, 2, 4, 6, 7, 8]);
+    const timeout = cwndTrace(10, { ssthresh: 8, variant: "reno", events: { 8: "timeout" } });
+    expect(timeout.slice(8).map((r) => r.cwnd)).toEqual([1, 2]);
+    // ssthresh never drops below 2 MSS
+    expect(cwndTrace(3, { ssthresh: 8, variant: "reno", events: { 2: "3dup" } })[2]).toMatchObject({ cwnd: 5, ssthresh: 2 });
+    expect(() => cwndTrace(0, { ssthresh: 8, variant: "reno" })).toThrow(RangeError);
   });
 });

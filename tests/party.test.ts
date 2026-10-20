@@ -120,10 +120,18 @@ describe("starter choice", () => {
     expect(evolutionDue("trunkadillo", [1, 2, 3, 4])).toBeNull(); // final form
   });
 
-  it("lets Ackorn win battles without evolving yet", () => {
-    const w = winBattle(starterPartner("ackorn"), 10, true, [1, 2, 3]);
-    expect(w.evolvedTo).toBeNull();
-    expect(w.partner.species).toBe("ackorn");
+  it("evolves Ackorn into Oakwind at the gym 3 badge, keeping its Transport type", () => {
+    expect(winBattle(starterPartner("ackorn"), 8, true, [1, 2]).evolvedTo).toBeNull();
     expect(partnerFighter(starterPartner("ackorn")).types).toEqual(["TRANSPORT"]);
+    const w = winBattle(starterPartner("ackorn"), 10, true, [1, 2, 3]);
+    expect(w.evolvedTo).toBe("oakwind");
+    expect(w.partner.species).toBe("oakwind");
+    expect(PARTNER_ART.oakwind.name).toBe(PARTNER_NAMES.oakwind);
+    expect(partnerFighter(w.partner)).toMatchObject({ name: "Oakwind", types: ["TRANSPORT"] });
+    expect(evolutionDue("oakwind", [1, 2, 3, 4])).toBeNull(); // final form
+  });
+
+  it("gives every starter an evolution at a gym badge", () => {
+    for (const s of STARTERS) expect(EVOLVE_MILESTONES.some((m) => m.from === s && PARTNER_ART[m.to])).toBe(true);
   });
 });

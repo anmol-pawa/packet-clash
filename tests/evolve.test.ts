@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { ACKORN } from "@/game/art/creatures/ackorn";
 import { FRAMADILLO } from "@/game/art/creatures/framadillo";
+import { OAKWIND } from "@/game/art/creatures/oakwind";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { TRUNKADILLO } from "@/game/art/creatures/trunkadillo";
@@ -26,6 +28,16 @@ describe("evolution", () => {
     expect(TRUNKADILLO.size).toBe(FRAMADILLO.size);
     const a = silhouette(FRAMADILLO.front.idle[0]).rows.join("");
     const b = silhouette(TRUNKADILLO.front.idle[0]).rows.join("");
+    const diff = a.split("").filter((ch, i) => (ch === ".") !== (b[i] === ".")).length;
+    expect(diff).toBeGreaterThan(filled([a]) * 0.15);
+  });
+
+  it("Ackorn evolves into Oakwind, a helmeted, longer-tailed shape at the same size", () => {
+    expect(evolutionOf(ACKORN.id)).toBe(OAKWIND);
+    expect(evolutionOf(OAKWIND.id)).toBeUndefined();
+    expect(OAKWIND.size).toBe(ACKORN.size);
+    const a = silhouette(ACKORN.front.idle[0]).rows.join("");
+    const b = silhouette(OAKWIND.front.idle[0]).rows.join("");
     const diff = a.split("").filter((ch, i) => (ch === ".") !== (b[i] === ".")).length;
     expect(diff).toBeGreaterThan(filled([a]) * 0.15);
   });

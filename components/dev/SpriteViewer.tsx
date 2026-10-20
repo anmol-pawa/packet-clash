@@ -12,6 +12,7 @@ import { HOOTPATH } from "@/game/art/creatures/hootpath";
 import { FETCHIMERA } from "@/game/art/creatures/fetchimera";
 import { GIGAROC } from "@/game/art/creatures/gigaroc";
 import { KEYVERN } from "@/game/art/creatures/keyvern";
+import { OAKWIND } from "@/game/art/creatures/oakwind";
 import { ORACLYNX } from "@/game/art/creatures/oraclynx";
 import { SYNACKLE } from "@/game/art/creatures/synackle";
 import { PINGKIT } from "@/game/art/creatures/pingkit";
@@ -27,7 +28,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus

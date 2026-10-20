@@ -1,6 +1,8 @@
 import type { SpriteDef } from "@/lib/pixel";
 import type { CreatureArt } from "./creature";
+import { ACKORN } from "./creatures/ackorn";
 import { FRAMADILLO } from "./creatures/framadillo";
+import { OAKWIND } from "./creatures/oakwind";
 import { PINGKIT } from "./creatures/pingkit";
 import { TRACEVIX } from "./creatures/tracevix";
 import { TRUNKADILLO } from "./creatures/trunkadillo";
@@ -9,6 +11,7 @@ import { TRUNKADILLO } from "./creatures/trunkadillo";
 export const EVOLUTIONS: { from: CreatureArt; to: CreatureArt }[] = [
   { from: PINGKIT, to: TRACEVIX },
   { from: FRAMADILLO, to: TRUNKADILLO },
+  { from: ACKORN, to: OAKWIND },
 ];
 
 export function evolutionOf(id: string): CreatureArt | undefined {

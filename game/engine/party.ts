@@ -19,7 +19,7 @@ export interface Partner {
 }
 
 /** Display names of the creatures that can be partners. */
-export const PARTNER_NAMES: Record<string, string> = { pingkit: "Pingkit", tracevix: "Tracevix", framadillo: "Framadillo", trunkadillo: "Trunkadillo", ackorn: "Ackorn" };
+export const PARTNER_NAMES: Record<string, string> = { pingkit: "Pingkit", tracevix: "Tracevix", framadillo: "Framadillo", trunkadillo: "Trunkadillo", ackorn: "Ackorn", oakwind: "Oakwind" };
 
 /** The level every starter begins at. */
 export const STARTER_LEVEL = 5;
@@ -45,6 +45,7 @@ export const needsStarter = (s: { partner: unknown; badges: readonly number[] })
 export const EVOLVE_MILESTONES: { from: string; to: string; badge: number }[] = [
   { from: "pingkit", to: "tracevix", badge: 3 },
   { from: "framadillo", to: "trunkadillo", badge: 3 },
+  { from: "ackorn", to: "oakwind", badge: 3 },
 ];
 
 /** A saved partner, repaired if the save was edited or is from an older version. */

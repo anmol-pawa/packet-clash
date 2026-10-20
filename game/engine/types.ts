@@ -97,6 +97,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   trunkadillo: ["LINK"],
   // Its tail lamps are a TCP sliding window.
   ackorn: ["TRANSPORT"],
+  // Its tail lamps show TCP congestion control: slow start, then halving on loss.
+  oakwind: ["TRANSPORT"],
   // Its stack runs from the link slab at the bottom to the application slab on top.
   stackadon: ["LINK", "APPLICATION"],
   braidwyrm: ["PHYSICAL"],
