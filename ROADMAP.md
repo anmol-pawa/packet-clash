@@ -30,7 +30,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 - [x] 1.2 Move types (Physical, Link, Network, Transport, Application, Security…) with a type chart and super-effective messages. Tests for the chart.
   - [x] 1.2a Type engine: six types, a chart built on "each layer serves the one above it" plus a security triangle (with a reason per matchup), creature types, typed moves in the battle reducer (question type → player move, foe's first type → its hit), "It's super effective!" messages with the reason, and type chips in the HP boxes and move menu.
   - [x] 1.2b Pixel type icons (one small drawn emblem per type, used in the chips) and a type chart screen reachable from the map and the battle, showing the grid and each matchup's reason.
-- [ ] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
+- [x] 1.3 Starter creature choice, XP and levels, evolution at gym milestones, and a capture box ("Packetdex").
   - [x] 1.3a Saved partner creature: species, level and total XP in the save, gym battles fought with it, boss EXP and level-ups kept after a win, evolution when a milestone gym's badge is won (Pingkit → Tracevix at badge 3), and a partner card on the world map.
   - [x] 1.3b A second starter line, base form: an original 64×64 creature (front/back, idle/attack/hurt/faint) of another layer's type. (Framadillo, Link: an armadillo whose shell bands are an Ethernet II frame.)
   - [x] 1.3c A third starter line, base form, of a third type (so the three starters form a type triangle).
@@ -38,7 +38,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 1.3e Evolved forms for the two new starters, with their gym milestones.
     - [x] 1.3e1 Trunkadillo, Framadillo's evolved form at badge 3 (Link): its shell gains the 802.1Q VLAN tag band.
     - [x] 1.3e2 Oakwind, Ackorn's evolved form at badge 3 (Transport): its tail shows TCP slow start and multiplicative decrease.
-  - [ ] 1.3f The Packetdex: seen/caught records from battles and a dex page with each creature's sprite, types and blurb (unseen ones as silhouettes).
+  - [x] 1.3f The Packetdex: seen/caught records from battles and a dex page with each creature's sprite, types and blurb (unseen ones as silhouettes).
 - [ ] 1.4 A question engine with MCQ / multi-select / numeric / order-the-steps / generated problems, explanations after every answer, and a Leitner spaced-repetition box.
 - [ ] 1.5 **Packet animations**: attacks are packets travelling between creatures, with headers that visibly encapsulate and decapsulate layer by layer.
 

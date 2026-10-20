@@ -278,15 +278,18 @@ export function WorldMap() {
         </div>
       </section>
 
-      <nav className="flex gap-3">
-        <Link href="/" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-4 py-3 text-xs">
+      <nav className="grid grid-cols-2 gap-3 sm:flex">
+        <Link href="/" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
           ◀ TITLE
         </Link>
-        <Link href="/battle" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-4 py-3 text-xs">
+        <Link href="/battle" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
           DEMO BATTLE
         </Link>
-        <Link href="/types" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-4 py-3 text-xs">
+        <Link href="/types" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
           TYPES
+        </Link>
+        <Link href="/dex" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
+          DEX
         </Link>
       </nav>
     </main>

@@ -7,6 +7,7 @@ import { PixelSprite } from "@/components/ui/PixelSprite";
 import { PARTNER_ART } from "@/game/art/partners";
 import { needsStarter, PARTNER_NAMES, partnerMaxHp, STARTER_LEVEL, starterPartner, STARTERS, type StarterId } from "@/game/engine/party";
 import { CHART, TYPE_INFO, typesOf } from "@/game/engine/types";
+import { dexRecord, recordStarter } from "@/game/engine/dex";
 import { updateSave, useSave } from "@/lib/save";
 
 /** True from the `sm` breakpoint up, so sprites can scale by whole numbers on both phones and desktops. */
@@ -54,7 +55,7 @@ export function StarterChoice() {
   const choose = () => {
     if (chosen || locked) return;
     setChosen(sel);
-    updateSave((s) => ({ ...s, partner: starterPartner(sel) }));
+    updateSave((s) => ({ ...s, ...recordStarter(dexRecord(s), sel), partner: starterPartner(sel) }));
     setTimeout(() => router.push("/map"), 1400);
   };
 

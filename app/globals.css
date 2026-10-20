@@ -222,3 +222,26 @@ body {
   position: relative;
   z-index: 1;
 }
+
+/* Packetdex */
+.dex-window {
+  /* a scanner screen: a sky band over a stone floor with a lit spot */
+  background:
+    radial-gradient(ellipse 42% 9% at 50% 88%, #5b4fa0 0 60%, transparent 62%),
+    linear-gradient(#2b4a7a 0 62%, #3a3070 62% 100%);
+  border: 4px solid #0b0818;
+  box-shadow: inset 0 0 0 2px #6c62a8;
+}
+.dex-cell {
+  background: #2c2458;
+  border: 2px solid #1a1433;
+  border-radius: 4px;
+  box-shadow: inset 0 -3px 0 0 #1f1842;
+}
+.dex-cell:hover {
+  background: #352c69;
+}
+.dex-cell-on {
+  border-color: #ffd257;
+  box-shadow: 0 0 0 2px #ffd257, inset 0 -3px 0 0 #1f1842;
+}

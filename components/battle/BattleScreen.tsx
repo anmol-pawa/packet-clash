@@ -15,6 +15,7 @@ import { initialState, reducer, type Fighter } from "@/game/engine/battle";
 import { effectMessage, effectReasons, TYPE_INFO, typesOf } from "@/game/engine/types";
 import { partnerFighter, validPartner, winBattle, type Partner } from "@/game/engine/party";
 import { xpProgress, xpTotal, type XpGain } from "@/game/engine/xp";
+import { dexRecord, recordEncounter, recordWin } from "@/game/engine/dex";
 import { getSave, updateSave } from "@/lib/save";
 import type { BattleStage } from "@/game/render/stage";
 import { BadgeGet } from "./BadgeGet";
@@ -187,8 +188,18 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   const advance = useCallback(() => setStep((i) => (AFTER_MS[AFTER[i]?.kind] > 0 ? Math.min(steps - 1, i + 1) : i)), [AFTER, steps]);
   const evolving = useRef(false);
   // A gym win is saved the moment the leader faints: the badge opens the next town, and the partner keeps its EXP (and evolution).
+  // The Packetdex: a gym leader is seen when the battle starts and caught when it faints.
   useEffect(() => {
-    if (s.phase === "victory" && gym) updateSave((sv) => ({ ...sv, badges: winBadge(sv.badges, gym.gym), partner: WIN.partner }));
+    if (gym?.bossSprite) updateSave((sv) => ({ ...sv, ...recordEncounter(dexRecord(sv), gym.bossSprite!, START.species) }));
+  }, [gym, START]);
+  useEffect(() => {
+    if (s.phase === "victory" && gym) {
+      updateSave((sv) => {
+        const badges = winBadge(sv.badges, gym.gym);
+        const dex = gym.bossSprite ? recordWin(dexRecord(sv), gym.bossSprite, WIN.partner.species) : {};
+        return { ...sv, ...dex, badges, partner: WIN.partner };
+      });
+    }
   }, [s.phase, gym, WIN]);
   useEffect(() => {
     if (s.phase !== "victory") return;
