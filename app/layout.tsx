@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { PwaRegister } from "@/components/PwaRegister";
-import { pixelify, pressStart } from "./fonts";
+import { digits, pixelify, pressStart } from "./fonts";
 
 export const metadata: Metadata = {
   title: "Packet Clash — a networks creature-battler",
@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${pixelify.variable} ${pressStart.variable} h-full`}>
+    <html lang="en" className={`${digits.variable} ${pixelify.variable} ${pressStart.variable} h-full`}>
       <body className="min-h-full">
         {children}
         <PwaRegister />

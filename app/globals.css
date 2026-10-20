@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-pixelify), system-ui, sans-serif;
+  --font-sans: var(--font-digits), var(--font-pixelify), system-ui, sans-serif;
   --font-pixel: var(--font-press), var(--font-pixelify), monospace;
 }
 
