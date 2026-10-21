@@ -64,3 +64,8 @@ export function bottleneck(rates: readonly number[]): number {
   if (rates.length === 0) throw new Error("empty path");
   return Math.min(...rates);
 }
+
+/** Bandwidth-delay product R·d_prop: the bits in flight on a link when the sender transmits nonstop. */
+export function bandwidthDelayProduct(bitsPerSecond: number, propSeconds: number): number {
+  return bitsPerSecond * propSeconds;
+}

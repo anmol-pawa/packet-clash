@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gymOpen } from "@/content/gyms";
+import { lessonsFor } from "@/content/lessons";
 import { currentTown, isRouteOpen, isUnlocked, ROUTES, town, TOWNS, townCidr, type Town } from "@/content/world";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { needsStarter, validPartner } from "@/game/engine/party";
@@ -259,7 +260,7 @@ export function WorldMap() {
             })}
           </dd>
         </dl>
-        <div className="mt-1">
+        <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           {!open ? (
             <p className="font-pixel text-[10px] leading-relaxed text-[#ff9fb4]">LOCKED · WIN THE {prev?.badge.toUpperCase()} IN {prev?.name.toUpperCase()}</p>
           ) : trip ? (
@@ -274,6 +275,11 @@ export function WorldMap() {
             </Link>
           ) : (
             <p className="font-pixel text-[10px] leading-relaxed text-[#ffd257]">THE GYM DOORS OPEN SOON · {sel.boss.toUpperCase()} IS TRAINING</p>
+          )}
+          {open && lessonsFor(sel.gym).length > 0 && (
+            <Link href={`/lessons?n=${sel.gym}`} className="pixel-button flex min-h-12 w-full items-center justify-center px-4 py-3 text-xs sm:w-auto">
+              LESSONS · {lessonsFor(sel.gym).length} CARDS
+            </Link>
           )}
         </div>
       </section>

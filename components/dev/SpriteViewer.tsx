@@ -28,6 +28,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { chipSprite, tagSprite } from "@/game/art/headers";
 import { encapsulate } from "@/game/engine/encap";
+import { delaysFigure, layerStackFigure, switchingFigure } from "@/game/art/lessons";
 import { silhouette } from "@/lib/pixel";
 
 const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
@@ -116,6 +117,7 @@ export function SpriteViewer() {
         </div>
       </section>
       <EncapSection scale={scale} />
+      <LessonSection scale={scale} />
     </main>
   );
 }
@@ -253,6 +255,28 @@ function EncapSection({ scale }: { scale: number }) {
           ))}
         </figure>
       ))}
+    </section>
+  );
+}
+
+/** The lesson cards' drawn figures. */
+function LessonSection({ scale }: { scale: number }) {
+  const figs = [
+    ["layer stack", layerStackFigure()],
+    ["switching", switchingFigure()],
+    ["four delays", delaysFigure()],
+  ] as const;
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-pixel text-xs text-white">LESSON FIGURES</h2>
+      <div className="flex flex-wrap gap-3">
+        {figs.map(([name, def]) => (
+          <figure key={name} className="sprite-cell flex flex-col items-center gap-2 p-2">
+            <PixelSprite frames={[def]} scale={Math.max(2, scale - 1)} label={name} />
+            <figcaption className="font-pixel text-[9px] text-[#cde]">{name}</figcaption>
+          </figure>
+        ))}
+      </div>
     </section>
   );
 }

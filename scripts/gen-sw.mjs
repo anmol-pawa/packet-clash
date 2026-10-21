@@ -46,8 +46,11 @@ self.addEventListener("activate", (e) => {
 // the request's #fragment, and Turbopack passes worker bootstrap config in the
 // fragment, so worker scripts get a fresh Response (which has no URL of its
 // own), making the browser fall back to the original request URL.
+// Anything with a ?query needs the same: the cache matches /gym/?n=1 to /gym/
+// (ignoreSearch), and both the browser and Next's router (which reads res.url
+// of its RSC fetches) would carry on at the cached URL, dropping the ?n=.
 const forWorker = (req, res) =>
-  req.destination === "worker" || req.destination === "sharedworker"
+  req.destination === "worker" || req.destination === "sharedworker" || req.mode === "navigate" || new URL(req.url).search !== ""
     ? new Response(res.body, { status: res.status, statusText: res.statusText, headers: res.headers })
     : res;
 

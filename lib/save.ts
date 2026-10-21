@@ -23,6 +23,7 @@ export interface SaveData {
   mapTown: string | null; // where the courier stands on the overworld (null = the first town)
   partner: Partner | null; // the player's creature (null = the starter, see STARTER)
   leitner: LeitnerState; // spaced-repetition boxes, keyed by question id (see cardKey)
+  lessonsSeen: number[]; // gyms whose lesson cards were read or skipped once
   settings: Settings;
 }
 
@@ -37,6 +38,7 @@ const DEFAULT: SaveData = {
   mapTown: null,
   partner: null,
   leitner: EMPTY_LEITNER,
+  lessonsSeen: [],
   settings: { volume: 0.6, music: true, reducedMotion: false, zen: false },
 };
 
