@@ -1,4 +1,6 @@
 import { TYPE_INFO, type PacketType } from "@/game/engine/types";
+import { crc, hammingCoverage, hammingEncode } from "@/lib/net/errors";
+import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
 import { MICRO_H, microRows, microWidth } from "./microFont";
@@ -259,5 +261,198 @@ export function delaysFigure(): SpriteDef {
   bracket(wx, wx + 22, "TRANS", "#ffd257");
   bracket(wx + 25, bx - 2, "PROP", "#8ee07a");
   c.ctext(Math.floor(w / 2), h - 6, "NODAL DELAY", INK);
+  return c.sprite();
+}
+
+/** The CRC card's worked division (Kurose & Ross): 101110 ÷ 1001 leaves 011. */
+export const CRC_DEMO = { data: "101110", gen: "1001" };
+
+/**
+ * Modulo-2 long division, row by row: the message with r zeros appended, then
+ * each XOR (the generator lined up under the leading 1) and what it leaves.
+ * The last r bits of the last row are the remainder, boxed in gold.
+ */
+export function crcFigure(): SpriteDef {
+  const { data, gen } = CRC_DEMO;
+  const res = crc(data, gen);
+  const r = gen.length - 1;
+  const n = data.length + r;
+  const cw = 8;
+  const rh = 8;
+  const lx = 24;
+  const link = ramp("LINK");
+  const w = lx + n * cw + 3;
+  const h = 12 + (1 + res.steps.length * 2) * rh + 4;
+  const c = new Canvas(w, h);
+  c.ctext(Math.floor(w / 2), 1, "MOD 2 DIVISION", INK);
+  const digit = (col: number, row: number, ch: string, color: string) => c.text(lx + col * cw + 2, 10 + row * rh + 1, ch, color);
+  c.text(1, 11, "MSG", DIM);
+  [...data + "0".repeat(r)].forEach((ch, i) => digit(i, 0, ch, i < data.length ? INK : "#ffb3c1"));
+  let row = 1;
+  for (const st of res.steps) {
+    c.text(1, 10 + row * rh + 1, "XOR", DIM);
+    [...gen].forEach((ch, j) => {
+      const x = lx + (st.at + j) * cw;
+      c.rect(x, 10 + row * rh, cw - 1, rh - 1, OUTLINE);
+      c.rect(x + 1, 11 + row * rh, cw - 3, rh - 3, link[3]);
+      digit(st.at + j, row, ch, "#ffe2c0");
+    });
+    row++;
+    [...st.after].forEach((ch, j) => digit(st.at + j, row, ch, ch === "1" ? INK : "#6a62a0"));
+    row++;
+  }
+  // the remainder: the last r bits of the last row
+  const ry = 10 + (row - 1) * rh;
+  const rx = lx + (n - r) * cw - 1;
+  c.rect(rx, ry, r * cw + 1, rh, "#ffd257");
+  c.rect(rx + 1, ry + 1, r * cw - 1, rh - 2, "#2a2350");
+  [...res.remainder].forEach((ch, j) => digit(n - r + j, row - 1, ch, "#ffd257"));
+  c.text(1, 10 + (row - 1) * rh + 1, "REM", "#ffd257");
+  return c.sprite();
+}
+
+/** The Hamming card's code: 1011 → 0110011, check bits at positions 1, 2 and 4. */
+export const HAMMING_DEMO = { data: "1011", code: hammingEncode("1011") };
+
+/**
+ * A Hamming(7,4) codeword with its positions numbered, then one row per
+ * check bit with a dot under every position it covers (the positions whose
+ * number has that bit set).
+ */
+export function hammingFigure(): SpriteDef {
+  const code = HAMMING_DEMO.code;
+  const n = code.length;
+  const cw = 15;
+  const lx = 22;
+  const w = lx + n * cw + 3;
+  const h = 10 + 13 + 3 * 9 + 4;
+  const c = new Canvas(w, h);
+  const chk = ramp("TRANSPORT");
+  const dat = ramp("APPLICATION");
+  const checks = [1, 2, 4];
+  c.text(1, 14, "BITS", DIM);
+  for (let pos = 1; pos <= n; pos++) {
+    const x = lx + (pos - 1) * cw;
+    c.ctext(x + 7, 2, String(pos), checks.includes(pos) ? chk[0] : DIM);
+    const isChk = checks.includes(pos);
+    c.brick(x, 9, cw - 1, 13, isChk ? chk : dat);
+    c.ctext(x + 7, 13, code[pos - 1], isChk ? TYPE_INFO.TRANSPORT.ink : TYPE_INFO.APPLICATION.ink);
+  }
+  checks.forEach((p, k) => {
+    const y = 26 + k * 9;
+    c.text(1, y + 1, `P${p}`, chk[0]);
+    c.hline(lx, y + 3, n * cw - 1, "#3b3175");
+    for (const pos of hammingCoverage(p, n)) {
+      const x = lx + (pos - 1) * cw + 7;
+      const self = pos === p;
+      c.rect(x - 2, y + 1, 5, 5, OUTLINE);
+      c.rect(x - 1, y + 2, 3, 3, self ? chk[1] : dat[1]);
+      c.set(x - 1, y + 2, self ? chk[0] : dat[0]);
+    }
+  });
+  return c.sprite();
+}
+
+/**
+ * CSMA/CD on a shared cable: A and B both hear silence and start, the signals
+ * collide, both jam, then binary exponential backoff. B draws 0 slots and
+ * retries at once while A draws 1 slot and finds the cable busy.
+ */
+export function csmaFigure(): SpriteDef {
+  const u = 3;
+  const lx = 22;
+  const w = lx + 44 * u + 2;
+  const h = 58;
+  const c = new Canvas(w, h);
+  const SEND = "#4f8fe8";
+  const JAM = "#e0564c";
+  const WAIT = "#5a5196";
+  const seg = (t0: number, t1: number, y: number, col: string, dotted = false) => {
+    c.rect(lx + t0 * u - 1, y - 1, (t1 - t0) * u + 2, 11, OUTLINE);
+    if (dotted) {
+      c.rect(lx + t0 * u, y, (t1 - t0) * u, 9, "#2a2350");
+      for (let j = 0; j < 9; j++) for (let k = 0; k < (t1 - t0) * u; k++) if ((j + k) % 2 === 0 && (j === 0 || j === 8 || k === 0 || k === (t1 - t0) * u - 1)) c.set(lx + t0 * u + k, y + j, col);
+    } else {
+      c.rect(lx + t0 * u, y, (t1 - t0) * u, 9, col);
+      c.hline(lx + t0 * u, y, (t1 - t0) * u, lighten(col, 0.35));
+      c.hline(lx + t0 * u, y + 8, (t1 - t0) * u, darken(col, 0.3));
+    }
+  };
+  c.text(1, 14, "A", INK);
+  c.text(1, 30, "B", INK);
+  // A hears silence and sends; B starts a moment later, before A's signal reaches it
+  seg(0, 4, 10, WAIT, true);
+  seg(4, 12, 10, SEND);
+  seg(12, 16, 10, JAM);
+  seg(16, 26, 10, WAIT, true);
+  seg(26, 30, 10, WAIT, true);
+  seg(8, 12, 26, SEND);
+  seg(12, 16, 26, JAM);
+  seg(16, 38, 26, SEND);
+  // the collision: a spark across both rows
+  const cx = lx + 12 * u;
+  for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-2, -2], [2, 2], [-2, 2], [2, -2], [-3, 0], [3, 0], [0, -3], [0, 3]]) c.set(cx + dx, 23 + dy, dy === 0 && dx === 0 ? INK : "#ffd257");
+  c.vline(cx, 19, 14, "#ffd257");
+  // legend
+  const key = (x: number, col: string, label: string, dotted = false) => {
+    c.rect(x, 43, 6, 6, OUTLINE);
+    c.rect(x + 1, 44, 4, 4, dotted ? "#2a2350" : col);
+    if (dotted) for (const [dx, dy] of [[1, 44], [3, 44], [2, 45], [4, 45]]) c.set(x + dx, dy, col);
+    c.text(x + 8, 43, label, INK);
+  };
+  key(lx, SEND, "SEND");
+  key(lx + 38, JAM, "JAM");
+  key(lx + 70, WAIT, "WAIT", true);
+  c.text(lx, 52, "A BACKS OFF 1 SLOT B 0", DIM);
+  return c.sprite();
+}
+
+/** The MAC-learning card's frames: (host letter → port) as the switch sees them. */
+export const MAC_DEMO: { hosts: { name: string; port: number }[]; frames: Frame[] } = {
+  hosts: [
+    { name: "A", port: 1 },
+    { name: "B", port: 2 },
+    { name: "C", port: 3 },
+    { name: "D", port: 4 },
+  ],
+  frames: [
+    { src: "A", dst: "B", inPort: 1 },
+    { src: "B", dst: "A", inPort: 2 },
+  ],
+};
+
+/** A 4-port switch with hosts A to D and the table it has learned after the demo frames. */
+export function macLearningFigure(): SpriteDef {
+  const w = 150;
+  const h = 62;
+  const c = new Canvas(w, h);
+  const net = ramp("LINK");
+  const host = ramp("APPLICATION");
+  const steps = simulateSwitch(4, MAC_DEMO.frames);
+  const table = steps[steps.length - 1].table;
+  const sx = 6;
+  c.brick(sx, 10, 62, 16, net);
+  c.ctext(sx + 31, 15, "SWITCH", TYPE_INFO.LINK.ink);
+  MAC_DEMO.hosts.forEach((hst, i) => {
+    const x = sx + 2 + i * 15;
+    c.vline(x + 5, 26, 14, "#c49a5a");
+    c.ctext(x + 5, 29, String(hst.port), "#ffd257");
+    c.brick(x, 40, 11, 12, host);
+    c.ctext(x + 5, 43, hst.name, TYPE_INFO.APPLICATION.ink);
+  });
+  // the learned table
+  const tx = 86;
+  c.rect(tx, 8, 60, 46, OUTLINE);
+  c.rect(tx + 1, 9, 58, 44, "#2a2350");
+  c.ctext(tx + 30, 12, "MAC TABLE", INK);
+  c.text(tx + 6, 21, "MAC", DIM);
+  c.text(tx + 34, 21, "PORT", DIM);
+  c.hline(tx + 3, 27, 54, "#5a5196");
+  Object.entries(table).forEach(([mac, port], i) => {
+    c.text(tx + 8, 31 + i * 8, mac, host[0]);
+    c.text(tx + 40, 31 + i * 8, String(port), "#ffd257");
+  });
+  c.text(tx + 8, 31 + Object.keys(table).length * 8, "C", "#5a5196");
+  c.text(tx + 20, 31 + Object.keys(table).length * 8, "NOT YET", "#5a5196");
   return c.sprite();
 }

@@ -1,13 +1,14 @@
 "use client";
 import { useState, type ReactNode } from "react";
+import type { SpriteDef } from "@/lib/pixel";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { ENCAP_STEPS, type Figure, type Lesson } from "@/content/lessons";
 import type { Town } from "@/content/world";
 import { BOSS_ART } from "@/game/art/bosses";
 import { chipSprite, tagSprite } from "@/game/art/headers";
-import { delaysFigure, layerStackFigure, switchingFigure } from "@/game/art/lessons";
+import { crcFigure, csmaFigure, delaysFigure, hammingFigure, layerStackFigure, macLearningFigure, switchingFigure } from "@/game/art/lessons";
 
-const FIGURES = { layers: layerStackFigure(), switching: switchingFigure(), delays: delaysFigure() };
+const FIGURES: Record<Exclude<Figure, "encap">, SpriteDef> = { layers: layerStackFigure(), switching: switchingFigure(), delays: delaysFigure(), crc: crcFigure(), hamming: hammingFigure(), csmacd: csmaFigure(), macLearn: macLearningFigure() };
 
 /** The encapsulation card: the battle's header chips, one row per layer on the way down. */
 function EncapFigure() {

@@ -1,4 +1,8 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
+import { CRC_DEMO, HAMMING_DEMO, MAC_DEMO } from "@/game/art/lessons";
+import { crc, crcOk, hammingSyndrome } from "@/lib/net/errors";
+import { backoffChoices, minFrameBits } from "@/lib/net/link";
+import { simulateSwitch } from "@/lib/net/switching";
 import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDelay, transmissionDelay } from "@/lib/net/basics";
 
 /**
@@ -8,7 +12,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn";
 
 export interface Lesson {
   id: string;
@@ -43,6 +47,22 @@ const HOP_SPEED = 2e8;
 const dTrans = transmissionDelay(HOP_BYTES, HOP_RATE);
 const dProp = propagationDelay(HOP_METERS, HOP_SPEED);
 const bdp = bandwidthDelayProduct(HOP_RATE, dProp);
+
+// gym 2: the CRC card divides K&R's 101110 by 1001; the Hamming card encodes 1011 and flips bit 6
+const crcRes = crc(CRC_DEMO.data, CRC_DEMO.gen);
+const crcRecv = crcOk(crcRes.codeword, CRC_DEMO.gen);
+const hamFlipped = HAMMING_DEMO.code.replace(/./g, (ch, i) => (i === 5 ? (ch === "1" ? "0" : "1") : ch));
+const hamSyndrome = hammingSyndrome(hamFlipped);
+// the CSMA/CD card: 10 Mbps Ethernet over 2.5 km of cable at 2×10^8 m/s
+const CD_RATE = 10_000_000;
+const CD_METERS = 2500;
+const cdMinBits = minFrameBits(CD_RATE, CD_METERS, HOP_SPEED);
+// the learning card: A → B (unknown, floods), then B → A (A is known, forwards)
+const macSteps = simulateSwitch(4, MAC_DEMO.frames);
+const macVerb = (i: number) => {
+  const st = macSteps[i];
+  return st.action === "flood" ? `floods to ports ${st.outPorts.join(", ")}` : st.action === "forward" ? `goes only to port ${st.outPorts[0]}` : "is filtered";
+};
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -111,6 +131,84 @@ export const LESSONS: Record<number, Lesson[]> = {
       },
     },
   ],
+  2: [
+    {
+      id: "crc",
+      title: "CRC: long division",
+      figure: "crc",
+      caption: "Dividing 101110 000 by 1001, modulo 2.",
+      paras: [
+        "A CRC treats the message as a polynomial and divides it by an agreed generator. With a generator of r + 1 bits you append r zeros to the message, divide, and the r-bit remainder becomes the check bits.",
+        "The division uses no borrows or carries: subtracting is XOR. Line the generator up under each leading 1, XOR, and slide on. The remainder is whatever is left in the last r bits.",
+        "The sender transmits message + remainder. The receiver divides what arrived by the same generator: a zero remainder means it is accepted, anything else means it was damaged. Ethernet's FCS is a CRC-32.",
+      ],
+      example: {
+        title: "Kurose & Ross's example",
+        lines: [
+          `Message ${CRC_DEMO.data}, generator ${CRC_DEMO.gen} (r = ${CRC_DEMO.gen.length - 1}): divide ${CRC_DEMO.data}${"0".repeat(CRC_DEMO.gen.length - 1)}.`,
+          `${crcRes.steps.length} XOR steps leave the remainder ${crcRes.remainder}.`,
+          `Sent: ${crcRes.codeword}. The receiver's division ${crcRecv ? "leaves 000, so the frame is accepted" : "fails"}.`,
+        ],
+      },
+    },
+    {
+      id: "hamming",
+      title: "Hamming codes",
+      figure: "hamming",
+      caption: "Hamming(7,4): check bits at positions 1, 2 and 4.",
+      paras: [
+        "Parity only detects errors. A Hamming code adds several check bits so the receiver can also find which single bit flipped and flip it back. For m data bits you need r check bits with 2^r ≥ m + r + 1, so 4 data bits take 3.",
+        "Number the positions from 1. Check bits sit at the powers of two (1, 2, 4, 8…) and data fills the rest. The check bit at position p makes the parity of every position whose number has bit p set even.",
+        "The receiver recomputes the checks. Read together as a binary number, the failed checks are the syndrome: 0 means no error, otherwise it is the position of the flipped bit.",
+      ],
+      example: {
+        title: "Hamming(7,4)",
+        lines: [
+          `Data ${HAMMING_DEMO.data} goes in positions 3, 5, 6 and 7. The checks at 1, 2 and 4 make the codeword ${HAMMING_DEMO.code}.`,
+          `Flip bit 6 in transit: ${hamFlipped}. Checks 2 and 4 fail, so the syndrome is 2 + 4 = ${hamSyndrome}.`,
+          `Flip position ${hamSyndrome} back and the data is recovered. Distance 3 corrects 1 error and detects 2.`,
+        ],
+      },
+    },
+    {
+      id: "csma-cd",
+      title: "CSMA/CD and Ethernet",
+      figure: "csmacd",
+      caption: "Both stations send, collide, jam and back off.",
+      paras: [
+        "On a shared cable a station listens first (carrier sense) and sends only if it is quiet. Two stations can still start within one propagation delay of each other, so frames collide.",
+        "While sending, a station keeps listening (collision detection). On a collision it sends a short jam signal so everybody notices, stops, and waits a random time. After the n-th collision it picks K from 0 … 2ⁿ − 1 slots of 512 bit times (the range stops growing at n = 10), then listens again.",
+        "A collision must reach the sender before it finishes the frame, so the frame must last at least one round trip: L ≥ 2 · tprop · R. That is why Ethernet frames are at least 64 bytes. Modern switched Ethernet has no collisions, because each link is its own collision domain.",
+      ],
+      example: {
+        title: "Minimum frame size",
+        lines: [
+          `${CD_RATE / 1e6} Mbps over ${n(CD_METERS)} m at 2×10⁸ m/s: tprop = ${ms(CD_METERS / HOP_SPEED)}.`,
+          `L ≥ 2 × ${ms(CD_METERS / HOP_SPEED)} × ${CD_RATE / 1e6} Mbps = ${cdMinBits} bits.`,
+          `After the 1st collision K is one of ${backoffChoices(1)} values (0, 1); after the 3rd one of ${backoffChoices(3)} (0 … 7).`,
+        ],
+      },
+    },
+    {
+      id: "mac-learning",
+      title: "How a switch learns",
+      figure: "macLearn",
+      caption: "After A→B and B→A the switch knows A and B.",
+      paras: [
+        "A switch starts with an empty MAC table and fills it by watching. Every frame that arrives teaches it that the source MAC is reachable through the arrival port, and old entries age out.",
+        "To forward, it looks up the destination. A known address goes out of that port only. An unknown or broadcast address is flooded out of every port except the one it came in on. If the destination is on the arrival port, the frame is filtered (dropped).",
+        "Switches never loop frames safely on their own: with redundant links a broadcast would circulate forever. Spanning Tree elects a root bridge (lowest bridge ID), keeps a tree and blocks the other links. VLANs split one switch into several broadcast domains, and an 802.1Q trunk tags each frame with its VLAN.",
+      ],
+      example: {
+        title: "Four ports, two frames",
+        lines: [
+          `A → B on port 1: the table is empty, so the frame ${macVerb(0)}. The switch learns A = port 1.`,
+          `B → A on port 2: A is known, so the frame ${macVerb(1)}. It learns B = port 2.`,
+          "A frame from A to a host also on port 1 would be filtered.",
+        ],
+      },
+    },
+  ],
 };
 
 export const lessonsFor = (gym: number): Lesson[] => LESSONS[gym] ?? [];
@@ -125,4 +223,4 @@ export function markLessonsSeen(seen: readonly number[], gym: number): number[] 
 }
 
 // exported for tests
-export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp };
+export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits };

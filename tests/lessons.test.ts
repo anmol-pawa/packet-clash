@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { BURST, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, delaysFigure, layerStackFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, hammingFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
+import { hammingSyndrome } from "@/lib/net/errors";
 import { parseSprite } from "@/lib/pixel";
 
 describe("lesson content", () => {
@@ -55,17 +56,56 @@ describe("lesson content", () => {
     expect([...new Set(OSI_LAYERS.map((l) => l.tcpip))]).toEqual(TCPIP_LAYERS);
   });
 
+  it("gives gym 2 its four cards: CRC, Hamming, CSMA/CD, MAC learning", () => {
+    expect(lessonsFor(2).map((l) => l.figure)).toEqual(["crc", "hamming", "csmacd", "macLearn"]);
+  });
+
+  it("divides Kurose & Ross's 101110 by 1001 to get remainder 011 and sends 101110011", () => {
+    expect(CRC_DEMO).toEqual({ data: "101110", gen: "1001" });
+    expect(WORKED.crcRes.remainder).toBe("011");
+    expect(WORKED.crcRes.codeword).toBe("101110011");
+    expect(WORKED.crcRecv).toBe(true);
+    const lines = lessonsFor(2).find((l) => l.id === "crc")!.example!.lines;
+    expect(lines[1]).toContain("remainder 011");
+    expect(lines[2]).toContain("Sent: 101110011");
+  });
+
+  it("encodes 1011 as Hamming 0110011 and locates a flipped bit 6 by syndrome 6", () => {
+    expect(HAMMING_DEMO.code).toBe("0110011");
+    expect(WORKED.hamFlipped).toBe("0110001");
+    expect(WORKED.hamSyndrome).toBe(6);
+    expect(hammingSyndrome(HAMMING_DEMO.code)).toBe(0);
+    const lines = lessonsFor(2).find((l) => l.id === "hamming")!.example!.lines;
+    expect(lines[1]).toContain("2 + 4 = 6");
+  });
+
+  it("works the CSMA/CD minimum frame (10 Mbps, 2.5 km → 250 bits) and the backoff ranges", () => {
+    expect(WORKED.cdMinBits).toBe(250);
+    const lines = lessonsFor(2).find((l) => l.id === "csma-cd")!.example!.lines;
+    expect(lines[1]).toContain("= 250 bits");
+    expect(lines[2]).toContain("one of 2 values (0, 1)");
+    expect(lines[2]).toContain("one of 8 (0 … 7)");
+  });
+
+  it("lets the switch learn A and B: the first frame floods to ports 2, 3, 4, the reply goes to port 1 only", () => {
+    const lines = lessonsFor(2).find((l) => l.id === "mac-learning")!.example!.lines;
+    expect(lines[0]).toContain("floods to ports 2, 3, 4");
+    expect(lines[1]).toContain("goes only to port 1");
+  });
+
   it("opens the lessons before a gym only until they've been seen once", () => {
     expect(showLessonsFirst(1, [])).toBe(true);
     expect(showLessonsFirst(1, markLessonsSeen([], 1))).toBe(false);
-    expect(showLessonsFirst(2, [1])).toBe(false); // no cards yet
+    expect(showLessonsFirst(2, [1])).toBe(true);
+    expect(showLessonsFirst(2, [1, 2])).toBe(false);
+    expect(showLessonsFirst(9, [])).toBe(false); // no cards yet
     expect(markLessonsSeen([3, 1], 1)).toEqual([1, 3]);
   });
 });
 
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale
