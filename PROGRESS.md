@@ -377,3 +377,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 5 new (339 total) pin the worked examples and the show-once gate for gym 2; the figure test covers all 7 figures.
 - Verified: lint, typecheck, 339 tests, `build:pages` (125 files precached). Playwright on the static export at 1280×800 and iPhone 14 (save with badge 1), paging through all four cards: no console errors, no horizontal overflow. I reviewed the screenshots and fixed the generator digits in the CRC figure, which were unreadable on the first pass.
 - Next: 2.3 Network layer and addressing (split it first; subnetting/CIDR solvers and generators first).
+
+## 2026-10-21 (23:50 IST): 2.3a Addressing solvers and generators
+- Main was green (Pages deployed 7ce43c1), no lock. Split 2.3 into 2.3a (this), 2.3b (hand-written gym 3 cards: IPv4 header, NAT, ICMP, IPv6) and 2.3c (lessons).
+- **Solvers** (`lib/net/addressing.ts`): `splitSubnets`, `prefixForHosts`, `vlsmAllocate` (largest first, aligned, null when it doesn't fit), `aggregate` / `aggregateIsExact`, `longestPrefixMatch`, `fragment` (offsets in 8-byte units, MF flag).
+- **Generators** (`content/questions/addressGenerators.ts`, 6 new on gym 3's chapter): subnet count after borrowing bits, the broadcast of the n-th subnet, a three-LAN VLSM plan, the exact summary route for 2/4/8 contiguous blocks, longest-prefix next hop over nested routes, and fragment count or last-fragment offset.
+- Tests: 12 new in `tests/addressing.test.ts`. Kurose & Ross's 4000-byte / MTU 1500 fragmentation (offsets 0, 185, 370; lengths 1500, 1500, 1040), Forouzan's /24 → four /26, K&R's longest-prefix example, a hand-derived VLSM plan, and over 300 seeds each generator is rechecked independently from its own id.
+- Verified: lint, typecheck, `npm test`, `build:pages` (125 files precached). The new questions are text-only (MCQ and numeric) and use existing panels, so I did not take new screenshots this run.
+- Next: 2.3b Gym 3 hand-written cards.

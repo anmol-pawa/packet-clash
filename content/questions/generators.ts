@@ -16,6 +16,7 @@ import {
 } from "@/lib/net/basics";
 import { blockSize, broadcastOf, formatIp, maskOf, usableHosts, type Cidr } from "@/lib/net/ipv4";
 import { randInt, rng, shuffled } from "@/lib/rng";
+import { ADDRESS_GENERATORS } from "./addressGenerators";
 import { ERROR_GENERATORS } from "./errorGenerators";
 import { LINK_GENERATORS } from "./linkGenerators";
 import { SWITCH_GENERATORS } from "./switchGenerators";
@@ -505,4 +506,5 @@ export const GENERATORS: readonly Generator[] = [
   ...ERROR_GENERATORS,
   ...LINK_GENERATORS,
   ...SWITCH_GENERATORS,
+  ...ADDRESS_GENERATORS,
 ];
