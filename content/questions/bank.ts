@@ -279,4 +279,21 @@ export const BANK: readonly Question[] = [
     answer: 0,
     explain: "A hub (a multiport repeater) only regenerates bits, so it never reads addresses. A switch reads MAC addresses (L2), a router reads IP addresses (L3), and a firewall can look as far up as L4–L7.",
   },
+  {
+    id: "devices-to-layers",
+    kind: "sort",
+    topic: "models",
+    type: "LINK",
+    difficulty: 1,
+    prompt: "Sort each device into the highest layer it works at.",
+    bins: ["Network", "Link", "Physical"],
+    items: [
+      { label: "Switch", bin: 1 },
+      { label: "Repeater", bin: 2 },
+      { label: "Router", bin: 0 },
+      { label: "Hub", bin: 2 },
+      { label: "Bridge", bin: 1 },
+    ],
+    explain: "Repeaters and hubs only regenerate bits (physical). Bridges and switches forward frames by MAC address (link). Routers forward packets by IP address (network), and process the two layers below on every port too.",
+  },
 ];

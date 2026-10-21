@@ -341,6 +341,36 @@ export const protocolLayer: Generator = {
   },
 };
 
+/** Items per sort-into-layers set: one per layer, plus one more so a layer holds two. */
+const SORT_ITEMS = 6;
+
+export const sortLayers: Generator = {
+  id: "gen-sort-layers",
+  topic: "models",
+  type: "NETWORK",
+  difficulty: 1,
+  generate(seed) {
+    const r = rng(seed);
+    const all = Object.keys(PROTOCOL_LAYERS);
+    const one = LAYERS_5.map((l) => pick(r, all.filter((p) => PROTOCOL_LAYERS[p] === l)));
+    const extra = pick(r, all.filter((p) => !one.includes(p)));
+    const protos = shuffled(r, [...one, extra]).slice(0, SORT_ITEMS);
+    const items = protos.map((label) => ({ label, bin: LAYERS_5.indexOf(PROTOCOL_LAYERS[label]) }));
+    const line = (l: Layer5) => `${l}: ${protos.filter((p) => PROTOCOL_LAYERS[p] === l).join(", ")}`;
+    return {
+      id: `gen-sort-layers:${protos.join("|")}`,
+      kind: "sort",
+      topic: "models",
+      type: "NETWORK",
+      difficulty: 1,
+      prompt: "Sort each protocol into its layer of the 5-layer Internet model.",
+      bins: [...LAYERS_5],
+      items,
+      explain: `${LAYERS_5.map(line).join(". ")}. Each layer only talks to the layers right above and below it, so every protocol has one home.`,
+    };
+  },
+};
+
 export const subnetHosts: Generator = {
   id: "gen-subnet-hosts",
   topic: "network",
@@ -464,6 +494,7 @@ export const GENERATORS: readonly Generator[] = [
   circuitCapacity,
   pathThroughput,
   protocolLayer,
+  sortLayers,
   subnetHosts,
   prefixForHosts,
   networkAddress,

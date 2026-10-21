@@ -44,7 +44,7 @@ describe("battle decks", () => {
 
   it("the demo opens with one question of each kind and covers the whole bank", () => {
     const deck = demoDeck(7);
-    expect(deck.slice(0, 4).map((q) => q.kind)).toEqual(["mcq", "multi", "numeric", "order"]);
+    expect(deck.slice(0, 5).map((q) => q.kind)).toEqual(["mcq", "multi", "numeric", "order", "sort"]);
     expect(deck).toHaveLength(BANK.length + GENERATORS.length);
     expect(keys(demoDeck(7))).toEqual(keys(deck));
   });

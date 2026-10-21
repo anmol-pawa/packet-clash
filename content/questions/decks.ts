@@ -37,7 +37,7 @@ export function gymDeck(s: LeitnerState, gym: number, seed: number, size = DECK_
   return [...own, ...rest];
 }
 
-const DEMO_KINDS: readonly QuestionKind[] = ["mcq", "multi", "numeric", "order"];
+const DEMO_KINDS: readonly QuestionKind[] = ["mcq", "multi", "numeric", "order", "sort"];
 
 /** The demo battle: one question of each kind first, so a short battle shows them all, then the rest of the bank. */
 export function demoDeck(seed: number): Question[] {

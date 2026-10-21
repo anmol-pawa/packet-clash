@@ -3,7 +3,8 @@
  * a pure grader, and seeded decks. Adapted from Query Clash's interview engine.
  *
  * Kinds: multiple choice (one answer), multi-select (pick exactly the right
- * set), numeric (with a unit and a tolerance) and order-the-steps. Generated
+ * set), numeric (with a unit and a tolerance), order-the-steps and sort
+ * (place every item in its bin, e.g. each protocol in its layer). Generated
  * problems are any of these, built by a seeded `Generator` whose answer comes
  * from the solvers in `lib/net`, never typed in by hand.
  */
@@ -55,7 +56,21 @@ export interface OrderQuestion extends QuestionBase {
   steps: string[];
 }
 
-export type Question = McqQuestion | MultiQuestion | NumericQuestion | OrderQuestion;
+export interface SortItem {
+  label: string;
+  /** Index into the question's `bins`. */
+  bin: number;
+}
+
+export interface SortQuestion extends QuestionBase {
+  kind: "sort";
+  /** The bins, in the order they're shown (e.g. the layers, top down). */
+  bins: string[];
+  /** The items to place, in the order they're shown. */
+  items: SortItem[];
+}
+
+export type Question = McqQuestion | MultiQuestion | NumericQuestion | OrderQuestion | SortQuestion;
 export type QuestionKind = Question["kind"];
 
 export type Response =
@@ -63,7 +78,9 @@ export type Response =
   | { kind: "multi"; choices: number[] }
   | { kind: "numeric"; value: number }
   /** The steps as the player arranged them. */
-  | { kind: "order"; steps: string[] };
+  | { kind: "order"; steps: string[] }
+  /** The bin the player put each item in (by item index), or null if left unplaced. */
+  | { kind: "sort"; bins: (number | null)[] };
 
 /** A seeded problem generator: the same seed always builds the same, solver-answered question. */
 export interface Generator {
@@ -88,7 +105,14 @@ export function grade(q: Question, r: Response): boolean {
       return r.kind === "numeric" && Number.isFinite(r.value) && Math.abs(r.value - q.answer) <= (q.tolerance ?? 0) + 1e-9;
     case "order":
       return r.kind === "order" && r.steps.length === q.steps.length && r.steps.every((s, i) => s === q.steps[i]);
+    case "sort":
+      return r.kind === "sort" && r.bins.length === q.items.length && sortMarks(q, r).every(Boolean);
   }
+}
+
+/** Per-item marks for a sort answer: true where that item is in its right bin. */
+export function sortMarks(q: SortQuestion, r: Response): boolean[] {
+  return q.items.map((it, i) => r.kind === "sort" && r.bins[i] === it.bin);
 }
 
 /** The response that `grade` accepts, for tests and the "show answer" reveal. */
@@ -102,6 +126,8 @@ export function correctResponse(q: Question): Response {
       return { kind: "numeric", value: q.answer };
     case "order":
       return { kind: "order", steps: [...q.steps] };
+    case "sort":
+      return { kind: "sort", bins: q.items.map((it) => it.bin) };
   }
 }
 
@@ -121,7 +147,17 @@ export function answerText(q: Question): string {
       return q.unit ? `${formatNumber(q.answer)} ${q.unit}` : formatNumber(q.answer);
     case "order":
       return q.steps.map((s, i) => `${i + 1}. ${s}`).join("  ");
+    case "sort":
+      return sortGroups(q)
+        .filter((g) => g.items.length > 0)
+        .map((g) => `${g.bin}: ${g.items.join(", ")}`)
+        .join("; ");
   }
+}
+
+/** A sort question's answer grouped by bin, in bin order (items in their shown order). */
+export function sortGroups(q: SortQuestion): { bin: string; items: string[] }[] {
+  return q.bins.map((bin, b) => ({ bin, items: q.items.filter((it) => it.bin === b).map((it) => it.label) }));
 }
 
 /**

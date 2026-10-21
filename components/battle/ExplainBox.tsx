@@ -1,4 +1,4 @@
-import { answerText, type Question } from "@/game/engine/questions";
+import { answerText, sortGroups, type Question } from "@/game/engine/questions";
 
 /** After every answer: right or wrong, the correct answer and why. */
 export function ExplainBox({ q, correct }: { q: Question; correct: boolean }) {
@@ -12,6 +12,16 @@ export function ExplainBox({ q, correct }: { q: Question; correct: boolean }) {
               <li key={s}>{s}</li>
             ))}
           </ol>
+        ) : q.kind === "sort" ? (
+          <ul className="mt-1.5 text-lg leading-snug text-white sm:text-xl">
+            {sortGroups(q)
+              .filter((g) => g.items.length > 0)
+              .map((g) => (
+                <li key={g.bin}>
+                  <span className="font-pixel text-[9px] text-[#ffd257] sm:text-[10px]">{g.bin.toUpperCase()}</span> {g.items.join(", ")}
+                </li>
+              ))}
+          </ul>
         ) : (
           <p className="mt-1.5 text-lg leading-snug text-white sm:text-xl">{answerText(q)}</p>
         ))}

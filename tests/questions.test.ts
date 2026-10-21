@@ -8,7 +8,10 @@ import {
   moveStep,
   parseNumber,
   scrambleSteps,
+  sortGroups,
+  sortMarks,
   type Question,
+  type SortQuestion,
 } from "@/game/engine/questions";
 import { BANK } from "@/content/questions/bank";
 import {
@@ -23,6 +26,7 @@ import {
   pathThroughput,
   protocolLayer,
   queuingIntensity,
+  sortLayers,
   storeForward,
   networkAddress,
   prefixForHosts,
@@ -70,6 +74,14 @@ function checkShape(q: Question) {
     case "order":
       expect(new Set(q.steps).size).toBe(q.steps.length);
       expect(q.steps.length).toBeGreaterThanOrEqual(3);
+      break;
+    case "sort":
+      expect(new Set(q.bins).size).toBe(q.bins.length);
+      expect(new Set(q.items.map((it) => it.label)).size).toBe(q.items.length);
+      expect(q.items.length).toBeGreaterThanOrEqual(3);
+      for (const it of q.items) expect(q.bins[it.bin]).toBeDefined();
+      // At least two bins in use, or there is nothing to sort.
+      expect(new Set(q.items.map((it) => it.bin)).size).toBeGreaterThanOrEqual(2);
       break;
   }
   expect(grade(q, correctResponse(q))).toBe(true);
@@ -131,6 +143,38 @@ describe("grading", () => {
   });
 });
 
+describe("sort into bins", () => {
+  const q = BANK.find((x): x is SortQuestion => x.id === "devices-to-layers")!;
+  const right = q.items.map((it) => it.bin);
+
+  it("is right only when every item is in its bin", () => {
+    expect(grade(q, { kind: "sort", bins: right })).toBe(true);
+    // One item in the wrong bin, one left unplaced, a short response, the wrong kind.
+    expect(grade(q, { kind: "sort", bins: right.map((b, i) => (i === 0 ? (b + 1) % 3 : b)) })).toBe(false);
+    expect(grade(q, { kind: "sort", bins: right.map((b, i) => (i === 1 ? null : b)) })).toBe(false);
+    expect(grade(q, { kind: "sort", bins: right.slice(1) })).toBe(false);
+    expect(grade(q, { kind: "sort", bins: [...right, 0] })).toBe(false);
+    expect(grade(q, { kind: "order", steps: [] })).toBe(false);
+  });
+
+  it("marks each item on its own", () => {
+    // Switch and Repeater swapped: those two are wrong, the rest are right.
+    const swapped = right.slice();
+    [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
+    expect(sortMarks(q, { kind: "sort", bins: swapped })).toEqual([false, false, true, true, true]);
+    expect(sortMarks(q, { kind: "sort", bins: right.map(() => null) })).toEqual([false, false, false, false, false]);
+    expect(sortMarks(q, { kind: "mcq", choice: 0 }).some(Boolean)).toBe(false);
+  });
+
+  it("groups the answer by bin, in bin order", () => {
+    expect(sortGroups(q)).toEqual([
+      { bin: "Network", items: ["Router"] },
+      { bin: "Link", items: ["Switch", "Bridge"] },
+      { bin: "Physical", items: ["Repeater", "Hub"] },
+    ]);
+  });
+});
+
 describe("order steps", () => {
   it("never shows the steps already solved, and is seeded", () => {
     const steps = ["a", "b", "c", "d"];
@@ -165,7 +209,7 @@ describe("multiple-choice options", () => {
 describe("the bank", () => {
   it("has unique ids and every kind", () => {
     expect(new Set(BANK.map((q) => q.id)).size).toBe(BANK.length);
-    expect(new Set(BANK.map((q) => q.kind))).toEqual(new Set(["mcq", "multi", "numeric", "order"]));
+    expect(new Set(BANK.map((q) => q.kind))).toEqual(new Set(["mcq", "multi", "numeric", "order", "sort"]));
   });
 
   it("has well-formed questions whose answers grade as right", () => {
@@ -200,6 +244,7 @@ describe("the bank", () => {
       "header-overhead": "58 bytes",
       "pdu-link": "Frame",
       "hub-layer": "Hub",
+      "devices-to-layers": "Network: Router; Link: Switch, Bridge; Physical: Repeater, Hub",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);
@@ -374,6 +419,28 @@ describe("gym 1 (models and basics) generators", () => {
       expect(q.prompt).toContain(proto);
     }
     expect(seen.size).toBe(Object.keys(PROTOCOL_LAYERS).length);
+  });
+
+  it("sort a protocol from every layer into its layer", () => {
+    const seen = new Set<string>();
+    for (const q of all(sortLayers)) {
+      if (q.kind !== "sort") throw new Error("sort");
+      expect(q.bins).toEqual([...LAYERS_5]);
+      expect(q.items).toHaveLength(6);
+      // Every layer gets at least one protocol, and one gets two.
+      expect(new Set(q.items.map((it) => it.bin)).size).toBe(5);
+      for (const it of q.items) {
+        seen.add(it.label);
+        expect(q.bins[it.bin]).toBe(PROTOCOL_LAYERS[it.label]);
+        expect(q.explain).toContain(it.label);
+      }
+      expect(q.id).toBe(`gen-sort-layers:${q.items.map((it) => it.label).join("|")}`);
+    }
+    expect(seen.size).toBe(Object.keys(PROTOCOL_LAYERS).length);
+    const fixed = sortLayers.generate(3);
+    if (fixed.kind !== "sort") throw new Error("sort");
+    const tcp = { ...fixed, items: [{ label: "TCP", bin: 1 }, { label: "Ethernet", bin: 3 }] };
+    expect(answerText(tcp)).toBe("Transport: TCP; Link: Ethernet");
   });
 
   it("agree with the encapsulation engine on header overhead", () => {

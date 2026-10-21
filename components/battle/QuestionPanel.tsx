@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { moveStep, parseNumber, scrambleSteps, type Question, type Response } from "@/game/engine/questions";
-import type { PacketType } from "@/game/engine/types";
+import { moveStep, parseNumber, scrambleSteps, sortMarks, type Question, type Response } from "@/game/engine/questions";
+import { TYPE_INFO, type PacketType } from "@/game/engine/types";
 import { InfoStrip, MoveMenu } from "./MoveMenu";
 
 interface PanelProps {
@@ -19,7 +19,8 @@ interface PanelProps {
 /**
  * The question in the battle's action area, one panel per kind: the four-move
  * menu for multiple choice, toggles for multi-select, a keypad for numbers
- * and tap-to-move rows for ordering steps. Remount it (key) for each turn.
+ * tap-to-move rows for ordering steps and tap-to-place bins for sorting.
+ * Remount it (key) for each turn.
  */
 export function QuestionPanel(p: PanelProps) {
   const { q } = p;
@@ -42,6 +43,8 @@ export function QuestionPanel(p: PanelProps) {
       return <NumericPanel {...p} q={q} />;
     case "order":
       return <OrderPanel {...p} q={q} />;
+    case "sort":
+      return <SortPanel {...p} q={q} />;
   }
 }
 
@@ -198,6 +201,88 @@ function OrderPanel({ q, locked, response, info, seed, onSubmit }: PanelProps & 
         })}
       </ol>
       {!locked && <FireButton disabled={false} onClick={() => onSubmit({ kind: "order", steps })} />}
+    </Frame>
+  );
+}
+
+/** Bins named after a layer wear that layer's colour. */
+const LAYER_BIN: Readonly<Record<string, PacketType>> = {
+  Application: "APPLICATION",
+  Transport: "TRANSPORT",
+  Network: "NETWORK",
+  Link: "LINK",
+  Physical: "PHYSICAL",
+};
+
+function SortPanel({ q, locked, response, info, onSubmit }: PanelProps & { q: Extract<Question, { kind: "sort" }> }) {
+  const [placed, setPlaced] = useState<(number | null)[]>(() => q.items.map(() => null));
+  const [held, setHeld] = useState<number | null>(null);
+  const shown = locked && response?.kind === "sort" ? response.bins : placed;
+  const marks = locked && response ? sortMarks(q, response) : [];
+  // Tap an item to pick it up (again, to put it down), then tap its bin. Placed items can be picked up and moved.
+  const tapItem = (i: number) => setHeld((h) => (h === i ? null : i));
+  const tapBin = (b: number) => {
+    if (held === null) return;
+    setPlaced((p) => p.map((x, i) => (i === held ? b : x)));
+    setHeld(null);
+  };
+  const chip = (i: number) => (
+    <button
+      key={i}
+      type="button"
+      disabled={locked}
+      onClick={(e) => {
+        e.stopPropagation();
+        tapItem(i);
+      }}
+      aria-pressed={held === i}
+      className={`move-button min-h-11 px-2.5 py-1 text-left text-base leading-tight sm:text-lg ${locked ? (marks[i] ? "move-right" : "move-wrong") : held === i ? "is-cursor is-held" : ""}`}
+      data-testid="sort-item"
+    >
+      {q.items[i].label}
+    </button>
+  );
+  const tray = q.items.map((_, i) => i).filter((i) => shown[i] == null);
+  return (
+    <Frame info={info} moveType={q.type} testId="sort-panel">
+      <p className="mb-1.5 px-1 font-pixel text-[8px] text-[#9d93d6] sm:text-[9px]">
+        {locked ? "YOUR SORT" : held === null ? (tray.length ? "TAP AN ITEM, THEN ITS BIN" : "ALL PLACED: FIRE, OR TAP ONE TO MOVE IT") : "NOW TAP ITS BIN"}
+      </p>
+      {tray.length > 0 && (
+        <div className="mb-2 flex min-h-11 flex-wrap gap-1.5" role="group" aria-label="To sort">
+          {tray.map(chip)}
+        </div>
+      )}
+      <div className="grid gap-1.5" role="group" aria-label="Bins">
+        {q.bins.map((bin, b) => {
+          const t = LAYER_BIN[bin] ? TYPE_INFO[LAYER_BIN[bin]] : null;
+          const inBin = q.items.map((_, i) => i).filter((i) => shown[i] === b);
+          return (
+            <div
+              key={bin}
+              onClick={() => tapBin(b)}
+              className={`flex min-h-12 items-stretch gap-1.5 border-[3px] border-[#3b3175] bg-[#0b0818] p-1 ${!locked && held !== null ? "cursor-pointer border-dashed border-[#ffd257]" : ""}`}
+              data-testid="sort-bin"
+            >
+              <button
+                type="button"
+                disabled={locked || held === null}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  tapBin(b);
+                }}
+                className="w-[6.5rem] shrink-0 border-2 border-[#0b0818] px-1.5 text-left font-pixel text-[8px] leading-tight sm:w-32 sm:text-[9px]"
+                style={{ background: t?.color ?? "#3b3175", color: t?.ink ?? "#fff" }}
+                aria-label={`Put in ${bin}`}
+              >
+                {bin.toUpperCase()}
+              </button>
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">{inBin.map(chip)}</div>
+            </div>
+          );
+        })}
+      </div>
+      {!locked && <FireButton disabled={tray.length > 0} onClick={() => onSubmit({ kind: "sort", bins: placed })} />}
     </Frame>
   );
 }
