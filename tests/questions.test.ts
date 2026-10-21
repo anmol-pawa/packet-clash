@@ -260,6 +260,12 @@ describe("the bank", () => {
       "aloha-max": "18.4% and 36.8%",
       "manchester-clock": "Every bit has a mid-bit transition, so the receiver can recover the clock even in a long run of identical bits",
       "switch-vs-hub": "A hub is one collision domain; each switch port is its own collision domain",
+      "switch-learning": "It learns the source MAC address and arrival port of every frame it receives",
+      "switch-flood-which": "A frame to the broadcast address FF:FF:FF:FF:FF:FF, A frame whose destination MAC is not in the table",
+      "vlan-purpose": "Splits one physical switch into separate broadcast domains",
+      "vlan-trunk": "An IEEE 802.1Q tag (4 bytes with the 12-bit VLAN ID) is inserted in the Ethernet header",
+      "stp-why": "Redundant links create loops, and Ethernet frames have no TTL, so broadcasts would circulate forever (a broadcast storm)",
+      "stp-root": "The lowest bridge ID wins: the priority (default 32768), with the MAC address breaking ties",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

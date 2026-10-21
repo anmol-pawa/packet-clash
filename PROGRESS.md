@@ -361,3 +361,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 324 tests, `build:pages` (124 files precached). Playwright on the static export at 1280×800 and iPhone 14 in gym 2: the battle renders, no console errors, no horizontal overflow; I reviewed both screenshots.
 - Note: this session was assigned the branch `claude/blissful-mendel-kt8lz5`; the work is pushed to it and to `main` (the protocol deploys from main).
 - Next: 2.2c Switches (MAC-learning simulator, VLANs and trunking, STP).
+
+## 2026-10-21 (23:10 IST): 2.2c Switches
+- Main was green (CI and Pages for aa816a4 passed), and there was no lock.
+- **Solvers** (`lib/net/switching.ts`): `simulateSwitch` (learn the source, flood broadcasts and unknowns, forward known destinations, filter when the destination is behind the arrival port, with the table after every frame), STP `electRoot` (lowest priority, then MAC) and `blockedLinks` (links − (switches − 1)), `vlanDomains` and the 802.1Q 1522-byte maximum frame.
+- **Generators** (`content/questions/switchGenerators.ts`, 5 new, 36 total on gym 2's chapter): how many of 4 frames flood (numeric, per-frame explanation), where frame 4 goes (MCQ), the STP root bridge, blocked links after STP, and broadcast domains across a trunk. **Bank** (6 new link cards, 45 total): self-learning, which frames flood (multi-select), VLAN purpose, 802.1Q trunk tags, why STP, root election.
+- Tests: 12 new in `tests/switching.test.ts` (346 total): a hand-derived flood/forward/filter sequence, host moves, bridge-ID ordering, triangle/mesh blocked counts, and over 300 seeds each generator's answer is recomputed independently from its own prompt. The 6 new bank answers are pinned.
+- Verified: lint, typecheck, 346 tests, `build:pages` (124 files precached). Playwright on the static export of gym 2 at 1280×800 and iPhone 14: the battle renders, no console errors, no horizontal overflow; I reviewed the screenshot. The new question kinds are text-only, so they use the existing panels.
+- Next: 2.2d Gym 2 concept lessons.
