@@ -250,6 +250,16 @@ describe("the bank", () => {
       "ethernet-fcs": "A CRC-32 over the frame",
       "internet-checksum-users": "The IPv4 header, UDP segments, TCP segments",
       "crc-burst": "Bursts of up to r bits",
+      "ethernet-sizes": "64 and 1518 bytes",
+      "arp-request-frame": "Broadcast frame to FF:FF:FF:FF:FF:FF; B replies by unicast",
+      "arp-off-subnet": "The MAC of the default gateway",
+      "csma-cd-order":
+        "1. Sense the channel until it is idle  2. Transmit the frame while listening  3. Detect a collision and send a jam signal  4. Wait a random backoff of K × 512 bit times  5. Sense the channel and retransmit",
+      "csma-ca-why": "Radios cannot transmit and listen on the same channel at once, and distant stations may not hear each other",
+      "hidden-terminal": "The hidden terminal problem: B's CTS, which C hears, makes C stay quiet while A sends",
+      "aloha-max": "18.4% and 36.8%",
+      "manchester-clock": "Every bit has a mid-bit transition, so the receiver can recover the clock even in a long run of identical bits",
+      "switch-vs-hub": "A hub is one collision domain; each switch port is its own collision domain",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);
