@@ -245,6 +245,11 @@ describe("the bank", () => {
       "pdu-link": "Frame",
       "hub-layer": "Hub",
       "devices-to-layers": "Network: Router; Link: Switch, Bridge; Physical: Repeater, Hub",
+      "parity-two-flips": "Nothing wrong: the error goes undetected",
+      "two-d-parity": "Detect it and correct it",
+      "ethernet-fcs": "A CRC-32 over the frame",
+      "internet-checksum-users": "The IPv4 header, UDP segments, TCP segments",
+      "crc-burst": "Bursts of up to r bits",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

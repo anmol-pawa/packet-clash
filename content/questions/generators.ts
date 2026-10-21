@@ -16,6 +16,7 @@ import {
 } from "@/lib/net/basics";
 import { blockSize, broadcastOf, formatIp, maskOf, usableHosts, type Cidr } from "@/lib/net/ipv4";
 import { randInt, rng, shuffled } from "@/lib/rng";
+import { ERROR_GENERATORS } from "./errorGenerators";
 
 const pick = <T>(r: () => number, xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];
 
@@ -499,4 +500,5 @@ export const GENERATORS: readonly Generator[] = [
   prefixForHosts,
   networkAddress,
   broadcastAddress,
+  ...ERROR_GENERATORS,
 ];
