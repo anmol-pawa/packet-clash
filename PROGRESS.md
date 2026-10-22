@@ -465,3 +465,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 18 in `tests/application.test.ts`. K&R Figs. 2.18/2.19 (8 DNS messages cold, both modes), the §2.2.5 access-link example (15 req/s × 1 Mbit on 15 Mbps = 1.0, 0.6 with a 40% hit rate), and each generator over 300 seeds is recomputed independently from its own id. The test caught a real bug: rounding the request rate up could push utilisation to exactly 1.0, so it now rounds down.
 - Verified: lint, typecheck, full test suite, `build:pages` (134 files precached). Numeric questions on existing panels, so no new screenshots.
 - Next: 2.6b Gym 6 hand-written cards.
+
+## 2026-10-22 (16:15 IST): 2.6b Gym 6 hand-written cards
+- Main was green (no lock).
+- **Bank** (12 new application cards): DNS record types (sort), iterative lookup order, recursive vs iterative, DNS port 53, HTTP status classes (sort), HTTP/1.1 vs 2 vs 3 transports, idempotent methods (multi), cookies (Set-Cookie/Cookie), conditional GET and 304 (order), SMTP vs IMAP vs POP3 (sort), DHCP ports 67/68, FTP and SSH facts (multi).
+- Tests: all 12 answers pinned in `tests/questions.test.ts` (443 tests in all).
+- Verified: lint, typecheck, 443 tests, `build:pages` (134 files precached). Text-only cards on existing panels, so no new screenshots.
+- Next: 2.6c Gym 6 concept lessons (DNS resolution, HTTP/1.1 vs 2 vs 3 timelines, DORA).

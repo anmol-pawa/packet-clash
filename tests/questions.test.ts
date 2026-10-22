@@ -301,6 +301,21 @@ describe("the bank", () => {
       aimd: "1. Slow start: cwnd doubles every RTT  2. cwnd reaches ssthresh, switch to congestion avoidance  3. Congestion avoidance: cwnd grows by 1 MSS per RTT  4. Three duplicate ACKs: ssthresh and cwnd are halved",
       "gbn-vs-sr": "Go-Back-N resends 3, 4 and 5; Selective Repeat buffers 4 and 5 and resends only 3",
       "head-of-line": "TCP delivers bytes in order, so one lost segment holds back later data that already arrived, HTTP/2 multiplexes streams over one TCP connection, so a loss can stall all of them, QUIC, over UDP, retransmits per stream so a loss stalls only that stream",
+      "dns-record-types": "Name → IPv4 address: A; Name → IPv6 address: AAAA; Name → another name: CNAME; Domain → mail server: MX",
+      "dns-resolution-order":
+        "1. Ask a root server, which refers it to the .com TLD servers  2. Ask a .com TLD server, which refers it to example.com's authoritative server  3. Ask the authoritative server, which returns the A record  4. Return the answer to the host and cache it",
+      "dns-recursive-vs-iterative": "A recursive query; the local server then queries iteratively",
+      "dns-transport-port": "53",
+      "http-status-classes":
+        "2xx Success: 200 OK; 3xx Redirection: 301 Moved Permanently, 304 Not Modified; 4xx Client error: 403 Forbidden, 404 Not Found; 5xx Server error: 500 Internal Server Error, 503 Service Unavailable",
+      "http-versions": "HTTP/1.1 over TCP, HTTP/2 over TCP, HTTP/3 over QUIC (UDP)",
+      "http-idempotent": "GET, PUT, DELETE",
+      "cookie-header": "It sends a Set-Cookie header; the browser returns it in a Cookie header on later requests",
+      "conditional-get":
+        "1. The cache sends GET with If-Modified-Since (or If-None-Match with an ETag)  2. The origin server checks whether the object changed  3. The server replies 304 Not Modified with no body  4. The cache serves its stored copy to the client",
+      "mail-protocols": "Sending mail (push): SMTP; Reading mail (pull): IMAP, POP3",
+      "dhcp-ports": "UDP; the server listens on 67 and the client on 68",
+      "ssh-ftp": "FTP uses a control connection on port 21 and a separate data connection, SSH runs over TCP port 22 and encrypts the whole session",
       "dijkstra-steps":
         "1. Set the source's cost to 0 and every other node's to infinity  2. Settle the unsettled node with the smallest cost  3. Relax its neighbours: lower D(v) if D(u) + c(u,v) is smaller  4. Repeat until every node is settled",
     };
