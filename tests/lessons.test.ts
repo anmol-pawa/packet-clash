@@ -3,6 +3,7 @@ import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsF
 import { TOWNS } from "@/content/world";
 import { TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
+import { tcpSteps } from "@/game/engine/tcpMachine";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
 import { hammingSyndrome } from "@/lib/net/errors";
 import { ACTIVE_OPEN_CLOSE, PASSIVE_OPEN_CLOSE, TCP_TRANSITIONS } from "@/lib/net/transport";
@@ -245,5 +246,35 @@ describe("lesson figures", () => {
     BURST.forEach((n, u) => expect(order.filter((x) => x === u)).toHaveLength(n));
     // TDM needs a slot for every user in every frame, so idle slots go out empty
     expect(order.length).toBeLessThan(TDM_FRAMES * BURST.length);
+  });
+});
+
+describe("animated TCP state machine", () => {
+  const steps = tcpSteps();
+  const legal = (from: string, to: string) => TCP_TRANSITIONS.some(([f, , t]) => f === from && t === to);
+
+  it("starts at CLOSED / LISTEN and ends with the client's TIME_WAIT timeout", () => {
+    expect(steps[0]).toMatchObject({ client: "CLOSED", server: "LISTEN", seg: null });
+    expect(steps[steps.length - 2]).toMatchObject({ client: "TIME_WAIT", server: "CLOSED" });
+    expect(steps[steps.length - 1]).toMatchObject({ client: "CLOSED", server: "CLOSED", seg: null });
+    expect(steps).toHaveLength(TCP_FLOW.length + 2);
+  });
+
+  it("only makes transitions the TCP state machine allows", () => {
+    for (let i = 1; i < steps.length; i++)
+      for (const side of ["client", "server"] as const)
+        if (steps[i][side] !== steps[i - 1][side]) expect(legal(steps[i - 1][side], steps[i][side]), `${side} step ${i}`).toBe(true);
+  });
+
+  it("walks each side through exactly the textbook state lists", () => {
+    for (const side of ["client", "server"] as const) {
+      const seen = steps.map((s) => s[side]).filter((s, i, a) => i === 0 || s !== a[i - 1]);
+      expect(seen).toEqual(side === "client" ? ACTIVE_OPEN_CLOSE : PASSIVE_OPEN_CLOSE.slice(1));
+    }
+  });
+
+  it("explains every step and the lesson links to the page", () => {
+    for (const s of steps) expect(s.note.length).toBeGreaterThan(30);
+    expect(lessonsFor(5).find((l) => l.id === "tcp-connection")?.tool?.href).toBe("/tcp");
   });
 });

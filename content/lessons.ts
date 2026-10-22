@@ -27,6 +27,8 @@ export interface Lesson {
   paras: string[];
   /** A worked example, one line per step. */
   example?: { title: string; lines: string[] };
+  /** An interactive page that goes with the card. */
+  tool?: { href: string; label: string };
 }
 
 const ms = (s: number) => `${+(s * 1000).toFixed(3)} ms`;
@@ -407,6 +409,7 @@ export const LESSONS: Record<number, Lesson[]> = {
       id: "tcp-connection",
       title: "Handshake and teardown",
       figure: "tcpflow",
+      tool: { href: "/tcp", label: "STEP THROUGH IT ▶" },
       caption: "Three segments to open, four to close.",
       paras: [
         "TCP is connection-oriented: before data flows, both sides agree on starting sequence numbers (ISNs). The client sends a SYN with its ISN, the server answers SYN+ACK with its own ISN and an ack of the client's ISN + 1, and the client's ACK completes it. A SYN or FIN consumes one sequence number, which is why every ack is \"+1\".",

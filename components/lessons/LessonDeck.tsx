@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { SpriteDef } from "@/lib/pixel";
 import { PixelSprite } from "@/components/ui/PixelSprite";
@@ -81,6 +82,11 @@ export function LessonDeck({ town, lessons, done, aside }: { town: Town; lessons
             {p}
           </p>
         ))}
+        {l.tool && (
+          <Link href={l.tool.href} className="pixel-button flex min-h-12 items-center justify-center px-3 py-3 text-xs">
+            {l.tool.label}
+          </Link>
+        )}
         {l.example && (
           <section className="rounded-[4px] border-2 border-dashed border-[#5a5196] px-3 py-2">
             <h2 className="font-pixel text-[9px] text-[#ffd257] sm:text-[10px]">{l.example.title.toUpperCase()}</h2>

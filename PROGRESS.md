@@ -449,3 +449,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 6 new (421 total): both sides' state trails equal the TCP state lists and every step is a legal transition, GBN 12 vs SR 9 send orders, K&R utilisation, the cwnd series and example lines.
 - Verified: lint, typecheck, 421 tests, `build:pages` (125 files precached). Playwright on the static export at 1280×800 and iPhone 14 on `/lessons?n=5`: no console errors, no horizontal overflow; reviewed screenshots and fixed an overlapping DATA label, a clipped legend and missing loss markers.
 - Next: 2.5d the animated TCP state machine.
+
+## 2026-10-22 (14:15 IST): 2.5d The animated TCP state machine
+- Main was green (no lock). This finishes 2.5 Transport.
+- **Engine** (`game/engine/tcpMachine.ts`): `tcpSteps()` derives both sides' states step by step from the same `TCP_FLOW` segments as the lesson figure (start CLOSED/LISTEN, seven segments, then the TIME_WAIT timeout), each with an explanatory note.
+- **Page** `/tcp` (`components/lessons/TcpMachine.tsx`): client and server state columns (past states dimmed, current one gold), the segment in flight (gold for setup, orange for teardown) sliding in from the sender, a note box, and BACK / RESET / NEXT in a sticky bottom bar. Honours reduced motion. The "Handshake and teardown" lesson card now has a STEP THROUGH IT button (new optional `tool` on `Lesson`).
+- Tests: 4 new (425 total): start and end states, every state change is a legal `TCP_TRANSITIONS` edge, each side's visited states equal the textbook active/passive lists, notes present and the lesson links to `/tcp`.
+- Verified: lint, typecheck, 425 tests, `build:pages` (134 files precached). Playwright on the static export at 1280×800 and iPhone 14, stepping through all steps: no console errors, no horizontal overflow; reviewed screenshots.
+- Next: 2.6 Application layer (split it first: DNS resolution solver/generators).

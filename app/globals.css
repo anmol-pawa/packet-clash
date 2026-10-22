@@ -109,7 +109,19 @@ body {
   animation: rise-in 0.4s steps(4) both;
 }
 
+@keyframes seg-right {
+  from { opacity: 0; transform: translateX(-36px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes seg-left {
+  from { opacity: 0; transform: translateX(36px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.tcp-seg-right { animation: seg-right 0.45s steps(6) both; }
+.tcp-seg-left { animation: seg-left 0.45s steps(6) both; }
+
 @media (prefers-reduced-motion: reduce) {
+  .tcp-seg-right, .tcp-seg-left { animation: none; }
   .blink, .bob, .bob-small, .badge-pop, .spin-rays, .twinkle, .rise-in { animation: none; }
   .twinkle { opacity: 1; }
 }
