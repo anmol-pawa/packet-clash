@@ -441,3 +441,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: all 12 answers pinned in `tests/questions.test.ts` (415 tests; they sit in the single expected-answers test).
 - Verified: lint, typecheck, 415 tests, `build:pages` (125 files precached). Text-only cards on existing panels, so no new screenshots.
 - Next: 2.5c Gym 5 concept lessons (handshake/teardown state machine, GBN/SR window, cwnd sawtooth) plus the animated state machine.
+
+## 2026-10-22 (13:15 IST): 2.5c Gym 5 concept lessons
+- Main was green (no lock). Split the animated state machine out as 2.5d.
+- **Cards** (`content/lessons.ts`, gym 5): handshake and teardown (ISNs 100/300, data ack 301), sliding windows (GBN vs SR on 8 packets, window 4, packet 2 lost; K&R §3.4 utilisation 0.027% stop-and-wait vs 0.080% with a window of 3, 3,751 packets to fill the pipe), and the congestion-control sawtooth (Reno, ssthresh 8, triple dup ACK at RTT 8, timeout at RTT 13). Every number comes from `lib/net/transport`.
+- **Art** (`game/art/lessons.ts`): `tcpFlowFigure` (client/server timelines, gold handshake and orange teardown arrows, the state each side enters), `windowFigure` (shaded packet bricks coloured sent/lost/resent/discarded/buffered with the window bracket) and `cwndFigure` (cwnd bars per RTT coloured by slow start vs avoidance, dashed ssthresh, loss markers). All on `/dev/sprites`. Caught a half-pixel coordinate bug (markers silently not drawn) from the screenshot.
+- Tests: 6 new (421 total): both sides' state trails equal the TCP state lists and every step is a legal transition, GBN 12 vs SR 9 send orders, K&R utilisation, the cwnd series and example lines.
+- Verified: lint, typecheck, 421 tests, `build:pages` (125 files precached). Playwright on the static export at 1280×800 and iPhone 14 on `/lessons?n=5`: no console errors, no horizontal overflow; reviewed screenshots and fixed an overlapping DATA label, a clipped legend and missing loss markers.
+- Next: 2.5d the animated TCP state machine.

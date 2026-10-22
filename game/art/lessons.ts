@@ -2,6 +2,7 @@ import { TYPE_INFO, type PacketType } from "@/game/engine/types";
 import { crc, hammingCoverage, hammingEncode } from "@/lib/net/errors";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstraSteps, type Graph } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate, type Route } from "@/lib/net/addressing";
+import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissions, type TcpState } from "@/lib/net/transport";
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import type { SpriteDef } from "@/lib/pixel";
@@ -785,5 +786,210 @@ export function bgpFigure(): SpriteDef {
   c.ctext(mid, 55, "AS4 TELLS AS1 " + looped.join(" "), INK);
   const ok = acceptsAsPath(BGP_CHAIN[0], looped);
   c.ctext(mid, 63, ok ? "ACCEPTED" : "REJECTED", ok ? "#4fc26a" : "#e0564c");
+  return c.sprite();
+}
+
+/** The handshake card: the client opens with ISN 100, the server answers with ISN 300. */
+export const HANDSHAKE_DEMO = { clientIsn: 100, serverIsn: 300 };
+
+export interface FlowEvent {
+  from: "client" | "server";
+  /** Text lines drawn above the arrow. */
+  lines: string[];
+  /** The sender's new state, if this segment changes it. */
+  send?: TcpState;
+  /** The receiver's new state, if this segment changes it. */
+  recv?: TcpState;
+  /** Handshake segments are gold, teardown ones orange. */
+  phase: "open" | "close";
+}
+
+const hs = handshake(HANDSHAKE_DEMO.clientIsn, HANDSHAKE_DEMO.serverIsn);
+const segLines = (i: number): string[] => [hs[i].flags.replace("+", " "), `SEQ ${hs[i].seq}`, ...(hs[i].ack === null ? [] : [`ACK ${hs[i].ack}`])];
+
+/** Setup then teardown, one event per segment, with the state each side moves to. */
+export const TCP_FLOW: readonly FlowEvent[] = [
+  { from: "client", lines: segLines(0), send: "SYN_SENT", recv: "SYN_RCVD", phase: "open" },
+  { from: "server", lines: segLines(1), recv: "ESTABLISHED", phase: "open" },
+  { from: "client", lines: segLines(2), recv: "ESTABLISHED", phase: "open" },
+  { from: "client", lines: ["FIN"], send: "FIN_WAIT_1", recv: "CLOSE_WAIT", phase: "close" },
+  { from: "server", lines: ["ACK"], recv: "FIN_WAIT_2", phase: "close" },
+  { from: "server", lines: ["FIN"], send: "LAST_ACK", recv: "TIME_WAIT", phase: "close" },
+  { from: "client", lines: ["ACK"], recv: "CLOSED", phase: "close" },
+];
+
+/** The states one side walks through, top to bottom, including the start and the final CLOSED after TIME_WAIT. */
+export function stateTrail(side: "client" | "server"): TcpState[] {
+  const trail: TcpState[] = [side === "client" ? "CLOSED" : "LISTEN"];
+  for (const e of TCP_FLOW) {
+    const mine = e.from === side;
+    const next = mine ? e.send : e.recv;
+    if (next && next !== trail[trail.length - 1]) trail.push(next);
+  }
+  if (side === "client") trail.push("CLOSED"); // after 2 MSL in TIME_WAIT
+  return trail;
+}
+
+const TIMELINE = "#3b3370";
+const GOLD = "#ffd257";
+const ORANGE = "#f0a03a";
+
+/** The TCP card: the three-way handshake, then the four-segment teardown, with each side's states. */
+export function tcpFlowFigure(): SpriteDef {
+  const w = 160;
+  const cx = 48;
+  const sx = 112;
+  const slot = (e: FlowEvent) => e.lines.length * 6 + 11;
+  const gap = 18;
+  const total = 20 + TCP_FLOW.reduce((a, e) => a + slot(e), 0) + gap + 18;
+  const c = new Canvas(w, total);
+  c.brick(cx - 16, 1, 32, 13, ramp("APPLICATION"));
+  c.ctext(cx, 5, "CLIENT", INK);
+  c.brick(sx - 16, 1, 32, 13, ramp("TRANSPORT"));
+  c.ctext(sx, 5, "SERVER", INK);
+  c.vline(cx, 15, total - 15, TIMELINE);
+  c.vline(sx, 15, total - 15, TIMELINE);
+  const stateColor = (s: TcpState) => (s === "ESTABLISHED" ? "#4fc26a" : s === "CLOSED" ? DIM : s === "TIME_WAIT" ? ORANGE : INK);
+  const label = (side: "client" | "server", y: number, s: TcpState) => {
+    const t = s.replace(/_/g, " ");
+    c.text(side === "client" ? cx - 4 - microWidth(t) : sx + 5, y - 2, t, stateColor(s));
+  };
+  label("client", 19, "CLOSED");
+  label("server", 19, "LISTEN");
+  let y = 22;
+  TCP_FLOW.forEach((e, i) => {
+    if (i === 3) {
+      c.hline(cx + 3, y + 3, sx - cx - 6, DIM, 2);
+      c.ctext((cx + sx) / 2, y + 6, "DATA", DIM);
+      y += gap;
+    }
+    const col = e.phase === "open" ? GOLD : ORANGE;
+    e.lines.forEach((ln, k) => c.ctext((cx + sx) / 2, y + k * 6, ln, k === 0 ? INK : DIM));
+    const ys = y + e.lines.length * 6 + 2;
+    const yr = ys + 5;
+    const [x0, x1] = e.from === "client" ? [cx + 1, sx - 1] : [sx - 1, cx + 1];
+    const dir = x1 > x0 ? 1 : -1;
+    for (let x = x0; x !== x1 + dir; x += dir) c.set(x, Math.round(ys + ((yr - ys) * (x - x0)) / (x1 - x0)), col);
+    for (let k = 1; k <= 3; k++) {
+      c.set(x1 - dir * k, yr - k, col);
+      c.set(x1 - dir * k, yr + k, col);
+    }
+    const sender: "client" | "server" = e.from;
+    const receiver = sender === "client" ? "server" : "client";
+    if (e.send) label(sender, ys, e.send);
+    if (e.recv) label(receiver, yr, e.recv);
+    y += slot(e);
+  });
+  c.ctext((cx + sx) / 2, y + 2, "2 MSL", DIM);
+  label("client", y + 5, "CLOSED");
+  return c.sprite();
+}
+
+/** The window card: 8 packets, a window of 4, packet 2 lost once. */
+export const WINDOW_DEMO = { packets: 8, window: 4, lost: 2 };
+
+export type SendKind = "sent" | "lost" | "resent" | "discarded" | "buffered";
+export interface Send {
+  pkt: number;
+  kind: SendKind;
+}
+
+/**
+ * Transmissions in order. The window has slid to `lost`..`lost + w − 1` when
+ * the loss happens, so everything up to `lost + w − 1` has been sent. Go-Back-N
+ * discards the packets after the hole and resends all of them; Selective
+ * Repeat buffers them and resends only the hole.
+ */
+export function windowSends(proto: "gbn" | "sr", { packets: n, window: w, lost }: typeof WINDOW_DEMO = WINDOW_DEMO): Send[] {
+  const end = Math.min(n, lost + w);
+  const out: Send[] = [];
+  for (let p = 0; p < end; p++) out.push({ pkt: p, kind: p < lost ? "sent" : p === lost ? "lost" : proto === "gbn" ? "discarded" : "buffered" });
+  for (let p = lost; p < (proto === "gbn" ? end : lost + 1); p++) out.push({ pkt: p, kind: "resent" });
+  for (let p = end; p < n; p++) out.push({ pkt: p, kind: "sent" });
+  return out;
+}
+
+export function windowFigure(): SpriteDef {
+  const bw = 11;
+  const rows = [["GO BACK N", "gbn", goBackNTransmissions(WINDOW_DEMO.packets, WINDOW_DEMO.window, WINDOW_DEMO.lost)], ["SELECTIVE REPEAT", "sr", selectiveRepeatTransmissions(WINDOW_DEMO.packets)]] as const;
+  const maxLen = Math.max(...rows.map(([, p]) => windowSends(p).length));
+  const w = maxLen * bw + 8;
+  const rowH = 36;
+  const c = new Canvas(w, rows.length * rowH + 30);
+  c.panel();
+  const kindColor: Record<SendKind, string> = { sent: "#4f8fe8", lost: "#e0564c", resent: "#f0a03a", discarded: "#5a5196", buffered: "#4fc26a" };
+  rows.forEach(([title, proto, count], r) => {
+    const y0 = 3 + r * rowH;
+    c.text(4, y0, title, INK);
+    const sends = windowSends(proto);
+    c.text(w - 4 - microWidth(`${count} SENDS`), y0, `${count} SENDS`, GOLD);
+    // the window as it stands when the loss happens
+    const wx = 4 + WINDOW_DEMO.lost * bw;
+    c.hline(wx, y0 + 9, WINDOW_DEMO.window * bw - 1, DIM);
+    c.vline(wx, y0 + 9, 3, DIM);
+    c.vline(wx + WINDOW_DEMO.window * bw - 2, y0 + 9, 3, DIM);
+    sends.forEach((s, i) => {
+      const x = 4 + i * bw;
+      c.brick(x, y0 + 13, bw - 1, 12, [lighten(kindColor[s.kind], 0.35), kindColor[s.kind], darken(kindColor[s.kind], 0.25), darken(kindColor[s.kind], 0.5)]);
+      c.ctext(x + (bw - 1) / 2, y0 + 16, String(s.pkt), s.kind === "discarded" ? DIM : INK);
+      if (s.kind === "lost") {
+        for (let k = 0; k < 7; k++) {
+          c.set(x + 1 + k, y0 + 27 + (k % 2), "#e0564c");
+        }
+      }
+    });
+  });
+  let lx = 4;
+  (["sent", "lost", "resent", "discarded", "buffered"] as const).forEach((k, i) => {
+    const ly = rows.length * rowH + 8 + (i < 3 ? 0 : 8);
+    if (i === 3) lx = 4;
+    c.rect(lx, ly, 4, 4, kindColor[k]);
+    c.text(lx + 6, ly - 1, k.toUpperCase(), DIM);
+    lx += 6 + microWidth(k) + 5;
+  });
+  return c.sprite();
+}
+
+/** The congestion-control card: Reno from 1 MSS with ssthresh 8, a triple duplicate ACK at RTT 8 and a timeout at RTT 13. */
+export const CWND_DEMO = { rounds: 18, ssthresh: 8, losses: { 8: "dup3", 13: "timeout" } as const };
+
+export function cwndFigure(): SpriteDef {
+  const { cwnd, ssthresh } = cwndSeries(CWND_DEMO);
+  const unit = 4;
+  const pitch = 8;
+  const x0 = 12;
+  const plotH = 14 * unit;
+  const top = 14;
+  const w = x0 + CWND_DEMO.rounds * pitch + 4;
+  const c = new Canvas(w, top + plotH + 24);
+  c.panel();
+  const base = top + plotH;
+  c.text(3, 3, "CWND IN MSS", INK);
+  const ss = "#4f8fe8";
+  const ca = "#f0a03a";
+  cwnd.forEach((v, t) => {
+    const col = v < ssthresh[t] ? ss : ca;
+    const x = x0 + t * pitch;
+    c.brick(x, base - v * unit - 1, pitch - 1, v * unit + 1, [lighten(col, 0.35), col, darken(col, 0.25), darken(col, 0.5)]);
+  });
+  // ssthresh, dashed, as it stands in each round
+  ssthresh.forEach((v, t) => c.hline(x0 + t * pitch - 1, base - v * unit - 1, pitch + 1, "#ffffff", 2));
+  c.hline(x0 - 2, base, w - x0, DIM);
+  c.vline(x0 - 2, top - 2, plotH + 3, DIM);
+  [1, 8, 13].forEach((v) => c.text(x0 - 5 - microWidth(String(v)), base - v * unit - 4, String(v), DIM));
+  const mark = (t: number, text: string) => {
+    const x = x0 + t * pitch + Math.floor((pitch - 1) / 2);
+    c.ctext(Math.min(x, w - 2 - Math.floor(microWidth(text) / 2)), base - cwnd[t] * unit - 9, text, "#e0564c");
+  };
+  mark(8, "3 DUP");
+  mark(13, "TIMEOUT");
+  const ly = base + 6;
+  c.text(x0, ly, "RTT", DIM);
+  c.rect(x0 + 18, ly, 4, 4, ss);
+  c.text(x0 + 24, ly - 1, "SLOW START", DIM);
+  c.rect(x0 + 70, ly, 4, 4, ca);
+  c.text(x0 + 76, ly - 1, "AVOID", DIM);
+  c.hline(x0 + 100, ly + 2, 8, "#ffffff", 2);
+  c.text(x0 + 110, ly - 1, "SSTHRESH", DIM);
   return c.sprite();
 }

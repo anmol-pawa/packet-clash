@@ -28,7 +28,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { chipSprite, tagSprite } from "@/game/art/headers";
 import { encapsulate } from "@/game/engine/encap";
-import { bellmanFordFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, vlsmFigure } from "@/game/art/lessons";
+import { bellmanFordFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, cwndFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, tcpFlowFigure, vlsmFigure, windowFigure } from "@/game/art/lessons";
 import { silhouette } from "@/lib/pixel";
 
 const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
@@ -277,6 +277,9 @@ function LessonSection({ scale }: { scale: number }) {
     ["bellman-ford", bellmanFordFigure()],
     ["count to infinity", countToInfinityFigure()],
     ["bgp as path", bgpFigure()],
+    ["tcp handshake and teardown", tcpFlowFigure()],
+    ["gbn vs sr", windowFigure()],
+    ["cwnd sawtooth", cwndFigure()],
   ] as const;
   return (
     <section className="flex flex-col gap-3">

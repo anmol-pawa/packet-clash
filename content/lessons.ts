@@ -1,8 +1,9 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { BF_DEST, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { BF_DEST, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstra, dijkstraSteps, nextHop, pathTo } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate } from "@/lib/net/addressing";
 import { blockSize, broadcastOf, formatCidr, formatIp, hostRange, parseCidr, parseIp, usableHosts } from "@/lib/net/ipv4";
+import { ackAfter, cwndSeries, fullPipeWindow, goBackNTransmissions, handshake, selectiveRepeatTransmissions, windowUtilization } from "@/lib/net/transport";
 import { crc, crcOk, hammingSyndrome } from "@/lib/net/errors";
 import { backoffChoices, minFrameBits } from "@/lib/net/link";
 import { simulateSwitch } from "@/lib/net/switching";
@@ -15,7 +16,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd";
 
 export interface Lesson {
   id: string;
@@ -88,6 +89,26 @@ const ctiPoison = afterLinkChange(CTI_GRAPH, "A", "A", "B", Infinity, { poison: 
 const bgpPaths = asPaths(BGP_CHAIN);
 const bgpLoop = bgpPaths[bgpPaths.length - 1];
 const showCost = (v: number) => (v === Infinity ? "∞" : String(v));
+
+// gym 5: the handshake and teardown, Go-Back-N vs Selective Repeat with packet 2 lost, Reno's cwnd over 18 RTTs
+const hsSegs = handshake(HANDSHAKE_DEMO.clientIsn, HANDSHAKE_DEMO.serverIsn);
+const DATA_BYTES = 200;
+const dataAck = ackAfter(HANDSHAKE_DEMO.clientIsn, DATA_BYTES);
+const gbnSends = windowSends("gbn");
+const srSends = windowSends("sr");
+const sendList = (list: { pkt: number }[]) => list.map((s) => s.pkt).join(" ");
+const gbnCount = goBackNTransmissions(WINDOW_DEMO.packets, WINDOW_DEMO.window, WINDOW_DEMO.lost);
+const srCount = selectiveRepeatTransmissions(WINDOW_DEMO.packets);
+// K&R §3.4: 8000-bit packets on a 1 Gbps link with a 30 ms round trip
+const KR_BITS = 8000;
+const KR_BPS = 1e9;
+const KR_RTT = 0.03;
+const uStop = windowUtilization(KR_BITS, KR_BPS, KR_RTT, 1);
+const uThree = windowUtilization(KR_BITS, KR_BPS, KR_RTT, 3);
+const pipeWindow = fullPipeWindow(KR_BITS, KR_BPS, KR_RTT);
+const pct = (u: number) => `${(u * 100).toFixed(3)}%`;
+const cw = cwndSeries(CWND_DEMO);
+const lossRounds = Object.keys(CWND_DEMO.losses).map(Number);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -381,6 +402,63 @@ export const LESSONS: Record<number, Lesson[]> = {
       },
     },
   ],
+  5: [
+    {
+      id: "tcp-connection",
+      title: "Handshake and teardown",
+      figure: "tcpflow",
+      caption: "Three segments to open, four to close.",
+      paras: [
+        "TCP is connection-oriented: before data flows, both sides agree on starting sequence numbers (ISNs). The client sends a SYN with its ISN, the server answers SYN+ACK with its own ISN and an ack of the client's ISN + 1, and the client's ACK completes it. A SYN or FIN consumes one sequence number, which is why every ack is \"+1\".",
+        "Closing is per direction. The side that closes first sends a FIN, gets an ACK (FIN_WAIT_2), and later receives the other side's FIN, which it ACKs. It then waits in TIME_WAIT for 2·MSL so the last ACK can be retransmitted if lost and old segments die out. The other side only needs that final ACK to reach CLOSED.",
+      ],
+      example: {
+        title: `ISNs ${HANDSHAKE_DEMO.clientIsn} (client) and ${HANDSHAKE_DEMO.serverIsn} (server)`,
+        lines: [
+          ...hsSegs.map((s) => `${s.from === "client" ? "Client" : "Server"} sends ${s.flags}, seq ${s.seq}${s.ack === null ? "" : `, ack ${s.ack}`}.`),
+          `The client then sends ${DATA_BYTES} bytes starting at seq ${hsSegs[2].seq}; the server acknowledges ${dataAck} (${hsSegs[2].seq} + ${DATA_BYTES}).`,
+        ],
+      },
+    },
+    {
+      id: "sliding-window",
+      title: "Sliding windows: GBN and SR",
+      figure: "window",
+      caption: "The same loss, two recoveries.",
+      paras: [
+        "Stop-and-wait sends one packet per round trip, so a fast long link sits idle. A sliding window lets the sender keep up to N unacknowledged packets in flight; the window slides forward as acks arrive.",
+        "When a packet is lost, Go-Back-N's receiver accepts only in-order packets and discards the rest, so on a timeout the sender resends the lost packet and everything after it in the window. Selective Repeat's receiver buffers out-of-order packets and acks each one, so only the lost packet is resent. GBN is simpler; SR wastes less bandwidth but needs a buffer and a window of at most half the sequence space.",
+      ],
+      example: {
+        title: `${WINDOW_DEMO.packets} packets, window ${WINDOW_DEMO.window}, packet ${WINDOW_DEMO.lost} lost once`,
+        lines: [
+          `Go-Back-N sends ${sendList(gbnSends)}: ${gbnCount} transmissions.`,
+          `Selective Repeat sends ${sendList(srSends)}: ${srCount} transmissions.`,
+          `Utilisation (K&R §3.4: ${n(KR_BITS)}-bit packets, 1 Gbps, 30 ms RTT): stop-and-wait ${pct(uStop)}, window of 3 ${pct(uThree)}.`,
+          `Filling that pipe would take ${n(pipeWindow)} packets in flight.`,
+        ],
+      },
+    },
+    {
+      id: "congestion-control",
+      title: "Congestion control: the sawtooth",
+      figure: "cwnd",
+      caption: "cwnd per round trip: double, add one, cut.",
+      paras: [
+        "Flow control protects the receiver (rwnd); congestion control protects the network (cwnd). The sender may have min(cwnd, rwnd) bytes in flight. cwnd starts at 1 MSS and doubles every RTT in slow start until it reaches ssthresh, then grows by 1 MSS per RTT (additive increase).",
+        "On three duplicate ACKs Reno treats the loss as mild: ssthresh = cwnd/2 and cwnd = ssthresh (multiplicative decrease, fast recovery). On a timeout the network looks badly congested: ssthresh = cwnd/2 and cwnd falls to 1 MSS to slow-start again. Tahoe drops to 1 MSS in both cases. The additive-increase, multiplicative-decrease pattern draws the sawtooth.",
+      ],
+      example: {
+        title: `Reno, ssthresh ${CWND_DEMO.ssthresh}, loss events at RTT ${lossRounds.join(" and ")}`,
+        lines: [
+          `Slow start: cwnd = ${cw.cwnd.slice(0, 4).join(", ")} MSS, capped at ssthresh ${CWND_DEMO.ssthresh}.`,
+          `Additive increase: ${cw.cwnd.slice(4, lossRounds[0] + 1).join(", ")} MSS, one more each RTT.`,
+          `Triple duplicate ACK at cwnd ${cw.cwnd[lossRounds[0]]}: ssthresh = ${cw.ssthresh[lossRounds[0] + 1]}, cwnd = ${cw.cwnd[lossRounds[0] + 1]}.`,
+          `Timeout at cwnd ${cw.cwnd[lossRounds[1]]}: ssthresh = ${cw.ssthresh[lossRounds[1] + 1]}, cwnd = ${cw.cwnd[lossRounds[1] + 1]}, then slow start again.`,
+        ],
+      },
+    },
+  ],
 };
 
 export const lessonsFor = (gym: number): Lesson[] => LESSONS[gym] ?? [];
@@ -395,4 +473,4 @@ export function markLessonsSeen(seen: readonly number[], gym: number): number[] 
 }
 
 // exported for tests
-export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList, dijSteps, dijRes, bfRounds, ctiPlain, ctiPoison, bgpPaths };
+export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList, dijSteps, dijRes, bfRounds, ctiPlain, ctiPoison, bgpPaths, hsSegs, dataAck, gbnSends, srSends, gbnCount, srCount, uStop, uThree, pipeWindow, cw };

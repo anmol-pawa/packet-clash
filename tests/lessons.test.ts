@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { bellmanFordFigure, bgpFigure, countToInfinityFigure, dijkstraFigure, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
 import { hammingSyndrome } from "@/lib/net/errors";
+import { ACTIVE_OPEN_CLOSE, PASSIVE_OPEN_CLOSE, TCP_TRANSITIONS } from "@/lib/net/transport";
 import { parseSprite } from "@/lib/pixel";
 
 describe("lesson content", () => {
@@ -164,6 +165,57 @@ describe("lesson content", () => {
     expect(lines).toEqual(["AS2 receives AS_PATH 1.", "AS3 receives AS_PATH 2 1.", "AS4 receives AS_PATH 3 2 1.", "If AS4 passed it on to AS1, the path would be 4 3 2 1. It contains AS1, so AS1 rejects it."]);
   });
 
+  it("gives gym 5 its three cards: handshake and teardown, sliding windows, congestion control", () => {
+    expect(lessonsFor(5).map((l) => l.figure)).toEqual(["tcpflow", "window", "cwnd"]);
+  });
+
+  it("draws the handshake with seq 100/300 and the data ack 301", () => {
+    const lines = lessonsFor(5).find((l) => l.id === "tcp-connection")!.example!.lines;
+    expect(lines.slice(0, 3)).toEqual(["Client sends SYN, seq 100.", "Server sends SYN+ACK, seq 300, ack 101.", "Client sends ACK, seq 101, ack 301."]);
+    expect(lines[3]).toBe("The client then sends 200 bytes starting at seq 101; the server acknowledges 301 (101 + 200).");
+    expect(WORKED.dataAck).toBe(301);
+  });
+
+  it("walks both sides through the real TCP states, every step a legal transition", () => {
+    expect(stateTrail("client")).toEqual(ACTIVE_OPEN_CLOSE.slice(0, 6).concat("CLOSED"));
+    expect(stateTrail("server")).toEqual(PASSIVE_OPEN_CLOSE.slice(1));
+    for (const side of ["client", "server"] as const) {
+      const trail = side === "client" ? stateTrail(side) : ["CLOSED" as const, ...stateTrail(side)];
+      trail.slice(1).forEach((to, i) => expect(TCP_TRANSITIONS.some(([from, , t]) => from === trail[i] && t === to)).toBe(true));
+    }
+    expect(TCP_FLOW.filter((e) => e.phase === "open")).toHaveLength(3);
+    expect(TCP_FLOW.filter((e) => e.phase === "close")).toHaveLength(4);
+  });
+
+  it("sends 12 packets with Go-Back-N and 9 with Selective Repeat when packet 2 of 8 is lost in a window of 4", () => {
+    expect(WORKED.gbnSends.map((s) => s.pkt)).toEqual([0, 1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 7]);
+    expect(WORKED.srSends.map((s) => s.pkt)).toEqual([0, 1, 2, 3, 4, 5, 2, 6, 7]);
+    expect([WORKED.gbnSends.length, WORKED.srSends.length]).toEqual([WORKED.gbnCount, WORKED.srCount]);
+    // every packet is delivered, and the lost one is the only one dropped by the network
+    for (const proto of ["gbn", "sr"] as const) {
+      const sends = windowSends(proto);
+      expect(sends.filter((s) => s.kind === "lost")).toHaveLength(1);
+      expect(new Set(sends.map((s) => s.pkt)).size).toBe(WINDOW_DEMO.packets);
+    }
+  });
+
+  it("matches K&R's utilisation numbers: 0.00027 stop-and-wait, three times that with a window of 3", () => {
+    expect(WORKED.uStop).toBeCloseTo(0.00027, 5);
+    expect(WORKED.uThree).toBeCloseTo(3 * WORKED.uStop, 12);
+    expect(WORKED.pipeWindow).toBe(3751);
+    const lines = lessonsFor(5).find((l) => l.id === "sliding-window")!.example!.lines;
+    expect(lines[2]).toContain("stop-and-wait 0.027%, window of 3 0.080%");
+  });
+
+  it("plots Reno's cwnd: 1, 2, 4, 8, then +1 to 13, halve to 6, timeout to 1", () => {
+    expect(WORKED.cw.cwnd).toEqual([1, 2, 4, 8, 9, 10, 11, 12, 13, 6, 7, 8, 9, 10, 1, 2, 4, 5]);
+    const lines = lessonsFor(5).find((l) => l.id === "congestion-control")!.example!.lines;
+    expect(lines[0]).toBe("Slow start: cwnd = 1, 2, 4, 8 MSS, capped at ssthresh 8.");
+    expect(lines[1]).toBe("Additive increase: 9, 10, 11, 12, 13 MSS, one more each RTT.");
+    expect(lines[2]).toBe("Triple duplicate ACK at cwnd 13: ssthresh = 6, cwnd = 6.");
+    expect(lines[3]).toBe("Timeout at cwnd 10: ssthresh = 5, cwnd = 1, then slow start again.");
+  });
+
   it("opens the lessons before a gym only until they've been seen once", () => {
     expect(showLessonsFirst(1, [])).toBe(true);
     expect(showLessonsFirst(1, markLessonsSeen([], 1))).toBe(false);
@@ -178,7 +230,7 @@ describe("lesson content", () => {
 
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

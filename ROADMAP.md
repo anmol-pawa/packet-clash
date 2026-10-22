@@ -68,7 +68,8 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 - [ ] 2.5 Transport: UDP vs TCP, ports and sockets, the **3-way handshake and teardown** (animated state machine), sequence/ack number problems, flow control (sliding window, Go-Back-N, Selective Repeat simulations), **congestion control** (slow start, AIMD, fast retransmit/recovery: plot cwnd over RTTs).
   - [x] 2.5a Transport solvers and generators: `lib/net/transport` (sequence/ack numbers, handshake, TCP state machine, Go-Back-N vs Selective Repeat, window utilisation, flow control, per-RTT slow start/AIMD/Reno/Tahoe) with seven seeded gym 5 generators, checked against Kurose & Ross §3.4–3.7.
   - [x] 2.5b Gym 5 hand-written cards: UDP vs TCP, ports and sockets, handshake and teardown (TIME_WAIT, SYN flood), flow vs congestion control, fast retransmit, Nagle/delayed ACK, head-of-line blocking.
-  - [ ] 2.5c Gym 5 concept lessons: illustrated cards (handshake and teardown state machine, sliding window GBN/SR, cwnd sawtooth), plus the animated state machine.
+  - [x] 2.5c Gym 5 concept lessons: illustrated cards (handshake and teardown with TCP states, sliding window GBN/SR, cwnd sawtooth).
+  - [ ] 2.5d The animated TCP state machine: step through handshake and teardown, both sides' states highlighted, on its own page linked from the gym 5 lessons.
 - [ ] 2.6 Application layer: DNS resolution (iterative vs recursive, order the steps, record types), HTTP/1.1 vs 2 vs 3, status codes, cookies, caching headers, REST, email (SMTP/IMAP), DHCP (DORA), FTP/SSH basics.
 - [ ] 2.7 Security: TLS 1.3 handshake ordering, symmetric vs asymmetric crypto, certificates and PKI, hashing and MACs, firewalls, VPNs, common attacks (MITM, DDoS, spoofing, XSS/CSRF at interview level).
 - [ ] 2.8 "What happens when you type a URL": a full end-to-end animated journey (DNS, ARP, TCP, TLS, HTTP, rendering) as an order-the-steps boss battle.
