@@ -82,7 +82,7 @@ export function StarterChoice() {
         }}
       />
       <header className="flex items-center justify-between font-pixel text-[10px] text-[#9d93d6]">
-        <Link href="/" className="py-2 hover:text-white">
+        <Link href="/" className="back-link py-2 hover:text-white">
           ◀ TITLE
         </Link>
         <h1 className="text-xs text-[#ffd257] sm:text-sm">CHOOSE A PARTNER</h1>

@@ -14,6 +14,8 @@ export function PixelSprite({ frames, scale = 4, frameMs = 500, className = "", 
 
   useEffect(() => {
     if (grids.length < 2) return;
+    // reduced motion: hold the first frame instead of cycling
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(() => setFrame((f) => (f + 1) % grids.length), frameMs);
     return () => clearInterval(id);
   }, [grids.length, frameMs]);

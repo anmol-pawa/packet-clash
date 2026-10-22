@@ -546,3 +546,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/daily.test.ts` (day arithmetic across month/year/leap, same deck per day and different next day, every daily question answerable, streak rules, normalisation); 498 total.
 - Verified: lint, typecheck, 498 tests, `build:pages` (157 files precached). Playwright at 1280x800 and iPhone 14 against the built export: played a full run to the result screen, no console errors, no horizontal overflow; reviewed screenshots.
 - Next: 3.2 Accessibility and performance pass on iPhone.
+
+## 2026-10-22 (night): 3.2 Accessibility pass
+- Main was green (no stale lock).
+- **CSS** (`app/globals.css`): `:focus-visible` accent ring; `@media (pointer: coarse)` gives buttons, summaries and the new `.back-link` a 44 px minimum height; text-size-adjust; the reduced-motion block now also zeroes every other animation/transition/smooth scroll.
+- **Components**: `PixelSprite` holds frame 0 under reduced motion; battle header is a real `<h1>` (it was the only page without one); the eight `◀` back links use `.back-link`.
+- Audit: Playwright over all 13 routes on the built export at 1280x800 and iPhone 14: no console errors, no horizontal overflow, no unnamed buttons/links, no sub-40 px tap targets on iPhone (desktop mouse still has compact back links by design).
+- Verified: lint, typecheck, 498 tests, `build:pages` (157 files precached). Caveat: the headless Chromium here renders the Pixi battle scene blank/partial even on the unchanged baseline (software WebGL), so battle art was not judged this run; changes are CSS/markup only.
+- Next: no unchecked roadmap tasks remain; check ROADMAP.md for new sections.

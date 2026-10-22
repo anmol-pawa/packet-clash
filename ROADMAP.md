@@ -90,4 +90,4 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 ## 3. Polish
 
 - [x] 3.1 Daily challenge (date-seeded) and streaks: `/daily`, five questions per local day, streak and best saved, linked from the map.
-- [ ] 3.2 Accessibility and performance pass on iPhone.
+- [x] 3.2 Accessibility and performance pass on iPhone: focus ring, 44px touch targets, global reduced-motion, one h1 per page.

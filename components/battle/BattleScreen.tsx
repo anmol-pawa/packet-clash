@@ -265,13 +265,13 @@ export function BattleScreen({ gym }: { gym?: Town }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4">
       <div className="flex items-center justify-between font-pixel text-[10px] text-[#9d93d6]">
-        <Link href={gym ? "/map" : "/"} className="py-2 hover:text-white">
+        <Link href={gym ? "/map" : "/"} className="back-link py-2 hover:text-white">
           {gym ? "◀ MAP" : "◀ TITLE"}
         </Link>
         <span className="flex items-center gap-3">
-          <span>
+          <h1>
             {gym ? `${gym.name.toUpperCase()} GYM` : "DEMO BATTLE"} · TURN {Math.max(1, s.turn)}
-          </span>
+          </h1>
           <button type="button" className="pixel-button px-2 py-2 text-[9px] pointer-coarse:min-h-11" onClick={() => setChart(true)} data-testid="open-type-chart">
             TYPES
           </button>
