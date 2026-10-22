@@ -4,6 +4,7 @@ import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstraSte
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate, type Route } from "@/lib/net/addressing";
 import { DHCP_DORA, dhcpTimers, pageLoadRtts, type HttpMode } from "@/lib/net/application";
 import { diffieHellman } from "@/lib/net/security";
+import { URL_JOURNEY, connectRtts, journeyRtts, type JourneyPhase, type Transport } from "@/lib/net/journey";
 import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissions, type TcpState } from "@/lib/net/transport";
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
@@ -1332,5 +1333,125 @@ export function dhFigure(): SpriteDef {
   c.brick(bx - 14, 86, 28, 11, key);
   c.ctext(bx, 89, `KEY ${ex.secret}`, INK);
   c.ctext(80, 102, `EAVESDROPPER SEES ONLY P G ${ex.publicA} ${ex.publicB}`, DIM);
+  return c.sprite();
+}
+
+/** The URL journey card: the nine steps in order, coloured by phase. */
+export const JOURNEY_LABELS: Record<string, string> = {
+  parse: "PARSE URL AND CHECK CACHES",
+  "dns-cache": "BROWSER AND OS DNS CACHE",
+  arp: "ARP FOR THE GATEWAY MAC",
+  dns: "DNS QUERY TO THE RESOLVER",
+  tcp: "TCP THREE-WAY HANDSHAKE",
+  tls: "TLS HANDSHAKE",
+  http: "HTTP GET REQUEST",
+  response: "200 OK WITH THE HTML",
+  render: "PARSE HTML AND RENDER",
+};
+const PHASE_TYPE: Record<JourneyPhase, PacketType> = { browser: "APPLICATION", link: "LINK", dns: "APPLICATION", tcp: "TRANSPORT", tls: "SECURITY", http: "APPLICATION", render: "NETWORK" };
+const PHASE_NAME: Record<JourneyPhase, string> = { browser: "BROWSER", link: "LAN", dns: "DNS", tcp: "TCP", tls: "TLS", http: "HTTP", render: "RENDER" };
+
+export function journeyFigure(): SpriteDef {
+  const rowH = 14;
+  const top = 5;
+  const c = new Canvas(160, top + URL_JOURNEY.length * rowH + 4);
+  c.panel();
+  c.vline(14, top + 6, (URL_JOURNEY.length - 1) * rowH, TIMELINE);
+  URL_JOURNEY.forEach((step, i) => {
+    const y = top + i * rowH;
+    c.brick(8, y, 13, 12, ramp(PHASE_TYPE[step.phase]));
+    c.ctext(14, y + 3, String(i + 1), INK);
+    c.text(26, y + 1, JOURNEY_LABELS[step.id], INK);
+    c.text(26, y + 7, PHASE_NAME[step.phase], DIM);
+  });
+  return c.sprite();
+}
+
+/** The RTT budget card: round trips before the first byte of HTML, cold versus warm. */
+export const BUDGET_ROWS: { label: string; cache: "none" | "tld" | "answer" | "browser"; transport: Transport }[] = [
+  { label: "COLD HTTPS TLS 1.3", cache: "none", transport: "tcp-tls13" },
+  { label: "TLD CACHED", cache: "tld", transport: "tcp-tls13" },
+  { label: "DNS CACHED AT RESOLVER", cache: "answer", transport: "tcp-tls13" },
+  { label: "DNS CACHED IN BROWSER", cache: "browser", transport: "tcp-tls13" },
+  { label: "WARM QUIC 0-RTT", cache: "browser", transport: "quic-0rtt" },
+];
+
+function stackedRows(c: Canvas, rows: { label: string; parts: [number, string][] }[], x0: number, y0: number, unit: number, rowH: number) {
+  const shade = (col: string): readonly string[] => [lighten(col, 0.35), col, darken(col, 0.25), darken(col, 0.5)];
+  rows.forEach(({ label, parts }, r) => {
+    const y = y0 + r * rowH;
+    const total = parts.reduce((a, [n]) => a + n, 0);
+    c.text(x0, y, label, INK);
+    let x = x0;
+    for (const [n, col] of parts) {
+      if (n > 0) c.brick(x, y + 7, n * unit - 1, 9, shade(col));
+      x += n * unit;
+    }
+    c.text(x + 2, y + 9, `${total}`, GOLD);
+  });
+}
+
+const DNS_COL = "#e0b13a";
+const CONNECT_COL = "#4f8fe8";
+const REQ_COL = "#4fc26a";
+
+export function budgetFigure(): SpriteDef {
+  const rowH = 21;
+  const x0 = 6;
+  const unit = 12;
+    const c = new Canvas(160, 4 + BUDGET_ROWS.length * rowH + 22);
+  c.panel();
+  stackedRows(
+    c,
+    BUDGET_ROWS.map(({ label, cache, transport }) => {
+      const j = journeyRtts(cache, transport);
+      return { label, parts: [[j.dns, DNS_COL], [j.connect, CONNECT_COL], [j.request, REQ_COL]] as [number, string][] };
+    }),
+    x0,
+    5,
+    unit,
+    rowH,
+  );
+  const ly = 5 + BUDGET_ROWS.length * rowH + 3;
+  c.rect(x0, ly, 4, 4, DNS_COL);
+  c.text(x0 + 6, ly - 1, "DNS", DIM);
+  c.rect(x0 + 28, ly, 4, 4, CONNECT_COL);
+  c.text(x0 + 34, ly - 1, "CONNECT", DIM);
+  c.rect(x0 + 72, ly, 4, 4, REQ_COL);
+  c.text(x0 + 78, ly - 1, "REQUEST", DIM);
+  c.text(c.w - 22, ly - 1, "RTTS", DIM);
+  return c.sprite();
+}
+
+/** The transport card: round trips to set up a connection, TCP with TLS 1.2 or 1.3 against QUIC. */
+export const CONNECT_ROWS: { label: string; transport: Transport }[] = [
+  { label: "TCP AND TLS 1.2", transport: "tcp-tls12" },
+  { label: "TCP AND TLS 1.3", transport: "tcp-tls13" },
+  { label: "QUIC ONE HANDSHAKE", transport: "quic" },
+  { label: "QUIC 0-RTT RESUME", transport: "quic-0rtt" },
+];
+
+export function connectFigure(): SpriteDef {
+  const rowH = 24;
+  const x0 = 6;
+  const unit = 16;
+  const c = new Canvas(160, 5 + CONNECT_ROWS.length * rowH + 14);
+  c.panel();
+  stackedRows(
+    c,
+    CONNECT_ROWS.map(({ label, transport }) => {
+      const tcp = transport.startsWith("tcp") ? 1 : 0;
+      const total = connectRtts(transport);
+      return { label, parts: [[tcp, "#9a7be0"], [total - tcp, "#e0564c"], [1, REQ_COL]] as [number, string][] };
+    }),
+    x0,
+    5,
+    unit,
+    rowH,
+  );
+  const ly = 5 + CONNECT_ROWS.length * rowH + 2;
+  c.text(x0, ly, "TCP", "#9a7be0");
+  c.text(x0 + 20, ly, "TLS OR QUIC", "#e0564c");
+  c.text(x0 + 66, ly, "REQUEST", REQ_COL);
   return c.sprite();
 }

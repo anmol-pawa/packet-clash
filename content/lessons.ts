@@ -1,5 +1,6 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
 import { CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstra, dijkstraSteps, nextHop, pathTo } from "@/lib/net/routing";
@@ -18,7 +19,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect";
 
 export interface Lesson {
   id: string;
@@ -120,6 +121,12 @@ const dnsTld = dnsCost("iterative", "tld");
 const dnsAnswer = dnsCost("iterative", "answer");
 const httpRtts = { np: pageLoadRtts("non-persistent", HTTP_DEMO.objects), p: pageLoadRtts("persistent", HTTP_DEMO.objects), pl: pageLoadRtts("pipelined", HTTP_DEMO.objects), np4: pageLoadRtts("non-persistent", HTTP_DEMO.objects, 4) };
 const dhcp = dhcpTimers(DHCP_DEMO.leaseHours * 3600);
+
+const jCold = journeyRtts("none", "tcp-tls13");
+const jTld = journeyRtts("tld", "tcp-tls13");
+const jAnswer = journeyRtts("answer", "tcp-tls13");
+const jBrowser = journeyRtts("browser", "tcp-tls13");
+const jQuic = journeyRtts("browser", "quic-0rtt");
 
 const dh = diffieHellman(DH_DEMO.p, DH_DEMO.g, DH_DEMO.a, DH_DEMO.b);
 
@@ -572,6 +579,56 @@ export const LESSONS: Record<number, Lesson[]> = {
           `Bob sends ${DH_DEMO.g}^${DH_DEMO.b} mod ${DH_DEMO.p} = ${dh.publicB}.`,
           `Alice computes ${dh.publicB}^${DH_DEMO.a} mod ${DH_DEMO.p} = ${dh.secret}; Bob computes ${dh.publicA}^${DH_DEMO.b} mod ${DH_DEMO.p} = ${dh.secret}.`,
         ],
+      },
+    },
+  ],
+  8: [
+    {
+      id: "url-journey",
+      title: "Typing a URL: the whole journey",
+      figure: "journey",
+      caption: "Nine steps from the address bar to pixels, in order.",
+      paras: [
+        "The browser first parses the URL (scheme, host, port, path), checks its HSTS list and its HTTP cache, and looks for the IP address in its own and the OS DNS cache. Only a miss goes on the wire. The first packet out is a DNS query to the recursive resolver; because the resolver is off-link, the host sends it to the default gateway and so needs the gateway's MAC address, which is what ARP is for (broadcast request, unicast reply, then cached).",
+        "With the IP address the browser opens a TCP connection to port 443 (three-way handshake), runs the TLS handshake on top, then sends GET / inside the encrypted channel. Routers along the way forward on longest-prefix match and the home router's NAT rewrites the source address and port. The server, often behind a load balancer or CDN edge, answers 200 OK with the HTML, and the browser builds the DOM, fetches CSS, scripts and images over the same connection, and paints.",
+      ],
+      example: {
+        title: "The order to remember",
+        lines: URL_JOURNEY.map((st, i) => `${i + 1}. ${st.title}.`),
+      },
+    },
+    {
+      id: "rtt-budget",
+      title: "The round-trip budget",
+      figure: "budget",
+      caption: `Cold: ${jCold.total} round trips to the first byte; fully warm over QUIC: ${jQuic.total}.`,
+      paras: [
+        "Latency is mostly counted in round trips, not bandwidth. Before the first byte of HTML arrives you pay for the name lookup, the connection setup and the request itself. A cold lookup walks root, TLD and the authoritative server, so every cache level saves a round trip: a cached TLD server skips the root, a cached answer leaves only the trip to the resolver, and a browser cache hit costs nothing.",
+        "ARP is not in the count: it never leaves the LAN and is cached after the first packet. Each step also costs propagation and processing time, so a round trip to a distant server is far more expensive than one to a CDN edge nearby, which is one reason CDNs exist.",
+      ],
+      example: {
+        title: "HTTPS over TCP with TLS 1.3",
+        lines: [
+          `Cold: DNS ${jCold.dns} + TCP and TLS ${jCold.connect} + request ${jCold.request} = ${jCold.total} RTT.`,
+          `TLD server cached: ${jTld.dns} + ${jTld.connect} + ${jTld.request} = ${jTld.total} RTT.`,
+          `Answer cached at the resolver: ${jAnswer.dns} + ${jAnswer.connect} + ${jAnswer.request} = ${jAnswer.total} RTT.`,
+          `Address in the browser cache: ${jBrowser.dns} + ${jBrowser.connect} + ${jBrowser.request} = ${jBrowser.total} RTT.`,
+          `Warm QUIC with 0-RTT data: ${jQuic.dns} + ${jQuic.connect} + ${jQuic.request} = ${jQuic.total} RTT.`,
+        ],
+      },
+    },
+    {
+      id: "tls-quic",
+      title: "TLS 1.2 vs TLS 1.3 vs QUIC",
+      figure: "connect",
+      caption: `Connection setup: ${connectRtts("tcp-tls12")}, ${connectRtts("tcp-tls13")}, ${connectRtts("quic")} and ${connectRtts("quic-0rtt")} round trips.`,
+      paras: [
+        `TCP needs one round trip for its handshake and TLS 1.2 adds two more, ${connectRtts("tcp-tls12")} in all. TLS 1.3 trims its own handshake to one, so TCP with TLS 1.3 takes ${connectRtts("tcp-tls13")}. The request then costs one more round trip.`,
+        "QUIC runs over UDP and builds reliability, congestion control and TLS 1.3 into one protocol, so the transport and crypto handshakes happen together in a single round trip. Resuming a known server can send the request along with the first packet (0-RTT), at the price of replay risk for non-idempotent requests. QUIC streams are independent, which removes TCP's head-of-line blocking, and a connection ID lets it survive a change of IP address. HTTP/3 is HTTP over QUIC.",
+      ],
+      example: {
+        title: "Round trips before the request can be sent",
+        lines: [`TCP + TLS 1.2: 1 + 2 = ${connectRtts("tcp-tls12")}.`, `TCP + TLS 1.3: 1 + 1 = ${connectRtts("tcp-tls13")}.`, `QUIC: ${connectRtts("quic")}. QUIC resumption with 0-RTT: ${connectRtts("quic-0rtt")}.`],
       },
     },
   ],

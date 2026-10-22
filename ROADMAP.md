@@ -81,7 +81,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
 - [ ] 2.8 "What happens when you type a URL": a full end-to-end animated journey (DNS, ARP, TCP, TLS, HTTP, rendering) as an order-the-steps boss battle.
   - [x] 2.8a URL journey solver and generators: `lib/net/journey` (ordered steps, RTT cost of DNS + connection setup + request) with gym 8 generators and a `journey` topic.
   - [x] 2.8b Gym 8 hand-written cards: URL parts, full journey order, DNS before TCP, on-link/off-link and gateway MAC, DNS transport, NAT, CDN, HTTP cache, HSTS, repeat visits, render blocking.
-  - [ ] 2.8c Gym 8 concept lessons: illustrated cards (the whole journey as a timeline, RTT budget bars for cold vs warm, TLS 1.2 vs 1.3 vs QUIC).
+  - [x] 2.8c Gym 8 concept lessons: illustrated cards (the whole journey as a timeline, RTT budget bars for cold vs warm, TLS 1.2 vs 1.3 vs QUIC).
   - [ ] 2.8d Animated journey page (`/url`): step through the nine stages with packets travelling laptop → router → resolver → server, linked from the gym 8 lessons.
 - [ ] 2.9 Interview gauntlet: the top networking interview questions (TCP vs UDP, how DNS works, HTTP vs HTTPS, subnetting on the spot, load balancers L4 vs L7, CDN, WebSockets, NAT traversal) as a timed mock interview with a scorecard.
 

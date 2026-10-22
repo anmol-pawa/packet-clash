@@ -512,3 +512,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/journey.test.ts` (cached plain HTTP = 2 RTT as in K&R, cold DNS = 4 RTT = dnsCost messages/2, TLS 1.3 cold = 7, generators recomputed from ids, deck) plus all 13 card answers pinned in `tests/questions.test.ts` (476 total).
 - Verified: lint, typecheck, 476 tests, `build:pages` (134 files precached). Text-only cards on existing panels, so no new screenshots.
 - Next: 2.8c Gym 8 concept lessons (journey timeline, RTT budget bars, TLS 1.2 vs 1.3 vs QUIC figures).
+
+## 2026-10-22 (22:15 IST): 2.8c Gym 8 concept lessons
+- Main was green (no lock).
+- **Cards** (`content/lessons.ts`, gym 8): the nine-step URL journey (order from `URL_JOURNEY`), the round-trip budget (cold 7 / TLD cached 6 / answer cached 4 / browser cache 3 / warm QUIC 0-RTT 1, all from `journeyRtts`), TLS 1.2 vs 1.3 vs QUIC (3 / 2 / 1 / 0 setup round trips from `connectRtts`).
+- **Art** (`game/art/lessons.ts`): `journeyFigure` (nine phase-coloured numbered bricks), `budgetFigure` and `connectFigure` (stacked DNS / connect / request RTT bricks). On `/dev/sprites` and the lesson deck. Screenshots caught overlapping legend labels, fixed.
+- Tests: 4 new gym 8 tests (480 total), figures added to the sprite validity test.
+- Verified: lint, typecheck, 480 tests, `build:pages` (134 files precached). Playwright at 1280×800 and iPhone 14 on `/dev/sprites`: no console errors or horizontal overflow; reviewed screenshots.
+- Next: 2.8d animated journey page (`/url`), linked from the gym 8 lessons.

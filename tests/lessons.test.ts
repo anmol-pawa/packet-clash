@@ -3,7 +3,8 @@ import { TLS13_HANDSHAKE, diffieHellman, modPow } from "@/lib/net/security";
 import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
+import { BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
@@ -300,9 +301,33 @@ describe("gym 7 lessons", () => {
   });
 });
 
+describe("gym 8 lessons", () => {
+  it("has three cards: journey, round-trip budget, TLS vs QUIC", () => {
+    expect(lessonsFor(8).map((l) => l.figure)).toEqual(["journey", "budget", "connect"]);
+  });
+
+  it("labels every journey step and lists them in the solver's order", () => {
+    URL_JOURNEY.forEach((st) => expect(JOURNEY_LABELS[st.id]).toBeTruthy());
+    const lines = lessonsFor(8).find((l) => l.id === "url-journey")!.example!.lines;
+    expect(lines).toHaveLength(9);
+    expect(lines[0]).toBe("1. Parse the URL and check local caches.");
+  });
+
+  it("budgets 7 round trips cold, 6 with the TLD cached, 4 with the answer cached, 3 in the browser and 1 warm over QUIC", () => {
+    expect(BUDGET_ROWS.map((r) => journeyRtts(r.cache, r.transport).total)).toEqual([7, 6, 4, 3, 1]);
+    const lines = lessonsFor(8).find((l) => l.id === "rtt-budget")!.example!.lines;
+    expect(lines[0]).toBe("Cold: DNS 4 + TCP and TLS 2 + request 1 = 7 RTT.");
+    expect(lines[4]).toBe("Warm QUIC with 0-RTT data: 0 + 0 + 1 = 1 RTT.");
+  });
+
+  it("sets up TCP with TLS 1.2 in 3 round trips, TLS 1.3 in 2, QUIC in 1 and 0-RTT QUIC in 0", () => {
+    expect(CONNECT_ROWS.map((r) => connectRtts(r.transport))).toEqual([3, 2, 1, 0]);
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale
