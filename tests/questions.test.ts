@@ -278,6 +278,19 @@ describe("the bank", () => {
       apipa: "169.254.x.y (link-local, APIPA)",
       "ipv6-size": "128 bits as eight groups of four hex digits",
       "ipv6-vs-ipv4": "The base header is a fixed 40 bytes, There is no header checksum, The TTL field is renamed Hop Limit",
+      "ls-vs-dv": "Link-state routers flood every link cost to all routers and each runs Dijkstra on the full map; distance-vector routers only tell neighbours their own distance estimates",
+      "rip-infinity": "16",
+      "rip-update": "Its whole routing table every 30 seconds, over UDP port 520",
+      "ospf-cost": "10",
+      "ospf-areas": "To keep link-state flooding and each router's Dijkstra run small; every area connects to the backbone, area 0",
+      "ospf-dr": "Routers form adjacencies only with the DR and BDR instead of a full mesh of 10, so there is much less flooding",
+      "bgp-pathvector": "A router rejects any route whose AS_PATH already contains its own AS number",
+      "ebgp-ibgp": "eBGP runs between routers in different ASes; iBGP runs between routers in the same AS to spread the externally learned routes",
+      "bgp-policy": "Between ISPs, routes are chosen by business policy first (for example customer routes over peer routes over provider routes); AS-path length is only a later tie-breaker",
+      "default-route": "It matches every destination, Any longer matching prefix wins over it, A stub network or home router typically uses it to send everything unknown to its ISP",
+      "static-vs-dynamic": "A small stub network with a single exit, where the route never needs to change",
+      "dijkstra-steps":
+        "1. Set the source's cost to 0 and every other node's to infinity  2. Settle the unsettled node with the smallest cost  3. Relax its neighbours: lower D(v) if D(u) + c(u,v) is smaller  4. Repeat until every node is settled",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

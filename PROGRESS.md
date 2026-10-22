@@ -410,3 +410,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 20 in `tests/routing.test.ts` (382 total). Kurose & Ross Fig. 5.3 (u→z cost 4 via x,y; w = 3) and Fig. 5.6 (x–y–z: Dx(z) 7 then 3), a hand-derived count-to-infinity sequence (B/C: 3,2 → 3,4 → 5,4 → 5,6 …, 15 rounds), and over 300 seeds each generator is recomputed independently from its printed graph (Bellman-Ford vs Dijkstra, brute-force path enumeration for the hop-limited and convergence answers). The `pickDeck` leitner test hard-coded a 100-question cap, so it now asks for the whole pool.
 - Verified: lint, typecheck, 382 tests, `build:pages` (126 files precached). The new questions are text-only (numeric, MCQ, order) and use existing panels, so I took no new screenshots this run. "Fill the routing table" as a table-entry UI is not built; the numeric and order questions cover the same solver checks for now.
 - Next: 2.4b Gym 4 hand-written cards.
+
+## 2026-10-22 (09:15 IST): 2.4b Gym 4 hand-written cards
+- Main was green (no lock).
+- **Bank** (12 new routing cards, 12 on gym 4's chapter): link state vs distance vector, RIP infinity = 16 (numeric), RIP's 30 s full-table updates over UDP 520, OSPF cost from a 100 Mbps reference (10 Mbps → 10), OSPF areas and the area 0 backbone, the designated router (5 routers: 10 adjacencies in a full mesh vs DR/BDR), BGP AS_PATH loop prevention, eBGP vs iBGP, why BGP routes by policy first, the default route 0.0.0.0/0 (multi-select), static vs dynamic routes, and Dijkstra's steps (order). Correct answers are spread over all four positions.
+- Tests: all 12 answers pinned in `tests/questions.test.ts` (382 tests).
+- Verified: lint, typecheck, 382 tests, `build:pages` (126 files precached). Text-only cards on existing panels, so no new screenshots.
+- Next: 2.4c Gym 4 concept lessons (Dijkstra table steps, Bellman-Ford rounds, count-to-infinity, AS-level BGP paths).
