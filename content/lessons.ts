@@ -1,5 +1,6 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { CRC_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { BF_DEST, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstra, dijkstraSteps, nextHop, pathTo } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate } from "@/lib/net/addressing";
 import { blockSize, broadcastOf, formatCidr, formatIp, hostRange, parseCidr, parseIp, usableHosts } from "@/lib/net/ipv4";
 import { crc, crcOk, hammingSyndrome } from "@/lib/net/errors";
@@ -14,7 +15,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp";
 
 export interface Lesson {
   id: string;
@@ -76,6 +77,17 @@ const lpmDest = parseIp(LPM_DEMO.dest);
 const lpmMatches = LPM_DEMO.routes.filter((r) => longestPrefixMatch([r], lpmDest));
 const lpmWinner = longestPrefixMatch(LPM_DEMO.routes, lpmDest)!;
 const fragList = fragment(FRAG_DEMO.total, FRAG_DEMO.mtu);
+
+// gym 4: Dijkstra and Bellman-Ford on K&R Fig. 5.3, count-to-infinity on A-B-C, an AS_PATH along AS1..AS4
+const dijSteps = dijkstraSteps(ROUTE_DEMO, "A");
+const dijRes = dijkstra(ROUTE_DEMO, "A");
+const dijPath = pathTo(dijRes, "A", "F")!;
+const bfRounds = bellmanFordRounds(ROUTE_DEMO, BF_DEST);
+const ctiPlain = afterLinkChange(CTI_GRAPH, "A", "A", "B", Infinity).history;
+const ctiPoison = afterLinkChange(CTI_GRAPH, "A", "A", "B", Infinity, { poison: true }).history;
+const bgpPaths = asPaths(BGP_CHAIN);
+const bgpLoop = bgpPaths[bgpPaths.length - 1];
+const showCost = (v: number) => (v === Infinity ? "∞" : String(v));
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -296,6 +308,79 @@ export const LESSONS: Record<number, Lesson[]> = {
       },
     },
   ],
+  4: [
+    {
+      id: "dijkstra",
+      title: "Link state: Dijkstra",
+      figure: "dijkstra",
+      caption: "Each step settles the cheapest unsettled node.",
+      paras: [
+        "In link-state routing (OSPF) every router floods its links and costs, so all routers hold the same map and each runs Dijkstra on it. The algorithm grows a set N' of settled nodes outward from the source.",
+        "Each step: pick the node outside N' with the smallest D(v), add it to N', then for each of its neighbours w ask whether D(settled) + cost to w beats D(w). If so, update D(w) and remember the predecessor p(w). When every node is settled, the predecessors give the least-cost tree, and the first hop on each path is the forwarding-table entry.",
+      ],
+      example: {
+        title: "Kurose & Ross Fig. 5.3 (relabelled A–F), from A",
+        lines: [
+          `Settle order: ${dijRes.order.join(", ")} (B and E tie at 2, the lowest label goes first).`,
+          `After settling D, C improves from ${showCost(dijSteps[0].dist.C)} to ${showCost(dijSteps[1].dist.C)} through D and E becomes ${showCost(dijSteps[1].dist.E)}.`,
+          `Final costs: ${ROUTE_DEMO.nodes.map((n) => `${n} = ${dijRes.dist[n]}`).join(", ")}.`,
+          `Least-cost path to F: ${dijPath.join(" → ")}, cost ${dijRes.dist.F}, so A forwards F-bound packets to ${nextHop(dijRes, "A", "F")}.`,
+        ],
+      },
+    },
+    {
+      id: "bellman-ford",
+      title: "Distance vector: Bellman-Ford",
+      figure: "bellman",
+      caption: "Round h: the cheapest cost to F using at most h links.",
+      paras: [
+        "Distance-vector routing (RIP) has no map. Each router knows only its neighbours' costs and the distance vectors they send. It applies the Bellman-Ford equation: D(x → y) = min over neighbours v of [ c(x, v) + D(v → y) ].",
+        "Run it in synchronous rounds: after round h every router knows the best path of at most h links. Good news spreads one hop per round, and the tables settle after a round that changes nothing.",
+      ],
+      example: {
+        title: `Costs to ${BF_DEST} on the same graph`,
+        lines: [
+          ...bfRounds.slice(1).map((r, i) => `Round ${i + 1}: ${ROUTE_DEMO.nodes.map((n) => `${n} = ${showCost(r[n])}`).join(", ")}.`),
+          `Round ${bfRounds.length - 1} changes nothing, so the tables have settled after ${bfRounds.length - 2} rounds. The result matches Dijkstra.`,
+        ],
+      },
+    },
+    {
+      id: "count-to-infinity",
+      title: "Count to infinity",
+      figure: "cti",
+      caption: "A-B-C in a line, then the A-B link fails.",
+      paras: [
+        "Bad news travels slowly in distance-vector routing. When A–B fails, B no longer has a direct route to A, but C still advertises \"I can reach A in 2\". B believes C and picks 3 via C. Then C hears B's 3 and updates to 4, and the two bounce the cost upwards, two units per exchange.",
+        "RIP caps the damage by defining infinity as 16 hops, so the loop ends when the cost reaches 16. Poisoned reverse stops it earlier: C never advertises a route to A back to B, the neighbour it learned it from (or advertises it with cost infinity), so B cannot be fooled. Split horizon, triggered updates and hold-down timers help too.",
+      ],
+      example: {
+        title: "Costs to A after the link fails",
+        lines: [
+          `Without poison, (B, C) per round: ${ctiPlain.slice(0, 5).map((h) => `(${h.dist.B}, ${h.dist.C})`).join(" → ")} → … → (${ctiPlain[ctiPlain.length - 2].dist.B}, ${ctiPlain[ctiPlain.length - 2].dist.C}).`,
+          `That takes ${ctiPlain.length - 1} rounds before both reach RIP's infinity of 16.`,
+          `With poisoned reverse: ${ctiPoison.map((h) => `(${h.dist.B}, ${h.dist.C})`).join(" → ")}, done in ${ctiPoison.length - 1} rounds.`,
+        ],
+      },
+    },
+    {
+      id: "bgp-as-path",
+      title: "BGP: paths between ASes",
+      figure: "bgp",
+      caption: "Each AS prepends its number; a loop is rejected.",
+      paras: [
+        "The internet is thousands of autonomous systems (ASes), each run by one organisation and numbered. Inside an AS an IGP such as OSPF or RIP finds the best path. Between ASes, BGP is the one protocol, running over TCP port 179.",
+        "BGP is a path-vector protocol. A route carries the AS_PATH, the list of ASes it crossed, and each AS prepends its own number when it passes the route on. A router drops any route whose AS_PATH already contains its own AS, which prevents loops without counting to infinity. Among valid routes, local policy (prices, peering agreements) decides first and a short AS_PATH comes after.",
+      ],
+      example: {
+        title: `A prefix originating in AS${BGP_CHAIN[0]}`,
+        lines: [
+          ...BGP_CHAIN.slice(1).map((asn, i) => `AS${asn} receives AS_PATH ${bgpPaths[i].join(" ")}.`),
+          `If AS${BGP_CHAIN[BGP_CHAIN.length - 1]} passed it on to AS${BGP_CHAIN[0]}, the path would be ${bgpLoop.join(" ")}. It contains AS${BGP_CHAIN[0]}, so AS${BGP_CHAIN[0]} ${acceptsAsPath(BGP_CHAIN[0], bgpLoop) ? "accepts" : "rejects"} it.`,
+        ],
+      },
+    },
+  ],
 };
 
 export const lessonsFor = (gym: number): Lesson[] => LESSONS[gym] ?? [];
@@ -310,4 +395,4 @@ export function markLessonsSeen(seen: readonly number[], gym: number): number[] 
 }
 
 // exported for tests
-export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList };
+export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList, dijSteps, dijRes, bfRounds, ctiPlain, ctiPoison, bgpPaths };

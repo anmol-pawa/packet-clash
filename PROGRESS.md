@@ -417,3 +417,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: all 12 answers pinned in `tests/questions.test.ts` (382 tests).
 - Verified: lint, typecheck, 382 tests, `build:pages` (126 files precached). Text-only cards on existing panels, so no new screenshots.
 - Next: 2.4c Gym 4 concept lessons (Dijkstra table steps, Bellman-Ford rounds, count-to-infinity, AS-level BGP paths).
+
+## 2026-10-22 (10:15 IST): 2.4c Gym 4 concept lessons
+- Main was green (no lock). This finishes 2.4.
+- **Solvers** (`lib/net/routing.ts`): `dijkstraSteps` (the textbook N'/D(v)/p(v) table, one row per step), `asPaths` (eBGP AS_PATH prepending along a chain) and `acceptsAsPath` (loop prevention: reject a path containing your own AS).
+- **Content** (`content/lessons.ts`): four cards for Hopwood's gym: link state/Dijkstra, distance vector/Bellman-Ford, count to infinity (with poisoned reverse and RIP's 16), and BGP AS paths. Every line of each worked example comes from the solvers (K&R Fig. 5.3 relabelled A–F because the 3×5 micro font draws V/W like U/H).
+- **Art** (`game/art/lessons.ts`): four code-drawn figures: the Dijkstra table with newly settled and changed cells highlighted, the Bellman-Ford round table, count-to-infinity bars for B and C with and without poison side by side, and an AS1…AS4 chain whose AS_PATH grows with a rejected loop-back. All on `/dev/sprites`. Fixed a bug caught by the figure test: half-pixel coordinates silently dropped cells, so column widths are even.
+- Tests: 7 new (389 total): Table 5.1 rows (v/y tie settles v first), AS_PATH and loop rejection, gym 4's four cards, and each worked example's lines pinned (settle order, final costs, BF rounds, 15 rounds vs 2 with poison, AS paths).
+- Verified: lint, typecheck, 389 tests, `build:pages` (125 files precached). Playwright on the static export (with gyms 1–3 unlocked in the save) at 1280×800 and iPhone 14 on `/lessons?n=4`: no console errors, no horizontal overflow; reviewed screenshots and fixed overlapping value labels in the count-to-infinity figure.
+- Next: 2.5 Transport (split it first: handshake/teardown state machine solvers and generators first).

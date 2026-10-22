@@ -173,3 +173,45 @@ export function afterLinkChange(g: Graph, dest: string, a: string, b: string, co
   const settled = distanceVector(g, dest, o).history.at(-1)!;
   return distanceVector(withCost(g, a, b, cost), dest, { ...o, start: settled });
 }
+
+export interface DijkstraStep {
+  /** N': the nodes settled so far, in the order they joined. */
+  settled: string[];
+  /** D(v) and p(v) for every node after this step (Infinity / null until a path is known). */
+  dist: Record<string, number>;
+  prev: Record<string, string | null>;
+}
+
+/** Dijkstra as the textbook table: one row per step, step 0 being N' = {source}. */
+export function dijkstraSteps(g: Graph, source: string): DijkstraStep[] {
+  const dist: Record<string, number> = Object.fromEntries(g.nodes.map((n) => [n, Infinity]));
+  const prev: Record<string, string | null> = Object.fromEntries(g.nodes.map((n) => [n, null]));
+  const settled: string[] = [];
+  const steps: DijkstraStep[] = [];
+  dist[source] = 0;
+  for (;;) {
+    let u: string | null = null;
+    for (const n of g.nodes) if (!settled.includes(n) && dist[n] < Infinity && (u === null || dist[n] < dist[u] || (dist[n] === dist[u] && n < u))) u = n;
+    if (u === null) break;
+    settled.push(u);
+    for (const { node, cost } of neighbors(g, u)) {
+      if (!settled.includes(node) && dist[u] + cost < dist[node]) {
+        dist[node] = dist[u] + cost;
+        prev[node] = u;
+      }
+    }
+    steps.push({ settled: [...settled], dist: { ...dist }, prev: { ...prev } });
+  }
+  return steps;
+}
+
+/**
+ * eBGP AS_PATH along a chain of ASes: the origin (first) announces its prefix
+ * and each AS prepends its own number before passing it on.
+ */
+export function asPaths(chain: readonly number[]): number[][] {
+  return chain.map((_, i) => chain.slice(0, i + 1).reverse());
+}
+
+/** Loop prevention: a BGP speaker rejects any route whose AS_PATH already contains its own AS number. */
+export const acceptsAsPath = (myAs: number, path: readonly number[]): boolean => !path.includes(myAs);

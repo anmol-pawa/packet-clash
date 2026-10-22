@@ -28,7 +28,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { chipSprite, tagSprite } from "@/game/art/headers";
 import { encapsulate } from "@/game/engine/encap";
-import { crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, vlsmFigure } from "@/game/art/lessons";
+import { bellmanFordFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, vlsmFigure } from "@/game/art/lessons";
 import { silhouette } from "@/lib/pixel";
 
 const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
@@ -273,6 +273,10 @@ function LessonSection({ scale }: { scale: number }) {
     ["vlsm", vlsmFigure()],
     ["longest prefix", lpmFigure()],
     ["fragmentation", fragFigure()],
+    ["dijkstra", dijkstraFigure()],
+    ["bellman-ford", bellmanFordFigure()],
+    ["count to infinity", countToInfinityFigure()],
+    ["bgp as path", bgpFigure()],
   ] as const;
   return (
     <section className="flex flex-col gap-3">

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { bellmanFordFigure, bgpFigure, countToInfinityFigure, dijkstraFigure, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
 import { hammingSyndrome } from "@/lib/net/errors";
@@ -130,12 +130,47 @@ describe("lesson content", () => {
     expect(lines[4]).toBe("Offset 185 × 8 = 1480 bytes of data come before fragment 2.");
   });
 
+  it("gives gym 4 its four cards: Dijkstra, Bellman-Ford, count to infinity, BGP", () => {
+    expect(lessonsFor(4).map((l) => l.figure)).toEqual(["dijkstra", "bellman", "cti", "bgp"]);
+  });
+
+  it("settles K&R's graph (relabelled A–F) from A in the order A, D, B, E, C, F with A→F via D, E", () => {
+    expect(WORKED.dijRes.order).toEqual(["A", "D", "B", "E", "C", "F"]);
+    const lines = lessonsFor(4).find((l) => l.id === "dijkstra")!.example!.lines;
+    expect(lines[1]).toBe("After settling D, C improves from 5 to 4 through D and E becomes 2.");
+    expect(lines[2]).toBe("Final costs: A = 0, B = 2, C = 3, D = 1, E = 2, F = 4.");
+    expect(lines[3]).toBe("Least-cost path to F: A → D → E → F, cost 4, so A forwards F-bound packets to D.");
+  });
+
+  it("runs Bellman-Ford to F: costs by round, settled after 3 rounds", () => {
+    expect(WORKED.bfRounds).toHaveLength(5);
+    const lines = lessonsFor(4).find((l) => l.id === "bellman-ford")!.example!.lines;
+    expect(lines[0]).toBe("Round 1: A = ∞, B = ∞, C = 5, D = ∞, E = 2, F = 0.");
+    expect(lines[1]).toBe("Round 2: A = 10, B = 8, C = 3, D = 3, E = 2, F = 0.");
+    expect(lines[2]).toBe("Round 3: A = 4, B = 5, C = 3, D = 3, E = 2, F = 0.");
+    expect(lines[4]).toContain("settled after 3 rounds");
+  });
+
+  it("counts to infinity in 15 rounds without poison and 2 with it", () => {
+    expect(WORKED.ctiPlain.slice(0, 4).map((h) => [h.dist.B, h.dist.C])).toEqual([[1, 2], [3, 2], [3, 4], [5, 4]]);
+    const lines = lessonsFor(4).find((l) => l.id === "count-to-infinity")!.example!.lines;
+    expect(lines[1]).toBe("That takes 15 rounds before both reach RIP's infinity of 16.");
+    expect(lines[2]).toBe("With poisoned reverse: (1, 2) → (16, 2) → (16, 16), done in 2 rounds.");
+  });
+
+  it("builds AS_PATH 3 2 1 at AS4 and has AS1 reject 4 3 2 1", () => {
+    expect(WORKED.bgpPaths[2]).toEqual([3, 2, 1]);
+    const lines = lessonsFor(4).find((l) => l.id === "bgp-as-path")!.example!.lines;
+    expect(lines).toEqual(["AS2 receives AS_PATH 1.", "AS3 receives AS_PATH 2 1.", "AS4 receives AS_PATH 3 2 1.", "If AS4 passed it on to AS1, the path would be 4 3 2 1. It contains AS1, so AS1 rejects it."]);
+  });
+
   it("opens the lessons before a gym only until they've been seen once", () => {
     expect(showLessonsFirst(1, [])).toBe(true);
     expect(showLessonsFirst(1, markLessonsSeen([], 1))).toBe(false);
     expect(showLessonsFirst(2, [1])).toBe(true);
     expect(showLessonsFirst(2, [1, 2])).toBe(false);
     expect(showLessonsFirst(3, [1, 2])).toBe(true);
+    expect(showLessonsFirst(4, [1, 2, 3])).toBe(true);
     expect(showLessonsFirst(9, [])).toBe(false); // no cards yet
     expect(markLessonsSeen([3, 1], 1)).toEqual([1, 3]);
   });
@@ -143,7 +178,7 @@ describe("lesson content", () => {
 
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

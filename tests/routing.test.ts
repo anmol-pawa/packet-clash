@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { afterLinkChange, bellmanFordRounds, convergenceRounds, dijkstra, distanceVector, leastCostPathCounts, nextHop, pathTo, withCost, type Graph } from "@/lib/net/routing";
+import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, convergenceRounds, dijkstra, dijkstraSteps, distanceVector, leastCostPathCounts, nextHop, pathTo, withCost, type Graph } from "@/lib/net/routing";
 import { ROUTING_GENERATORS, countToInfinityGen, dvRoundsGen, firstHopGen, hopLimitedGen, leastCostGen, settleOrderGen } from "@/content/questions/routingGenerators";
 import { GENERATORS } from "@/content/questions/generators";
 import { answerText, type McqQuestion, type NumericQuestion, type OrderQuestion } from "@/game/engine/questions";
@@ -212,5 +212,24 @@ describe("routing generators", () => {
       else expect(q.answer).toBeGreaterThanOrEqual(5);
       expect(answerText(q)).toBe(String(q.answer));
     }
+  });
+});
+
+describe("Dijkstra table and AS paths", () => {
+  it("reproduces the Kurose & Ross Table 5.1 rows (the v/y tie settles v first)", () => {
+    const steps = dijkstraSteps(KR, "u");
+    expect(steps.map((s) => s.settled.join(""))).toEqual(["u", "ux", "uxv", "uxvy", "uxvyw", "uxvywz"]);
+    expect(steps[0].dist).toEqual({ u: 0, v: 2, w: 5, x: 1, y: Infinity, z: Infinity });
+    expect(steps[1].dist).toMatchObject({ v: 2, w: 4, y: 2, z: Infinity });
+    expect(steps[1].prev).toMatchObject({ w: "x", y: "x" });
+    expect(steps[3].dist).toMatchObject({ w: 3, z: 4 });
+    expect(steps[3].prev).toMatchObject({ w: "y", z: "y" });
+    expect(steps.at(-1)!.dist).toEqual(dijkstra(KR, "u").dist);
+  });
+
+  it("builds the AS_PATH by prepending and rejects a path containing the receiver's own AS", () => {
+    expect(asPaths([1, 2, 3, 4])).toEqual([[1], [2, 1], [3, 2, 1], [4, 3, 2, 1]]);
+    expect(acceptsAsPath(4, [3, 2, 1])).toBe(true);
+    expect(acceptsAsPath(1, [4, 3, 2, 1])).toBe(false);
   });
 });

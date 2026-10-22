@@ -6,9 +6,9 @@ import { ENCAP_STEPS, type Figure, type Lesson } from "@/content/lessons";
 import type { Town } from "@/content/world";
 import { BOSS_ART } from "@/game/art/bosses";
 import { chipSprite, tagSprite } from "@/game/art/headers";
-import { crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, vlsmFigure } from "@/game/art/lessons";
+import { bellmanFordFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, vlsmFigure } from "@/game/art/lessons";
 
-const FIGURES: Record<Exclude<Figure, "encap">, SpriteDef> = { layers: layerStackFigure(), switching: switchingFigure(), delays: delaysFigure(), crc: crcFigure(), hamming: hammingFigure(), csmacd: csmaFigure(), macLearn: macLearningFigure(), subnet: subnetFigure(), vlsm: vlsmFigure(), lpm: lpmFigure(), frag: fragFigure() };
+const FIGURES: Record<Exclude<Figure, "encap">, SpriteDef> = { layers: layerStackFigure(), switching: switchingFigure(), delays: delaysFigure(), crc: crcFigure(), hamming: hammingFigure(), csmacd: csmaFigure(), macLearn: macLearningFigure(), subnet: subnetFigure(), vlsm: vlsmFigure(), lpm: lpmFigure(), frag: fragFigure(), dijkstra: dijkstraFigure(), bellman: bellmanFordFigure(), cti: countToInfinityFigure(), bgp: bgpFigure() };
 
 /** The encapsulation card: the battle's header chips, one row per layer on the way down. */
 function EncapFigure() {

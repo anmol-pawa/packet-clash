@@ -1,5 +1,6 @@
 import { TYPE_INFO, type PacketType } from "@/game/engine/types";
 import { crc, hammingCoverage, hammingEncode } from "@/lib/net/errors";
+import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstraSteps, type Graph } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate, type Route } from "@/lib/net/addressing";
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
@@ -58,6 +59,11 @@ class Canvas {
     this.hline(x + 1, y + h - 3, w - 2, sh);
     this.hline(x + 1, y + h - 2, w - 2, deep);
     this.vline(x + w - 2, y + 2, h - 4, sh);
+  }
+  /** A dark panel with an outline, for figures that are mostly text. */
+  panel() {
+    this.rect(0, 0, this.w, this.h, OUTLINE);
+    this.rect(1, 1, this.w - 2, this.h - 2, "#1c1640");
   }
   sprite(): SpriteDef {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -613,5 +619,171 @@ export function fragFigure(): SpriteDef {
     const used = bar(lx + 1, y, f.totalLength - 20, DATA, 4);
     c.text(lx + used + 5, y + 2, "OFF " + f.offset + " MF " + (f.more ? 1 : 0), f.more ? INK : "#ffd257");
   });
+  return c.sprite();
+}
+
+/**
+ * Kurose & Ross Fig. 5.3, the graph the Dijkstra and Bellman-Ford cards work
+ * on, relabelled A–F (u→A, v→B, w→C, x→D, y→E, z→F) because the 3×5 font
+ * draws V/W like U/H.
+ */
+export const ROUTE_DEMO: Graph = {
+  nodes: ["A", "B", "C", "D", "E", "F"],
+  edges: [["A", "B", 2], ["A", "D", 1], ["A", "C", 5], ["B", "D", 2], ["B", "C", 3], ["C", "D", 3], ["C", "E", 1], ["D", "E", 1], ["E", "F", 2], ["C", "F", 5]],
+};
+
+const cost = (v: number) => (v === Infinity ? "INF" : String(v));
+const CHANGED = "#2a3f7a";
+
+/** The Dijkstra card: the textbook table of D(v) and p(v), one row per step, from A. */
+export function dijkstraFigure(): SpriteDef {
+  const steps = dijkstraSteps(ROUTE_DEMO, "A");
+  const cols = ROUTE_DEMO.nodes.filter((n) => n !== "A");
+  const lx = 2;
+  const cw = 20;
+  const x0 = lx + 28;
+  const rowH = 9;
+  const w = x0 + cols.length * cw + 2;
+  const h = 20 + steps.length * rowH + 2;
+  const c = new Canvas(w, h);
+  c.panel();
+  c.text(lx, 2, "N PRIME", DIM);
+  cols.forEach((n, i) => {
+    c.brick(x0 + i * cw + cw / 2 - 6, 1, 13, 10, ramp("NETWORK"));
+    c.ctext(x0 + i * cw + cw / 2, 3, n, TYPE_INFO.NETWORK.ink);
+  });
+  c.hline(lx, 12, w - 4, "#5a5196");
+  steps.forEach((st, r) => {
+    const y = 15 + r * rowH;
+    const last = st.settled[st.settled.length - 1];
+    c.text(lx, y, st.settled.join(""), r === steps.length - 1 ? "#ffd257" : INK);
+    cols.forEach((n, i) => {
+      const cx = x0 + i * cw + cw / 2;
+      if (st.settled.includes(n)) {
+        if (n === last) {
+          c.rect(cx - 9, y - 2, 18, 8, "#5a4a14");
+          c.ctext(cx, y, cost(st.dist[n]), "#ffd257");
+        }
+        return;
+      }
+      const before = r ? steps[r - 1] : null;
+      const changed = !before || before.dist[n] !== st.dist[n];
+      if (changed && st.dist[n] < Infinity) c.rect(cx - 9, y - 2, 18, 8, CHANGED);
+      c.ctext(cx, y, st.dist[n] === Infinity ? "INF" : cost(st.dist[n]) + (st.prev[n] ?? ""), changed ? INK : DIM);
+    });
+  });
+  return c.sprite();
+}
+
+/** The Bellman-Ford card: round h holds the cheapest cost to F using at most h links. */
+export const BF_DEST = "F";
+
+export function bellmanFordFigure(): SpriteDef {
+  const rounds = bellmanFordRounds(ROUTE_DEMO, BF_DEST);
+  const nodes = ROUTE_DEMO.nodes;
+  const lx = 2;
+  const cw = 20;
+  const x0 = lx + 14;
+  const rowH = 10;
+  const w = x0 + nodes.length * cw + 2;
+  const h = 24 + rounds.length * rowH;
+  const c = new Canvas(w, h);
+  c.panel();
+  c.text(lx, 2, "COST TO " + BF_DEST + " IN AT MOST H LINKS", DIM);
+  c.text(lx, 11, "H", DIM);
+  nodes.forEach((n, i) => {
+    c.brick(x0 + i * cw + cw / 2 - 6, 9, 13, 10, ramp(n === BF_DEST ? "APPLICATION" : "NETWORK"));
+    c.ctext(x0 + i * cw + cw / 2, 11, n, TYPE_INFO[n === BF_DEST ? "APPLICATION" : "NETWORK"].ink);
+  });
+  c.hline(lx, 21, w - 4, "#5a5196");
+  rounds.forEach((rd, r) => {
+    const y = 25 + r * rowH;
+    c.text(lx + 1, y, String(r), INK);
+    nodes.forEach((n, i) => {
+      const cx = x0 + i * cw + cw / 2;
+      const changed = r > 0 && rd[n] !== rounds[r - 1][n];
+      if (changed) c.rect(cx - 9, y - 2, 18, 8, CHANGED);
+      c.ctext(cx, y, cost(rd[n]), changed ? INK : rd[n] === Infinity ? "#5a5196" : DIM);
+    });
+  });
+  return c.sprite();
+}
+
+/** The count-to-infinity card: A-B-C in a line, then the A-B link fails. */
+export const CTI_GRAPH: Graph = { nodes: ["A", "B", "C"], edges: [["A", "B", 1], ["B", "C", 1]] };
+
+export function countToInfinityFigure(): SpriteDef {
+  const plain = afterLinkChange(CTI_GRAPH, "A", "A", "B", Infinity).history;
+  const poison = afterLinkChange(CTI_GRAPH, "A", "A", "B", Infinity, { poison: true }).history;
+  const unit = 3;
+  const panelW = 74;
+  const rowH = 15;
+  const rows = 7;
+  const w = panelW * 2 + 4;
+  const h = 24 + rows * rowH + 2;
+  const c = new Canvas(w, h);
+  c.panel();
+  const B = "#4f8fe8";
+  const C = "#f0a03a";
+  const panel = (x: number, title: string, hist: typeof plain, extra: string) => {
+    c.text(x + 2, 2, title, INK);
+    c.text(x + 2, 10, "B", B);
+    c.text(x + 10, 10, "C", C);
+    c.text(x + 18, 10, "TO A", DIM);
+    c.hline(x + 2, 17, panelW - 4, "#5a5196");
+    hist.slice(0, rows - 1).forEach((st, r) => {
+      const y = 21 + r * rowH;
+      c.text(x + 2, y + 1, "R" + r, DIM);
+      ([[st.dist.B, B, 0], [st.dist.C, C, 7]] as const).forEach(([v, col, dy]) => {
+        const bw = Math.min(v, 16) * unit;
+        c.rect(x + 12, y + dy - 1, bw + 2, 5, OUTLINE);
+        c.rect(x + 13, y + dy, bw, 3, col);
+        c.hline(x + 13, y + dy, bw, lighten(col, 0.4));
+        c.text(x + 14 + bw + 2, y + dy - 1, cost(v), v >= 16 ? "#e0564c" : INK);
+      });
+    });
+    c.text(x + 2, 21 + (rows - 1) * rowH, extra, DIM);
+  };
+  panel(0, "NO POISON", plain, "... UP TO 16");
+  c.vline(panelW + 1, 2, h - 4, "#3b3370");
+  panel(panelW + 4, "POISONED REVERSE", poison, "STOPS AT R2");
+  return c.sprite();
+}
+
+/** The BGP card: the AS_PATH grows by one AS per hop, and a path that loops back is rejected. */
+export const BGP_CHAIN = [1, 2, 3, 4];
+
+export function bgpFigure(): SpriteDef {
+  const paths = asPaths(BGP_CHAIN);
+  const bw = 26;
+  const gap = 10;
+  const w = BGP_CHAIN.length * bw + (BGP_CHAIN.length - 1) * gap + 8;
+  const h = 70;
+  const c = new Canvas(w, h);
+  c.text(4, 2, "PREFIX ORIGINATES IN AS1", DIM);
+  BGP_CHAIN.forEach((asn, i) => {
+    const x = 4 + i * (bw + gap);
+    c.brick(x, 12, bw, 14, ramp(i === 0 ? "APPLICATION" : "TRANSPORT"));
+    c.ctext(x + bw / 2, 16, "AS" + asn, INK);
+    if (i < BGP_CHAIN.length - 1) {
+      c.hline(x + bw, 18, gap, "#ffd257");
+      c.set(x + bw + gap - 2, 17, "#ffd257");
+      c.set(x + bw + gap - 2, 19, "#ffd257");
+    }
+    c.ctext(x + bw / 2, 30, "PATH", DIM);
+    c.ctext(x + bw / 2, 37, i === 0 ? "ORIGIN" : paths[i - 1].join(" "), INK);
+  });
+  // the last AS advertises to AS1 again: AS1 sees itself in the path and drops it
+  const last = BGP_CHAIN.length - 1;
+  const xa = 4 + bw / 2;
+  const xb = 4 + last * (bw + gap) + bw / 2;
+  const looped = paths[last];
+  c.vline(xb, 44, 8, "#e0564c");
+  c.hline(xa, 52, xb - xa + 1, "#e0564c", 2);
+  c.vline(xa, 44, 8, "#e0564c");
+  const mid = Math.floor((xa + xb) / 2);
+  c.ctext(mid, 55, "AS4 TELLS AS1 " + looped.join(" "), INK);
+  const ok = acceptsAsPath(BGP_CHAIN[0], looped);
+  c.ctext(mid, 63, ok ? "ACCEPTED" : "REJECTED", ok ? "#4fc26a" : "#e0564c");
   return c.sprite();
 }
