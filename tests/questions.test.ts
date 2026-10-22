@@ -266,6 +266,18 @@ describe("the bank", () => {
       "vlan-trunk": "An IEEE 802.1Q tag (4 bytes with the 12-bit VLAN ID) is inserted in the Ethernet header",
       "stp-why": "Redundant links create loops, and Ethernet frames have no TTL, so broadcasts would circulate forever (a broadcast storm)",
       "stp-root": "The lowest bridge ID wins: the priority (default 32768), with the MAC address breaking ties",
+      "ipv4-ihl": "24 bytes",
+      "ipv4-ttl-expiry": "Drops it and sends an ICMP Time Exceeded message to the source",
+      "special-addresses": "127.0.0.1, 169.254.10.5, 192.168.4.9",
+      "nat-pat": "The router rewrites the source address and port and keeps a table of (private IP, port) ↔ (public IP, port)",
+      "nat-inbound": "The NAT table has no entry for an unsolicited inbound packet, so the router doesn't know which private host it is for",
+      "ping-icmp": "ICMP echo request and echo reply",
+      "traceroute-order":
+        "1. Send a probe with TTL = 1  2. The first router drops it and returns ICMP Time Exceeded  3. Send the next probe with TTL = 2  4. Repeat until the destination replies, so the TTL was large enough",
+      "path-mtu": "The router drops it and sends ICMP “fragmentation needed” (type 3, code 4) with the link's MTU",
+      apipa: "169.254.x.y (link-local, APIPA)",
+      "ipv6-size": "128 bits as eight groups of four hex digits",
+      "ipv6-vs-ipv4": "The base header is a fixed 40 bytes, There is no header checksum, The TTL field is renamed Hop Limit",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

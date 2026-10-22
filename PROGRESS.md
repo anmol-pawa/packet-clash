@@ -385,3 +385,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 12 new in `tests/addressing.test.ts`. Kurose & Ross's 4000-byte / MTU 1500 fragmentation (offsets 0, 185, 370; lengths 1500, 1500, 1040), Forouzan's /24 → four /26, K&R's longest-prefix example, a hand-derived VLSM plan, and over 300 seeds each generator is rechecked independently from its own id.
 - Verified: lint, typecheck, `npm test`, `build:pages` (125 files precached). The new questions are text-only (MCQ and numeric) and use existing panels, so I did not take new screenshots this run.
 - Next: 2.3b Gym 3 hand-written cards.
+
+## 2026-10-22 (06:15 IST): 2.3b Gym 3 hand-written cards
+- Main was green (no lock). 
+- **Bank** (11 new network cards, 13 total on gym 3's chapter): IHL header length, TTL expiry and ICMP Time Exceeded, special addresses (loopback, link-local, private; multi-select), NAT/PAT table, why inbound connections fail behind NAT, ping's ICMP echo, traceroute step order, DF bit and path MTU discovery (ICMP type 3 code 4), APIPA fallback, IPv6 size and notation, and IPv4-vs-IPv6 differences (40-byte header, no checksum, Hop Limit).
+- **Solver** (`lib/net/ipv6.ts`): `parseIpv6`, `expandIpv6`, `compressIpv6` per RFC 5952 (longest run, leftmost on ties, no `::` for a lone zero group). **Generator** (`content/questions/ipv6Generators.ts`): shortest valid form of a 2001:0db8 address with two zero runs of different length, so "first run" and "longest run" disagree; distractors are the wrong run, no compression, two `::`, and leading zeros kept.
+- Tests: 18 new (357 total). RFC 5952 examples, malformed-address rejection, round trips, and over 300 seeds the answer is recomputed and every distractor is checked to be wrong. The 11 new bank answers are pinned in `tests/questions.test.ts`.
+- Verified: lint, typecheck, 357 tests, `build:pages` (125 files precached). The new questions are text-only (MCQ, multi-select, order) and use existing panels, so I took no new screenshots this run.
+- Note: this session was assigned the branch `claude/blissful-mendel-5prq28`; the work is pushed to it and to `main` (the protocol deploys from main).
+- Next: 2.3c Gym 3 concept lessons (subnetting by borrowing bits, VLSM, longest-prefix match, fragmentation).

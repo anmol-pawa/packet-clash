@@ -17,6 +17,7 @@ import {
 import { blockSize, broadcastOf, formatIp, maskOf, usableHosts, type Cidr } from "@/lib/net/ipv4";
 import { randInt, rng, shuffled } from "@/lib/rng";
 import { ADDRESS_GENERATORS } from "./addressGenerators";
+import { IPV6_GENERATORS } from "./ipv6Generators";
 import { ERROR_GENERATORS } from "./errorGenerators";
 import { LINK_GENERATORS } from "./linkGenerators";
 import { SWITCH_GENERATORS } from "./switchGenerators";
@@ -507,4 +508,5 @@ export const GENERATORS: readonly Generator[] = [
   ...LINK_GENERATORS,
   ...SWITCH_GENERATORS,
   ...ADDRESS_GENERATORS,
+  ...IPV6_GENERATORS,
 ];
