@@ -12,7 +12,7 @@ import { GENERATORS } from "./generators";
 /** Questions per battle (the deck cycles if the battle runs longer). */
 export const DECK_SIZE = 10;
 
-/** Each gym's chapter (gyms 7–9, security, the URL journey and the gauntlet, draw from everything). */
+/** Each gym's chapter (gyms 8–9, the URL journey and the gauntlet, draw from everything). */
 export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   1: ["models"],
   2: ["link"],
@@ -20,6 +20,7 @@ export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   4: ["routing"],
   5: ["transport"],
   6: ["application"],
+  7: ["security"],
 };
 
 /** A gym battle's deck: its chapter's cards first, then any chapter's, never the same card twice. */

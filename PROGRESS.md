@@ -480,3 +480,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 4 new (447 total): figure order, DNS flow matches the solver's message count and the root/TLD/auth order, HTTP cells match `pageLoadRtts`, DORA order and timers.
 - Verified: lint, typecheck, 447 tests, `build:pages` (134 files precached). Playwright at 1280×800 and iPhone 14: no console errors or horizontal overflow; reviewed figure screenshots (gym 6 lessons are badge-locked, so viewed via `/dev/sprites`).
 - Next: 2.7 Security (split first: solvers/generators for hashing/crypto arithmetic, then cards, then lessons).
+
+## 2026-10-22 (18:15 IST): 2.7a Security solvers and generators
+- Main was green (no lock). Split 2.7 into 2.7a (this), 2.7b (hand-written cards) and 2.7c (lessons).
+- **Solvers** (`lib/net/security.ts`): `modPow`, `modInverse`, `diffieHellman`, toy RSA (`rsaKey`/`rsaEncrypt`/`rsaDecrypt`), `symmetricKeys` n(n−1)/2 vs `asymmetricKeys` 2n, `bruteForceSeconds`, `passwordEntropy`, and the TLS 1.3 handshake order.
+- **Generators** (`content/questions/securityGenerators.ts`, 5 new, gym 7's first problems): Diffie-Hellman public value/shared secret, RSA encrypt/decrypt/d, key counts, brute-force time, password entropy. New `security` topic; `GYM_TOPICS[7] = ["security"]`.
+- Tests: 19 in `tests/security.test.ts` (462 total). Forouzan RSA (7, 11, 13 → d 37, 5 → 26), the 61/53/17 example (d 2753, 65 → 2790), DH p=23, g=5 (8, 19, secret 2), and each generator over 300 seeds recomputed independently from its own id.
+- Verified: lint, typecheck, 462 tests, `build:pages`. Numeric questions on existing panels, so no new screenshots.
+- Next: 2.7b Gym 7 hand-written cards.
