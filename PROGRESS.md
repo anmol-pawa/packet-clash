@@ -426,3 +426,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 7 new (389 total): Table 5.1 rows (v/y tie settles v first), AS_PATH and loop rejection, gym 4's four cards, and each worked example's lines pinned (settle order, final costs, BF rounds, 15 rounds vs 2 with poison, AS paths).
 - Verified: lint, typecheck, 389 tests, `build:pages` (125 files precached). Playwright on the static export (with gyms 1–3 unlocked in the save) at 1280×800 and iPhone 14 on `/lessons?n=4`: no console errors, no horizontal overflow; reviewed screenshots and fixed overlapping value labels in the count-to-infinity figure.
 - Next: 2.5 Transport (split it first: handshake/teardown state machine solvers and generators first).
+
+## 2026-10-22 (11:15 IST): 2.5a Transport solvers and generators
+- Main was green (no lock). Split 2.5 into 2.5a (this), 2.5b (hand-written cards) and 2.5c (lessons and the animated state machine).
+- **Solvers** (`lib/net/transport.ts`): `handshake`/`ackAfter`/`segmentSeqs` (SYN and FIN use one sequence number, 32-bit wrap), the TCP state machine transitions with the active- and passive-side paths, `goBackNTransmissions` vs `selectiveRepeatTransmissions` (window full when one packet is lost once), `windowUtilization` and `fullPipeWindow`, `advertisedWindow` and `sendable` (min(cwnd, rwnd) minus in flight), and `cwndSeries` (slow start capped at ssthresh, +1 MSS per RTT, Reno halves on triple dup ACK, Tahoe and timeouts restart at 1, ssthresh floor 2).
+- **Generators** (`content/questions/transportGenerators.ts`, 7 new on gym 5's chapter): seq/ack after data, handshake field, GBN/SR transmissions, stop-and-wait utilisation, full-pipe window, usable window, cwnd after a loss.
+- Tests: 26 in `tests/transport.test.ts` (415 total). K&R §3.4 utilisation (8000 b, 1 Gbps, 30 ms: 0.00027, three packets 0.0008), Fig. 3.22 GBN vs SR, Fig. 3.53-style cwnd series, and over 300 seeds each generator is recomputed independently from its own id (send log for GBN/SR, a hand-rolled cwnd loop, a utilisation check at the answer and one below it). Corrected my own first guess for the pipelined figure (0.0008, not 0.00081) before committing.
+- Verified: lint, typecheck, 415 tests, `build:pages` (125 files precached). Numeric questions on existing panels, so no new screenshots.
+- Next: 2.5b Gym 5 hand-written cards.
