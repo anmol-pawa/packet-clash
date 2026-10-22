@@ -1,5 +1,7 @@
 import { TYPE_INFO, type PacketType } from "@/game/engine/types";
 import { crc, hammingCoverage, hammingEncode } from "@/lib/net/errors";
+import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate, type Route } from "@/lib/net/addressing";
+import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
@@ -454,5 +456,162 @@ export function macLearningFigure(): SpriteDef {
   });
   c.text(tx + 8, 31 + Object.keys(table).length * 8, "C", "#5a5196");
   c.text(tx + 20, 31 + Object.keys(table).length * 8, "NOT YET", "#5a5196");
+  return c.sprite();
+}
+
+/** The subnetting card: 192.168.1.0/24 borrows 2 host bits and becomes four /26 subnets. */
+export const SUBNET_DEMO = { block: "192.168.1.0/24", borrow: 2 };
+
+export function subnetFigure(): SpriteDef {
+  const cell = 4;
+  const w = 32 * cell + 3 * 3 + 12;
+  const h = 62;
+  const c = new Canvas(w, h);
+  const base = parseCidr(SUBNET_DEMO.block);
+  const newPrefix = base.prefix + SUBNET_DEMO.borrow;
+  const NET = "#4f8fe8";
+  const BORROW = "#ffd257";
+  const HOST = "#5a5196";
+  const x0 = 6;
+  // 32 address bits: network, the borrowed bits, what stays host
+  for (let i = 0; i < 32; i++) {
+    const x = x0 + i * cell + Math.floor(i / 8) * 3;
+    const col = i < base.prefix ? NET : i < newPrefix ? BORROW : HOST;
+    c.rect(x, 12, cell, 8, OUTLINE);
+    c.rect(x, 13, cell - 1, 6, col);
+    c.hline(x, 13, cell - 1, lighten(col, 0.35));
+    c.hline(x, 18, cell - 1, darken(col, 0.3));
+  }
+  c.text(x0, 3, "/" + base.prefix + " BECOMES /" + newPrefix, INK);
+  const key = (x: number, col: string, label: string) => {
+    c.rect(x, 24, 6, 6, OUTLINE);
+    c.rect(x + 1, 25, 4, 4, col);
+    c.text(x + 8, 25, label, INK);
+  };
+  key(x0, NET, "NET");
+  key(x0 + 32, BORROW, "BORROWED " + SUBNET_DEMO.borrow);
+  key(x0 + 92, HOST, "HOST");
+  // the subnets the borrowed bits select
+  const subs = splitSubnets(base, newPrefix);
+  const bw = Math.floor((w - 12) / subs.length);
+  subs.forEach((s, i) => {
+    const x = 6 + i * bw;
+    c.brick(x, 36, bw - 2, 20, ramp("NETWORK"));
+    c.ctext(x + Math.floor((bw - 2) / 2), 40, "." + (s.network & 255) + "/" + s.prefix, TYPE_INFO.NETWORK.ink);
+    c.ctext(x + Math.floor((bw - 2) / 2), 47, String(blockSize(s.prefix)), TYPE_INFO.NETWORK.ink);
+  });
+  return c.sprite();
+}
+
+/** The VLSM card: a /24 handed out largest requirement first. */
+export const VLSM_DEMO = { block: "192.168.1.0/24", lans: [{ name: "LAN A", hosts: 100 }, { name: "LAN B", hosts: 50 }, { name: "LAN C", hosts: 20 }, { name: "LINK", hosts: 2 }] };
+
+export function vlsmFigure(): SpriteDef {
+  const block = parseCidr(VLSM_DEMO.block);
+  const alloc = vlsmAllocate(block, VLSM_DEMO.lans.map((l) => l.hosts));
+  if (!alloc) throw new Error("VLSM demo must fit");
+  const lx = 20;
+  const bar = 128; // 256 addresses at half a pixel each
+  const w = lx + bar + 8;
+  const rowH = 12;
+  const h = 14 + alloc.length * rowH + 10;
+  const c = new Canvas(w, h);
+  const cols = ["#e0564c", "#4f8fe8", "#4fc26a", "#f0c34a"];
+  c.rect(lx - 1, 9, bar + 2, alloc.length * rowH + 2, OUTLINE);
+  c.rect(lx, 10, bar, alloc.length * rowH, "#2a2350");
+  [0, 64, 128, 192, 256].forEach((a) => {
+    const x = lx + a / 2 - (a === 256 ? 1 : 0);
+    c.vline(x, 10, alloc.length * rowH, "#3b3370");
+    c.text(Math.max(0, x - 5), 1, String(a), DIM);
+  });
+  alloc.forEach((a, i) => {
+    const y = 12 + i * rowH;
+    const x = lx + (a.subnet.network - block.network) / 2;
+    const bw = Math.max(3, blockSize(a.subnet.prefix) / 2);
+    c.text(1, y + 2, VLSM_DEMO.lans[i].name.replace("LAN ", ""), INK);
+    c.rect(x - 1, y - 1, bw + 2, 10, OUTLINE);
+    c.rect(x, y, bw, 8, cols[i]);
+    c.hline(x, y, bw, lighten(cols[i], 0.35));
+    c.hline(x, y + 7, bw, darken(cols[i], 0.3));
+    const label = "/" + a.subnet.prefix;
+    const lxp = x + bw + 4 + microWidth(label) <= w ? x + bw + 3 : x - 3 - microWidth(label);
+    c.text(lxp, y + 2, label, INK);
+  });
+  c.text(lx, h - 7, "LAST BYTE OF THE ADDRESS", DIM);
+  return c.sprite();
+}
+
+/** The longest-prefix card: four routes match 10.1.2.7, the /24 wins. */
+export const LPM_DEMO: { routes: Route[]; dest: string } = {
+  dest: "10.1.2.7",
+  routes: [
+    { prefix: parseCidr("0.0.0.0/0"), nextHop: "R4" },
+    { prefix: parseCidr("10.0.0.0/8"), nextHop: "R1" },
+    { prefix: parseCidr("10.1.0.0/16"), nextHop: "R2" },
+    { prefix: parseCidr("10.1.2.0/24"), nextHop: "R3" },
+    { prefix: parseCidr("10.2.0.0/16"), nextHop: "R5" },
+  ],
+};
+
+export function lpmFigure(): SpriteDef {
+  const w = 150;
+  const rowH = 10;
+  const h = 14 + LPM_DEMO.routes.length * rowH + 4;
+  const c = new Canvas(w, h);
+  const ip = parseIp(LPM_DEMO.dest);
+  const win = longestPrefixMatch(LPM_DEMO.routes, ip);
+  c.text(2, 2, "DEST " + LPM_DEMO.dest, INK);
+  const bx = 70; // the bit bar: 32 bits at 2 px each, with the matching prefix filled
+  c.rect(bx - 1, 8, 66, 1, "#3b3370");
+  LPM_DEMO.routes.forEach((r, i) => {
+    const y = 12 + i * rowH;
+    const hit = longestPrefixMatch([r], ip) !== undefined;
+    const best = r === win;
+    const col = best ? "#ffd257" : hit ? "#4f8fe8" : "#3b3370";
+    if (best) c.rect(0, y - 2, w, rowH, "#2a2350");
+    c.text(2, y, formatIp(r.prefix.network) + "/" + r.prefix.prefix, hit ? INK : DIM);
+    c.rect(bx - 1, y - 1, 66, 7, OUTLINE);
+    c.rect(bx, y, 64, 5, "#17122f");
+    c.rect(bx, y, r.prefix.prefix * 2, 5, col);
+    if (r.prefix.prefix) c.hline(bx, y, r.prefix.prefix * 2, lighten(col, 0.4));
+    c.text(bx + 69, y, r.nextHop, best ? "#ffd257" : hit ? INK : DIM);
+  });
+  return c.sprite();
+}
+
+/** The fragmentation card: a 4000-byte datagram over a 1500-byte MTU. */
+export const FRAG_DEMO = { total: 4000, mtu: 1500 };
+
+export function fragFigure(): SpriteDef {
+  const frags = fragment(FRAG_DEMO.total, FRAG_DEMO.mtu);
+  const per = 40; // bytes per pixel
+  const lx = 2;
+  const w = 150;
+  const rowH = 14;
+  const h = 14 + (frags.length + 1) * rowH;
+  const c = new Canvas(w, h);
+  const HDR = "#e0564c";
+  const DATA = "#4f8fe8";
+  const bar = (x: number, y: number, bytes: number, col: string, hw = 0) => {
+    const bw = Math.max(2, Math.round(bytes / per));
+    c.rect(x - 1, y - 1, bw + hw + 2, 10, OUTLINE);
+    if (hw) {
+      c.rect(x, y, hw, 8, HDR);
+      c.hline(x, y, hw, lighten(HDR, 0.35));
+    }
+    c.rect(x + hw, y, bw, 8, col);
+    c.hline(x + hw, y, bw, lighten(col, 0.35));
+    c.hline(x + hw, y + 7, bw, darken(col, 0.3));
+    return bw + hw;
+  };
+  c.text(lx, 1, "ONE DATAGRAM", DIM);
+  const full = bar(lx + 1, 8, FRAG_DEMO.total - 20, DATA, 4);
+  c.text(lx + full + 5, 10, String(FRAG_DEMO.total) + " B", INK);
+  c.text(lx, 22, "THREE FRAGMENTS", DIM);
+  frags.forEach((f, i) => {
+    const y = 30 + i * rowH - 2;
+    const used = bar(lx + 1, y, f.totalLength - 20, DATA, 4);
+    c.text(lx + used + 5, y + 2, "OFF " + f.offset + " MF " + (f.more ? 1 : 0), f.more ? INK : "#ffd257");
+  });
   return c.sprite();
 }

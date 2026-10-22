@@ -394,3 +394,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 357 tests, `build:pages` (125 files precached). The new questions are text-only (MCQ, multi-select, order) and use existing panels, so I took no new screenshots this run.
 - Note: this session was assigned the branch `claude/blissful-mendel-5prq28`; the work is pushed to it and to `main` (the protocol deploys from main).
 - Next: 2.3c Gym 3 concept lessons (subnetting by borrowing bits, VLSM, longest-prefix match, fragmentation).
+
+## 2026-10-22 (07:15 IST): 2.3c Gym 3 concept lessons
+- Main was green (no lock). This finishes 2.3.
+- **Content** (`content/lessons.ts`): four cards for Cidrab. Subnetting by borrowing bits (192.168.1.0/24 + 2 bits → four /26, subnet 2 = .64 with hosts .65–.126, broadcast .127), VLSM (100/50/20/2 hosts → /25, /26, /27, /30 at .0/.128/.192/.224, 228 of 256 addresses), longest-prefix match (10.1.2.7 matches four routes, the /24 wins), and fragmentation (K&R's 4000 B over MTU 1500: lengths 1500/1500/1040, offsets 0/185/370). Every number comes from `splitSubnets`, `vlsmAllocate`, `longestPrefixMatch` and `fragment`.
+- **Art** (`game/art/lessons.ts`): four code-drawn figures (32-bit address bar with borrowed bits and the resulting subnet bricks, a VLSM ruler over the last address byte, a route table with prefix-length bars and the winner highlighted, and datagram vs fragment bars with offset/MF labels). Added `/`, `.` and `-` to the 3×5 micro font. All on `/dev/sprites`.
+- Tests: 5 new (362 total) pin the worked examples and the gym 3 show-once gate; the figure test covers all 11 figures.
+- Verified: lint, typecheck, 362 tests, `build:pages` (126 files precached). Playwright on the static export at 1280×800 and iPhone 14 (`/lessons?n=3`): no console errors, no horizontal overflow; reviewed the screenshots and `/dev/sprites`, and fixed clipped labels in the VLSM and fragmentation figures.
+- Next: 2.4 Routing (split it first; Dijkstra and Bellman-Ford solvers and generators first).

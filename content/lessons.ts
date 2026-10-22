@@ -1,5 +1,7 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { CRC_DEMO, HAMMING_DEMO, MAC_DEMO } from "@/game/art/lessons";
+import { CRC_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate } from "@/lib/net/addressing";
+import { blockSize, broadcastOf, formatCidr, formatIp, hostRange, parseCidr, parseIp, usableHosts } from "@/lib/net/ipv4";
 import { crc, crcOk, hammingSyndrome } from "@/lib/net/errors";
 import { backoffChoices, minFrameBits } from "@/lib/net/link";
 import { simulateSwitch } from "@/lib/net/switching";
@@ -12,7 +14,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag";
 
 export interface Lesson {
   id: string;
@@ -63,6 +65,17 @@ const macVerb = (i: number) => {
   const st = macSteps[i];
   return st.action === "flood" ? `floods to ports ${st.outPorts.join(", ")}` : st.action === "forward" ? `goes only to port ${st.outPorts[0]}` : "is filtered";
 };
+
+// gym 3: borrow 2 bits from a /24, give a /24 out by VLSM, route 10.1.2.7, fragment K&R's 4000-byte datagram
+const subBlock = parseCidr(SUBNET_DEMO.block);
+const subNets = splitSubnets(subBlock, subBlock.prefix + SUBNET_DEMO.borrow);
+const subSecond = subNets[1];
+const subRange = hostRange(subSecond);
+const vlsmPlan = vlsmAllocate(parseCidr(VLSM_DEMO.block), VLSM_DEMO.lans.map((l) => l.hosts))!;
+const lpmDest = parseIp(LPM_DEMO.dest);
+const lpmMatches = LPM_DEMO.routes.filter((r) => longestPrefixMatch([r], lpmDest));
+const lpmWinner = longestPrefixMatch(LPM_DEMO.routes, lpmDest)!;
+const fragList = fragment(FRAG_DEMO.total, FRAG_DEMO.mtu);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -209,6 +222,80 @@ export const LESSONS: Record<number, Lesson[]> = {
       },
     },
   ],
+  3: [
+    {
+      id: "subnetting",
+      title: "Subnetting: borrow bits",
+      figure: "subnet",
+      caption: "A /24 lends two host bits to the network part.",
+      paras: [
+        "An IPv4 address has 32 bits. The prefix length /n says the first n bits name the network and the remaining 32 − n name the host. The mask is n ones followed by zeros, and it is the same thing written another way: /24 is 255.255.255.0.",
+        "To cut a block into subnets you borrow host bits. Borrow b bits and you get 2^b subnets, each with 2^(32 − n − b) addresses. Two of those addresses are not for hosts: the first is the network address and the last is the broadcast.",
+        "To find the network of any address, AND it with the mask. The broadcast is the network with every host bit set to 1.",
+      ],
+      example: {
+        title: `${SUBNET_DEMO.block}, borrow ${SUBNET_DEMO.borrow}`,
+        lines: [
+          `2^${SUBNET_DEMO.borrow} = ${subNets.length} subnets: ${subNets.map(formatCidr).join(", ")}.`,
+          `Each has ${blockSize(subSecond.prefix)} addresses, ${usableHosts(subSecond.prefix)} usable for hosts.`,
+          `Subnet 2 is ${formatCidr(subSecond)}: network ${formatIp(subSecond.network)}, hosts ${formatIp(subRange[0])} to ${formatIp(subRange[1])}, broadcast ${formatIp(broadcastOf(subSecond))}.`,
+        ],
+      },
+    },
+    {
+      id: "vlsm",
+      title: "VLSM: right-sized subnets",
+      figure: "vlsm",
+      caption: "Biggest LAN first, each block aligned to its own size.",
+      paras: [
+        "Fixed-size subnets waste addresses: a two-router link does not need 62 host addresses. Variable-length subnet masks let every LAN get the smallest block that fits it.",
+        "For N hosts you need N + 2 addresses (network and broadcast), rounded up to a power of two. Allocate the largest requirement first, at the next address that is a multiple of its block size. Doing it in that order keeps every block aligned and nothing overlaps.",
+      ],
+      example: {
+        title: `Splitting ${VLSM_DEMO.block}`,
+        lines: [
+          ...vlsmPlan.map((a, i) => `${VLSM_DEMO.lans[i].name}, ${a.hosts} hosts: ${formatCidr(a.subnet)} (${blockSize(a.subnet.prefix)} addresses, ${usableHosts(a.subnet.prefix)} usable).`),
+          `Together they use ${vlsmPlan.reduce((t, a) => t + blockSize(a.subnet.prefix), 0)} of ${blockSize(parseCidr(VLSM_DEMO.block).prefix)} addresses.`,
+        ],
+      },
+    },
+    {
+      id: "longest-prefix",
+      title: "Longest-prefix match",
+      figure: "lpm",
+      caption: "Four routes match; the longest prefix wins.",
+      paras: [
+        "A router's forwarding table holds prefixes, and one destination can match several of them. The router uses the most specific one, the match with the longest prefix. That is how a /24 exception can sit inside a /8 and a default route (0.0.0.0/0) matches everything as a last resort.",
+        "Aggregation uses the same idea in reverse: neighbouring blocks that share a prefix are advertised as one shorter prefix (4 contiguous /26 blocks become one /24), which keeps tables small.",
+      ],
+      example: {
+        title: `Destination ${LPM_DEMO.dest}`,
+        lines: [
+          `Matching routes: ${lpmMatches.map((r) => formatCidr(r.prefix)).join(", ")}.`,
+          `Longest is ${formatCidr(lpmWinner.prefix)}, so the packet goes to ${lpmWinner.nextHop}.`,
+          `${formatCidr(LPM_DEMO.routes[LPM_DEMO.routes.length - 1].prefix)} does not match: the second octet differs.`,
+        ],
+      },
+    },
+    {
+      id: "fragmentation",
+      title: "IP fragmentation",
+      figure: "frag",
+      caption: "A 4000-byte datagram crossing a 1500-byte MTU link.",
+      paras: [
+        "Each link has a maximum transmission unit (MTU), the largest IP datagram it carries. If a datagram is bigger, the router splits it into fragments, each with its own 20-byte header and the same identification number. Only the destination reassembles them.",
+        "The fragment offset field counts in units of 8 bytes, so every fragment's data except the last must be a multiple of 8. The more-fragments (MF) flag is 1 on every fragment but the last. A datagram with DF set is not fragmented: the router drops it and sends ICMP \"fragmentation needed\".",
+      ],
+      example: {
+        title: "Kurose & Ross's example",
+        lines: [
+          `${FRAG_DEMO.total} B datagram = 20 B header + ${FRAG_DEMO.total - 20} B data, MTU ${FRAG_DEMO.mtu}: at most ${Math.floor((FRAG_DEMO.mtu - 20) / 8) * 8} B of data per fragment.`,
+          ...fragList.map((f, i) => `Fragment ${i + 1}: length ${f.totalLength}, offset ${f.offset}, MF = ${f.more ? 1 : 0}.`),
+          `Offset ${fragList[1].offset} × 8 = ${fragList[1].offset * 8} bytes of data come before fragment 2.`,
+        ],
+      },
+    },
+  ],
 };
 
 export const lessonsFor = (gym: number): Lesson[] => LESSONS[gym] ?? [];
@@ -223,4 +310,4 @@ export function markLessonsSeen(seen: readonly number[], gym: number): number[] 
 }
 
 // exported for tests
-export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits };
+export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList };

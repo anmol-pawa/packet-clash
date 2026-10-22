@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, hammingFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
 import { hammingSyndrome } from "@/lib/net/errors";
@@ -93,11 +93,49 @@ describe("lesson content", () => {
     expect(lines[1]).toContain("goes only to port 1");
   });
 
+  it("gives gym 3 its four cards: subnetting, VLSM, longest-prefix match, fragmentation", () => {
+    expect(lessonsFor(3).map((l) => l.figure)).toEqual(["subnet", "vlsm", "lpm", "frag"]);
+  });
+
+  it("borrows 2 bits from 192.168.1.0/24: four /26 subnets, subnet 2 hosts .65 to .126, broadcast .127", () => {
+    expect(WORKED.subNets.map((s) => s.network & 255)).toEqual([0, 64, 128, 192]);
+    const lines = lessonsFor(3).find((l) => l.id === "subnetting")!.example!.lines;
+    expect(lines[0]).toContain("192.168.1.0/26, 192.168.1.64/26, 192.168.1.128/26, 192.168.1.192/26");
+    expect(lines[1]).toBe("Each has 64 addresses, 62 usable for hosts.");
+    expect(lines[2]).toContain("network 192.168.1.64, hosts 192.168.1.65 to 192.168.1.126, broadcast 192.168.1.127");
+  });
+
+  it("allocates 100, 50, 20 and 2 hosts from a /24 as /25, /26, /27 and /30 at .0, .128, .192, .224", () => {
+    const lines = lessonsFor(3).find((l) => l.id === "vlsm")!.example!.lines;
+    expect(lines[0]).toContain("192.168.1.0/25 (128 addresses, 126 usable)");
+    expect(lines[1]).toContain("192.168.1.128/26");
+    expect(lines[2]).toContain("192.168.1.192/27");
+    expect(lines[3]).toContain("192.168.1.224/30 (4 addresses, 2 usable)");
+    expect(lines[4]).toBe("Together they use 228 of 256 addresses.");
+  });
+
+  it("routes 10.1.2.7 by the /24 among four matching routes", () => {
+    expect(WORKED.lpmMatches).toHaveLength(4);
+    expect(WORKED.lpmWinner.nextHop).toBe("R3");
+    const lines = lessonsFor(3).find((l) => l.id === "longest-prefix")!.example!.lines;
+    expect(lines[0]).toBe("Matching routes: 0.0.0.0/0, 10.0.0.0/8, 10.1.0.0/16, 10.1.2.0/24.");
+    expect(lines[1]).toBe("Longest is 10.1.2.0/24, so the packet goes to R3.");
+  });
+
+  it("fragments Kurose & Ross's 4000-byte datagram into lengths 1500, 1500, 1040 at offsets 0, 185, 370", () => {
+    expect(WORKED.fragList.map((f) => [f.totalLength, f.offset, f.more])).toEqual([[1500, 0, true], [1500, 185, true], [1040, 370, false]]);
+    const lines = lessonsFor(3).find((l) => l.id === "fragmentation")!.example!.lines;
+    expect(lines[0]).toContain("at most 1480 B of data per fragment");
+    expect(lines[3]).toBe("Fragment 3: length 1040, offset 370, MF = 0.");
+    expect(lines[4]).toBe("Offset 185 × 8 = 1480 bytes of data come before fragment 2.");
+  });
+
   it("opens the lessons before a gym only until they've been seen once", () => {
     expect(showLessonsFirst(1, [])).toBe(true);
     expect(showLessonsFirst(1, markLessonsSeen([], 1))).toBe(false);
     expect(showLessonsFirst(2, [1])).toBe(true);
     expect(showLessonsFirst(2, [1, 2])).toBe(false);
+    expect(showLessonsFirst(3, [1, 2])).toBe(true);
     expect(showLessonsFirst(9, [])).toBe(false); // no cards yet
     expect(markLessonsSeen([3, 1], 1)).toEqual([1, 3]);
   });
@@ -105,7 +143,7 @@ describe("lesson content", () => {
 
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale
