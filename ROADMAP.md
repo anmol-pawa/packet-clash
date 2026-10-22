@@ -70,10 +70,10 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 2.5b Gym 5 hand-written cards: UDP vs TCP, ports and sockets, handshake and teardown (TIME_WAIT, SYN flood), flow vs congestion control, fast retransmit, Nagle/delayed ACK, head-of-line blocking.
   - [x] 2.5c Gym 5 concept lessons: illustrated cards (handshake and teardown with TCP states, sliding window GBN/SR, cwnd sawtooth).
   - [x] 2.5d The animated TCP state machine: step through handshake and teardown, both sides' states highlighted, on its own page linked from the gym 5 lessons.
-- [ ] 2.6 Application layer: DNS resolution (iterative vs recursive, order the steps, record types), HTTP/1.1 vs 2 vs 3, status codes, cookies, caching headers, REST, email (SMTP/IMAP), DHCP (DORA), FTP/SSH basics.
+- [x] 2.6 Application layer: DNS resolution (iterative vs recursive, order the steps, record types), HTTP/1.1 vs 2 vs 3, status codes, cookies, caching headers, REST, email (SMTP/IMAP), DHCP (DORA), FTP/SSH basics.
   - [x] 2.6a Application solvers and generators: `lib/net/application` (DNS cost iterative vs recursive with caches, HTTP page-load RTTs, web-cache delay and access-link utilisation, DHCP T1/T2) with five seeded gym 6 generators.
   - [x] 2.6b Gym 6 hand-written cards: DNS records and resolution order, HTTP versions, status codes, cookies, caching headers, REST, SMTP/IMAP/POP3, DHCP DORA, FTP/SSH.
-  - [ ] 2.6c Gym 6 concept lessons: illustrated cards (DNS resolution, HTTP/1.1 vs 2 vs 3 timelines, DORA).
+  - [x] 2.6c Gym 6 concept lessons: illustrated cards (DNS resolution, HTTP/1.1 vs 2 vs 3 timelines, DORA).
 - [ ] 2.7 Security: TLS 1.3 handshake ordering, symmetric vs asymmetric crypto, certificates and PKI, hashing and MACs, firewalls, VPNs, common attacks (MITM, DDoS, spoofing, XSS/CSRF at interview level).
 - [ ] 2.8 "What happens when you type a URL": a full end-to-end animated journey (DNS, ARP, TCP, TLS, HTTP, rendering) as an order-the-steps boss battle.
 - [ ] 2.9 Interview gauntlet: the top networking interview questions (TCP vs UDP, how DNS works, HTTP vs HTTPS, subnetting on the spot, load balancers L4 vs L7, CDN, WebSockets, NAT traversal) as a timed mock interview with a scorecard.

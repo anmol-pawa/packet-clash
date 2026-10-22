@@ -7,9 +7,9 @@ import { ENCAP_STEPS, type Figure, type Lesson } from "@/content/lessons";
 import type { Town } from "@/content/world";
 import { BOSS_ART } from "@/game/art/bosses";
 import { chipSprite, tagSprite } from "@/game/art/headers";
-import { bellmanFordFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, cwndFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, tcpFlowFigure, vlsmFigure, windowFigure } from "@/game/art/lessons";
+import { bellmanFordFigure, dnsFigure, doraFigure, httpFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, cwndFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, tcpFlowFigure, vlsmFigure, windowFigure } from "@/game/art/lessons";
 
-const FIGURES: Record<Exclude<Figure, "encap">, SpriteDef> = { layers: layerStackFigure(), switching: switchingFigure(), delays: delaysFigure(), crc: crcFigure(), hamming: hammingFigure(), csmacd: csmaFigure(), macLearn: macLearningFigure(), subnet: subnetFigure(), vlsm: vlsmFigure(), lpm: lpmFigure(), frag: fragFigure(), dijkstra: dijkstraFigure(), bellman: bellmanFordFigure(), cti: countToInfinityFigure(), bgp: bgpFigure(), tcpflow: tcpFlowFigure(), window: windowFigure(), cwnd: cwndFigure() };
+const FIGURES: Record<Exclude<Figure, "encap">, SpriteDef> = { layers: layerStackFigure(), switching: switchingFigure(), delays: delaysFigure(), crc: crcFigure(), hamming: hammingFigure(), csmacd: csmaFigure(), macLearn: macLearningFigure(), subnet: subnetFigure(), vlsm: vlsmFigure(), lpm: lpmFigure(), frag: fragFigure(), dijkstra: dijkstraFigure(), bellman: bellmanFordFigure(), cti: countToInfinityFigure(), bgp: bgpFigure(), tcpflow: tcpFlowFigure(), window: windowFigure(), cwnd: cwndFigure(), dns: dnsFigure(), http: httpFigure(), dora: doraFigure() };
 
 /** The encapsulation card: the battle's header chips, one row per layer on the way down. */
 function EncapFigure() {

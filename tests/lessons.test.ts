@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
@@ -229,9 +230,46 @@ describe("lesson content", () => {
   });
 });
 
+describe("gym 6 lessons", () => {
+  it("has three cards: DNS, HTTP round trips, DHCP", () => {
+    expect(lessonsFor(6).map((l) => l.figure)).toEqual(["dns", "http", "dora"]);
+  });
+
+  it("draws the iterative lookup with as many messages as the solver counts", () => {
+    expect(DNS_FLOW).toHaveLength(dnsCost("iterative", "none").messages);
+    // every query out of the local resolver is answered by the same server
+    const asked = DNS_FLOW.filter((m) => m.from === 1 && m.to > 1).map((m) => m.to);
+    const answered = DNS_FLOW.filter((m) => m.to === 1 && m.from > 1).map((m) => m.from);
+    expect(answered).toEqual(asked);
+    expect(asked.map((i) => DNS_COLUMNS[i])).toEqual(["ROOT", "TLD", "AUTH"]);
+    const lines = lessonsFor(6).find((l) => l.id === "dns-resolution")!.example!.lines;
+    expect(lines[1]).toContain("3 (root, TLD, authoritative)");
+    expect(lines[1]).toContain("8 messages");
+    expect(lines[2]).toContain("2 servers, 6 messages");
+    expect(lines[3]).toContain("0 servers, 2 messages");
+  });
+
+  it("lays out each HTTP row with one cell per RTT", () => {
+    for (const { mode } of HTTP_ROWS) expect(httpCells(mode, HTTP_DEMO.objects)).toHaveLength(pageLoadRtts(mode, HTTP_DEMO.objects));
+    const lines = lessonsFor(6).find((l) => l.id === "http-versions")!.example!.lines;
+    expect(lines).toEqual([
+      "Non-persistent, one connection at a time: 2 + 2 × 4 = 10 RTTs.",
+      "Non-persistent with 4 parallel connections: 2 + 2 × 1 = 4 RTTs.",
+      "Persistent: 2 + 4 × 1 = 6 RTTs.",
+      "Pipelined (or multiplexed): 2 + 1 = 3 RTTs.",
+    ]);
+  });
+
+  it("walks DORA in order and puts T1/T2 at 4 h and 7 h of an 8 h lease", () => {
+    const lines = lessonsFor(6).find((l) => l.id === "dhcp-dora")!.example!.lines;
+    expect(lines).toEqual(["Order: Discover → Offer → Request → Acknowledge.", "T1 = 50% × 8 h = 4 h: renew with the same server.", "T2 = 87.5% × 8 h = 7 h: rebind with any server.", "At 8 h the lease expires."]);
+    expect(Object.keys(DORA_LINES)).toEqual(["Discover", "Offer", "Request", "Acknowledge"]);
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

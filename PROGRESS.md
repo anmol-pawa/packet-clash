@@ -472,3 +472,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: all 12 answers pinned in `tests/questions.test.ts` (443 tests in all).
 - Verified: lint, typecheck, 443 tests, `build:pages` (134 files precached). Text-only cards on existing panels, so no new screenshots.
 - Next: 2.6c Gym 6 concept lessons (DNS resolution, HTTP/1.1 vs 2 vs 3 timelines, DORA).
+
+## 2026-10-22 (17:15 IST): 2.6c Gym 6 concept lessons
+- Main was green (no lock). This finishes 2.6 Application layer.
+- **Cards** (`content/lessons.ts`, gym 6): DNS resolution (iterative lookup, record types, caching; cold lookup 8 messages, TLD cached 6, answer cached 2, all from `dnsCost`), HTTP round trips (page + 4 objects: 10 / 4 with 4 parallel / 6 persistent / 3 pipelined from `pageLoadRtts`; HTTP/2 multiplexing and HTTP/3 over QUIC in the text), DHCP DORA and the lease (T1 4 h, T2 7 h of 8 h from `dhcpTimers`).
+- **Art** (`game/art/lessons.ts`): `dnsFigure` (five coloured host columns, eight numbered query/reply arrows), `httpFigure` (one shaded brick per RTT, handshake vs request, per mode) and `doraFigure` (client/server timelines plus the lease bar). All on `/dev/sprites`. Screenshots caught missing panels, a clipped legend and badge placement.
+- Tests: 4 new (447 total): figure order, DNS flow matches the solver's message count and the root/TLD/auth order, HTTP cells match `pageLoadRtts`, DORA order and timers.
+- Verified: lint, typecheck, 447 tests, `build:pages` (134 files precached). Playwright at 1280×800 and iPhone 14: no console errors or horizontal overflow; reviewed figure screenshots (gym 6 lessons are badge-locked, so viewed via `/dev/sprites`).
+- Next: 2.7 Security (split first: solvers/generators for hashing/crypto arithmetic, then cards, then lessons).

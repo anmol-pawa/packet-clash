@@ -2,6 +2,7 @@ import { TYPE_INFO, type PacketType } from "@/game/engine/types";
 import { crc, hammingCoverage, hammingEncode } from "@/lib/net/errors";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstraSteps, type Graph } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate, type Route } from "@/lib/net/addressing";
+import { DHCP_DORA, dhcpTimers, pageLoadRtts, type HttpMode } from "@/lib/net/application";
 import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissions, type TcpState } from "@/lib/net/transport";
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
@@ -991,5 +992,161 @@ export function cwndFigure(): SpriteDef {
   c.text(x0 + 76, ly - 1, "AVOID", DIM);
   c.hline(x0 + 100, ly + 2, 8, "#ffffff", 2);
   c.text(x0 + 110, ly - 1, "SSTHRESH", DIM);
+  return c.sprite();
+}
+
+/** The DNS card: the iterative lookup, one numbered arrow per message (K&R Fig. 2.19 without caches). */
+export interface DnsMsg {
+  from: number;
+  to: number;
+  label: string;
+}
+export const DNS_COLUMNS = ["HOST", "LOCAL", "ROOT", "TLD", "AUTH"] as const;
+export const DNS_FLOW: readonly DnsMsg[] = [
+  { from: 0, to: 1, label: "QUERY" },
+  { from: 1, to: 2, label: "QUERY" },
+  { from: 2, to: 1, label: "TLD NS" },
+  { from: 1, to: 3, label: "QUERY" },
+  { from: 3, to: 1, label: "AUTH NS" },
+  { from: 1, to: 4, label: "QUERY" },
+  { from: 4, to: 1, label: "ANSWER" },
+  { from: 1, to: 0, label: "ANSWER" },
+];
+
+export function dnsFigure(): SpriteDef {
+  const pitch = 32;
+  const x0 = 16;
+  const rowH = 12;
+  const top = 18;
+  const c = new Canvas(160, top + DNS_FLOW.length * rowH + 6);
+  c.panel();
+  const types: PacketType[] = ["APPLICATION", "TRANSPORT", "NETWORK", "LINK", "PHYSICAL"];
+  DNS_COLUMNS.forEach((name, i) => {
+    const x = x0 + i * pitch;
+    c.vline(x, 14, c.h - 14, TIMELINE);
+    c.brick(x - 14, 1, 29, 13, ramp(types[i]));
+    c.ctext(x, 5, name, INK);
+  });
+  const reply = "#4f8fe8";
+  DNS_FLOW.forEach((m, i) => {
+    const y = top + i * rowH + 7;
+    const xa = x0 + m.from * pitch;
+    const xb = x0 + m.to * pitch;
+    const dir = xb > xa ? 1 : -1;
+    const col = m.label === "QUERY" ? GOLD : reply;
+    for (let x = xa + dir * 7; x !== xb - dir; x += dir) c.set(x, y, col);
+    for (let k = 1; k <= 3; k++) {
+      c.set(xb - dir * (k + 1), y - k, col);
+      c.set(xb - dir * (k + 1), y + k, col);
+    }
+    c.set(xb - dir, y, col);
+    c.rect(xa + dir * 2 - (dir < 0 ? 4 : 0), y - 3, 5, 7, OUTLINE);
+    c.ctext(xa + dir * 4, y - 2, String(i + 1), INK);
+    c.ctext((xa + xb) / 2 + dir * 3, y - 7, m.label, m.label === "QUERY" ? INK : DIM);
+  });
+  return c.sprite();
+}
+
+/** The HTTP card: fetching a page and 4 embedded objects, in round trips. */
+export const HTTP_DEMO = { objects: 4 };
+export const HTTP_ROWS: { mode: HttpMode; label: string }[] = [
+  { mode: "non-persistent", label: "HTTP/1.0 NEW CONNECTION EACH" },
+  { mode: "persistent", label: "HTTP/1.1 PERSISTENT" },
+  { mode: "pipelined", label: "PIPELINED OR HTTP/2 MULTIPLEX" },
+];
+
+/** One cell per RTT: "h" is a TCP handshake, "r" a request and response. */
+export function httpCells(mode: HttpMode, objects: number): ("h" | "r")[] {
+  const cells: ("h" | "r")[] = [];
+  if (mode === "non-persistent") for (let i = 0; i <= objects; i++) cells.push("h", "r");
+  else if (mode === "persistent") cells.push("h", "r", ...Array<"r">(objects).fill("r"));
+  else cells.push("h", "r", "r");
+  return cells;
+}
+
+export function httpFigure(): SpriteDef {
+  const unit = 13;
+  const x0 = 4;
+  const rows = HTTP_ROWS.length;
+  const max = pageLoadRtts("non-persistent", HTTP_DEMO.objects);
+  const c = new Canvas(x0 + max * unit + 6, 8 + rows * 24 + 22);
+  c.panel();
+  const hs = "#4f8fe8";
+  const rq = "#4fc26a";
+  const shade = (col: string): readonly string[] => [lighten(col, 0.35), col, darken(col, 0.25), darken(col, 0.5)];
+  HTTP_ROWS.forEach(({ mode, label }, r) => {
+    const y = 6 + r * 24;
+    c.text(x0, y, label, INK);
+    httpCells(mode, HTTP_DEMO.objects).forEach((k, i) => c.brick(x0 + i * unit, y + 7, unit - 1, 11, shade(k === "h" ? hs : rq)));
+  });
+  const ay = 8 + rows * 24 - 2;
+  c.hline(x0, ay, max * unit, DIM);
+  for (let t = 0; t <= max; t += 2) {
+    c.vline(x0 + t * unit - (t ? 1 : 0), ay, 2, DIM);
+    c.ctext(x0 + t * unit - (t ? 1 : 0), ay + 3, String(t), DIM);
+  }
+  const ly = ay + 11;
+  c.rect(x0, ly, 4, 4, hs);
+  c.text(x0 + 6, ly - 1, "HANDSHAKE", DIM);
+  c.rect(x0 + 58, ly, 4, 4, rq);
+  c.text(x0 + 64, ly - 1, "REQUEST", DIM);
+  c.text(x0 + max * unit - 10, ly - 1, "RTTS", DIM);
+  return c.sprite();
+}
+
+/** The DHCP card: DORA, then the lease timers. */
+export const DHCP_DEMO = { ip: "192.168.1.50", leaseHours: 8 };
+export const DORA_LINES: Record<(typeof DHCP_DORA)[number], string[]> = {
+  Discover: ["DISCOVER", "FROM 0.0.0.0", "TO 255.255.255.255"],
+  Offer: ["OFFER", `IP ${DHCP_DEMO.ip}`, `LEASE ${DHCP_DEMO.leaseHours} H`],
+  Request: ["REQUEST", `WANT ${DHCP_DEMO.ip}`, "TO 255.255.255.255"],
+  Acknowledge: ["ACK", `IP ${DHCP_DEMO.ip}`, `LEASE ${DHCP_DEMO.leaseHours} H`],
+};
+
+export function doraFigure(): SpriteDef {
+  const cx = 34;
+  const sx = 126;
+  const slot = 26;
+  const top = 18;
+  const barY = top + DHCP_DORA.length * slot + 14;
+  const c = new Canvas(160, barY + 28);
+  c.panel();
+  c.brick(cx - 16, 1, 32, 13, ramp("APPLICATION"));
+  c.ctext(cx, 5, "CLIENT", INK);
+  c.brick(sx - 16, 1, 32, 13, ramp("TRANSPORT"));
+  c.ctext(sx, 5, "SERVER", INK);
+  c.vline(cx, 14, barY - 20 - 14 + 6, TIMELINE);
+  c.vline(sx, 14, barY - 20 - 14 + 6, TIMELINE);
+  DHCP_DORA.forEach((name, i) => {
+    const lines = DORA_LINES[name];
+    const fromClient = i % 2 === 0;
+    const y = top + i * slot;
+    lines.forEach((ln, k) => c.ctext((cx + sx) / 2, y + k * 6, ln, k === 0 ? INK : DIM));
+    const ys = y + 19;
+    const [x0, x1] = fromClient ? [cx + 1, sx - 1] : [sx - 1, cx + 1];
+    const dir = x1 > x0 ? 1 : -1;
+    const col = fromClient ? GOLD : "#4f8fe8";
+    for (let x = x0; x !== x1 + dir; x += dir) c.set(x, ys, col);
+    for (let k = 1; k <= 3; k++) {
+      c.set(x1 - dir * k, ys - k, col);
+      c.set(x1 - dir * k, ys + k, col);
+    }
+    c.ctext(fromClient ? 10 : 150, y + 5, ["D", "O", "R", "A"][i], GOLD);
+  });
+  // the lease: bound until T1, renewing until T2, rebinding until it expires
+  const lease = DHCP_DEMO.leaseHours * 3600;
+  const { t1, t2 } = dhcpTimers(lease);
+  const bx = 8;
+  const bw = 144;
+  const at = (t: number) => bx + Math.round((t / lease) * bw);
+  const seg = (a: number, b: number, col: string) => c.brick(at(a), barY, at(b) - at(a), 9, [lighten(col, 0.35), col, darken(col, 0.25), darken(col, 0.5)]);
+  c.text(bx, barY - 7, "LEASE", DIM);
+  seg(0, t1, "#4fc26a");
+  seg(t1, t2, "#4f8fe8");
+  seg(t2, lease, "#f0a03a");
+  c.ctext((at(0) + at(t1)) / 2, barY + 2, "BOUND", INK);
+  c.ctext((at(t1) + at(t2)) / 2, barY + 2, "RENEW", INK);
+  c.ctext(at(t1), barY + 12, `T1 ${t1 / 3600} H`, DIM);
+  c.ctext(at(t2), barY + 18, `T2 ${t2 / 3600} H`, DIM);
   return c.sprite();
 }

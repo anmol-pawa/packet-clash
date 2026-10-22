@@ -1,5 +1,6 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { BF_DEST, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstra, dijkstraSteps, nextHop, pathTo } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate } from "@/lib/net/addressing";
 import { blockSize, broadcastOf, formatCidr, formatIp, hostRange, parseCidr, parseIp, usableHosts } from "@/lib/net/ipv4";
@@ -16,7 +17,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora";
 
 export interface Lesson {
   id: string;
@@ -111,6 +112,13 @@ const pipeWindow = fullPipeWindow(KR_BITS, KR_BPS, KR_RTT);
 const pct = (u: number) => `${(u * 100).toFixed(3)}%`;
 const cw = cwndSeries(CWND_DEMO);
 const lossRounds = Object.keys(CWND_DEMO.losses).map(Number);
+
+// gym 6: the DNS card's cold lookup, the HTTP card's page and 4 objects, the DHCP card's 8-hour lease
+const dnsCold = dnsCost("iterative", "none");
+const dnsTld = dnsCost("iterative", "tld");
+const dnsAnswer = dnsCost("iterative", "answer");
+const httpRtts = { np: pageLoadRtts("non-persistent", HTTP_DEMO.objects), p: pageLoadRtts("persistent", HTTP_DEMO.objects), pl: pageLoadRtts("pipelined", HTTP_DEMO.objects), np4: pageLoadRtts("non-persistent", HTTP_DEMO.objects, 4) };
+const dhcp = dhcpTimers(DHCP_DEMO.leaseHours * 3600);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -459,6 +467,60 @@ export const LESSONS: Record<number, Lesson[]> = {
           `Triple duplicate ACK at cwnd ${cw.cwnd[lossRounds[0]]}: ssthresh = ${cw.ssthresh[lossRounds[0] + 1]}, cwnd = ${cw.cwnd[lossRounds[0] + 1]}.`,
           `Timeout at cwnd ${cw.cwnd[lossRounds[1]]}: ssthresh = ${cw.ssthresh[lossRounds[1] + 1]}, cwnd = ${cw.cwnd[lossRounds[1] + 1]}, then slow start again.`,
         ],
+      },
+    },
+  ],
+  6: [
+    {
+      id: "dns-resolution",
+      title: "DNS: resolving a name",
+      figure: "dns",
+      caption: "Eight messages for a cold lookup.",
+      paras: [
+        "DNS maps names to IP addresses through a hierarchy: root servers know who runs each top-level domain (.com), TLD servers know who runs each domain (example.com), and that domain's authoritative server holds the actual records (A for IPv4, AAAA for IPv6, CNAME for an alias, MX for mail, NS for the delegation). The host only talks to its local (recursive) resolver, which does the walking and caches what it learns.",
+        "In an iterative lookup the local server asks each server in turn and each one answers with a referral to the next (\"ask the .com servers\"). In a recursive lookup a server asks the next one on your behalf and passes the answer back, which loads the upper servers. Caching is why the root is rarely contacted: a cached TLD server skips the root, a cached answer skips everything until its TTL expires.",
+      ],
+      example: {
+        title: "Iterative lookup, local server with cold caches",
+        lines: [
+          `${DNS_FLOW.length} messages on the wire: host to local, three server queries with three replies, local to host.`,
+          `Servers contacted: ${dnsCold.serversContacted} (root, TLD, authoritative), all queried by the local server; ${dnsCold.messages} messages in all.`,
+          `With the TLD server cached the root is skipped: ${dnsTld.serversContacted} servers, ${dnsTld.messages} messages.`,
+          `With the answer cached: ${dnsAnswer.serversContacted} servers, ${dnsAnswer.messages} messages (the host and its resolver only).`,
+        ],
+      },
+    },
+    {
+      id: "http-versions",
+      title: "HTTP: versions and round trips",
+      figure: "http",
+      caption: `A page with ${HTTP_DEMO.objects} images, counted in RTTs.`,
+      paras: [
+        "Round trips decide how fast a page loads. Early HTTP opened a new TCP connection for every object: 2 RTTs each (handshake, then request and reply). HTTP/1.1 made connections persistent, so after the first 2 RTTs each object costs 1 RTT; with pipelining all the requests go out together and the objects cost 1 RTT in total.",
+        "HTTP/1.1 pipelining was brittle (replies must come back in order, so one slow reply blocks the rest). HTTP/2 multiplexes many independent streams over one TCP connection, with header compression, but a single lost TCP segment still stalls every stream. HTTP/3 runs over QUIC on UDP: each stream is recovered separately, so a loss only delays its own stream, and the transport and TLS 1.3 handshakes are combined, saving a round trip on a new connection.",
+      ],
+      example: {
+        title: `One base page and ${HTTP_DEMO.objects} embedded objects, transmission times ignored`,
+        lines: [
+          `Non-persistent, one connection at a time: 2 + 2 × ${HTTP_DEMO.objects} = ${httpRtts.np} RTTs.`,
+          `Non-persistent with ${HTTP_DEMO.objects} parallel connections: 2 + 2 × 1 = ${httpRtts.np4} RTTs.`,
+          `Persistent: 2 + ${HTTP_DEMO.objects} × 1 = ${httpRtts.p} RTTs.`,
+          `Pipelined (or multiplexed): 2 + 1 = ${httpRtts.pl} RTTs.`,
+        ],
+      },
+    },
+    {
+      id: "dhcp-dora",
+      title: "DHCP: DORA and the lease",
+      figure: "dora",
+      caption: "Four messages, then a timed lease.",
+      paras: [
+        `A host with no address cannot use the network, so it broadcasts: ${DHCP_DORA.join(", ")}. The Discover goes from 0.0.0.0 to 255.255.255.255 over UDP (client port 68, server port 67). A server Offers an address and lease, the client Requests it (broadcast, so other servers learn their offers were declined), and the server Acknowledges. The reply can also carry the subnet mask, default gateway and DNS server.`,
+        "The address is leased, not owned. At T1 (50% of the lease) the client unicasts a renewal to its server; if that fails, at T2 (87.5%) it broadcasts to any server to rebind; if the lease still runs out it must stop using the address and start again with Discover. A relay agent lets one server serve many subnets by forwarding the broadcast.",
+      ],
+      example: {
+        title: `A ${DHCP_DEMO.leaseHours}-hour lease on ${DHCP_DEMO.ip}`,
+        lines: [`Order: ${DHCP_DORA.join(" → ")}.`, `T1 = 50% × ${DHCP_DEMO.leaseHours} h = ${dhcp.t1 / 3600} h: renew with the same server.`, `T2 = 87.5% × ${DHCP_DEMO.leaseHours} h = ${dhcp.t2 / 3600} h: rebind with any server.`, `At ${DHCP_DEMO.leaseHours} h the lease expires.`],
       },
     },
   ],
