@@ -83,7 +83,9 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 2.8b Gym 8 hand-written cards: URL parts, full journey order, DNS before TCP, on-link/off-link and gateway MAC, DNS transport, NAT, CDN, HTTP cache, HSTS, repeat visits, render blocking.
   - [x] 2.8c Gym 8 concept lessons: illustrated cards (the whole journey as a timeline, RTT budget bars for cold vs warm, TLS 1.2 vs 1.3 vs QUIC).
   - [x] 2.8d Animated journey page (`/url`): step through the nine stages with packets travelling laptop → router → resolver → server, linked from the gym 8 lessons.
-- [ ] 2.9 Interview gauntlet: the top networking interview questions (TCP vs UDP, how DNS works, HTTP vs HTTPS, subnetting on the spot, load balancers L4 vs L7, CDN, WebSockets, NAT traversal) as a timed mock interview with a scorecard.
+- [x] 2.9 Interview gauntlet: the top networking interview questions (TCP vs UDP, how DNS works, HTTP vs HTTPS, subnetting on the spot, load balancers L4 vs L7, CDN, WebSockets, NAT traversal) as a timed mock interview with a scorecard.
+  - [x] 2.9a Gym 9 interview bank: 14 hand-written gauntlet cards (TCP vs UDP, L4 vs L7 load balancers, sticky sessions, CDN, WebSockets, STUN/TURN/ICE, subnetting on the spot, troubleshooting order, anycast, proxies, 502 vs 504) under a new `interview` topic that gym 9 asks.
+  - [x] 2.9b Timed mock interview page (`/interview`): 8 seeded questions against a per-question clock, explanations, a difficulty-weighted scorecard with a verdict and the questions to revisit; linked from the map.
 
 ## 3. Polish
 

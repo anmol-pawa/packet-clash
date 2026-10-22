@@ -3,8 +3,9 @@
  * this; every answer is checked in tests/questions.test.ts.
  */
 import type { Question } from "@/game/engine/questions";
+import { INTERVIEW_BANK } from "./interviewBank";
 
-export const BANK: readonly Question[] = [
+const CHAPTER_BANK: readonly Question[] = [
   {
     id: "router-layer",
     kind: "mcq",
@@ -1708,3 +1709,5 @@ export const BANK: readonly Question[] = [
     explain: "A classic script can change the document, so the parser waits for it (and for CSS that it may read). The async and defer attributes let the download overlap parsing, and the fetch reuses the open HTTP/2 connection, so there is no new handshake.",
   },
 ];
+
+export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK];

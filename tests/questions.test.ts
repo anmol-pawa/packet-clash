@@ -334,6 +334,22 @@ describe("the bank", () => {
       "syn-flood-defence": "SYN cookies: encode the connection details in the SYN-ACK's sequence number",
       "tls13-round-trips": "1",
       "https-guarantees": "The traffic's contents are encrypted, Tampering with the data in transit is detected, The server proves its identity with a certificate",
+      "iv-tcp-vs-udp": "A late packet is worthless, so waiting for a retransmission only adds delay",
+      "iv-lb-l4-l7": "Route by URL path, Host header or cookie",
+      "iv-lb-sticky": "Store sessions in a shared store such as Redis, so any server can serve any request",
+      "iv-cdn-benefits": "Edge servers near users cut the round-trip time, Cached copies take load off the origin server, Absorbing traffic at many edges helps withstand a DDoS",
+      "iv-websocket-upgrade": "An ordinary HTTP GET with Upgrade: websocket, answered by 101 Switching Protocols",
+      "iv-websocket-steps":
+        "1. TCP three-way handshake  2. TLS handshake  3. HTTP GET with Upgrade: websocket and Sec-WebSocket-Key  4. Server answers 101 Switching Protocols  5. Both sides send WebSocket frames",
+      "iv-nat-traversal": "It tells a peer its public IP address and port as the NAT mapped it",
+      "iv-stun-turn-ice": "STUN: Reports your public IP and port, Carries no media itself; TURN: Relays the media when no direct path works, Costs the operator real bandwidth; ICE: Gathers candidates and tests which pair connects",
+      "iv-subnet-hosts": "30",
+      "iv-subnet-broadcast": "7",
+      "iv-troubleshoot":
+        "1. Check the link light and the host's IP configuration  2. Ping the default gateway  3. Ping a public IP address such as 1.1.1.1  4. Resolve the site's name with nslookup or dig  5. Connect to the port with curl or telnet",
+      "iv-anycast": "Many sites announce the same IP prefix via BGP, and routers send you to the closest announcement",
+      "iv-proxies": "A forward proxy fronts clients going out; a reverse proxy fronts servers receiving requests",
+      "iv-502-504": "The upstream server did not answer within the proxy's timeout",
       "url-fragment": "The fragment, #setup",
       "url-journey-order":
         "1. Parse the URL and check local caches  2. Look for the IP in the browser and OS DNS caches  3. ARP for the default gateway's MAC address  4. DNS query to the recursive resolver  5. TCP three-way handshake with the server  6. TLS handshake  7. HTTP request: GET /  8. Server responds 200 OK with the HTML  9. Parse the HTML and render the page",

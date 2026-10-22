@@ -528,3 +528,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 5 new in `tests/journeyTrip.test.ts` (485 total).
 - Verified: lint, typecheck, 485 tests, `build:pages` (142 files precached; note the first build run after install fails with a Next.js security-advisory notice, the identical retry passes). Playwright at 1280x800 and iPhone 14 against the built export: no console errors, no horizontal overflow; reviewed screenshots (moved the description above the list so it is visible on mobile).
 - Next: 2.9 Interview gauntlet (split first).
+
+## 2026-10-22 (23:50 IST): 2.9 Interview gauntlet
+- Main was green (no lock). Split 2.9 into 2.9a bank and 2.9b mock interview page; did both. This finishes section 2 (curriculum).
+- **Bank** (`content/questions/interviewBank.ts`, new `interview` topic, `GYM_TOPICS[9]`): 14 cards: TCP vs UDP for voice, L4 vs L7 balancers, sticky sessions vs shared store, CDN benefits, WebSocket upgrade (+ order of a wss:// open), STUN, STUN/TURN/ICE sort, /27 hosts, broadcast of 172.16.5.200/21, bottom-up troubleshooting order, anycast, forward vs reverse proxy, 504 vs 502.
+- **Engine** (`game/engine/mockInterview.ts`): seeded `interviewDeck` (warm-ups first), `timeLimit` (30/45/60 s by difficulty, +30 s for order/sort), difficulty-weighted `scorecard` with verdict bands (85/65/45).
+- **Page** (`/interview`, `components/interview/MockInterview.tsx`): intro, countdown bar, existing QuestionPanel and ExplainBox, scorecard with per-difficulty tally and expandable REVISIT list; answers go into the Leitner box. Button added to the map's bottom bar.
+- Tests: `tests/interview.test.ts` (subnet answers solved by `lib/net/ipv4`, gym 9 deck, deck/timing/scoring) and all 14 answers pinned in `tests/questions.test.ts`.
+- Verified: lint, typecheck, tests, `build:pages` (149 files precached). Playwright at 1280x800 and iPhone 14 on the built export: played a full run on desktop to the scorecard; no console errors, no horizontal overflow; reviewed screenshots.
+- Next: 3.1 Daily challenge (date-seeded) and streaks.

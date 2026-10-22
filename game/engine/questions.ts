@@ -11,8 +11,8 @@
 import type { PacketType } from "./types";
 import { rng, shuffled } from "@/lib/rng";
 
-/** The curriculum chapters (ROADMAP 2.1–2.6). */
-export type TopicId = "models" | "link" | "network" | "routing" | "transport" | "application" | "security" | "journey";
+/** The curriculum chapters (ROADMAP 2.1–2.9). */
+export type TopicId = "models" | "link" | "network" | "routing" | "transport" | "application" | "security" | "journey" | "interview";
 
 /** 1 = warm-up, 2 = standard, 3 = interview / tough follow-up. */
 export type Difficulty = 1 | 2 | 3;

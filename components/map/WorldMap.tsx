@@ -297,6 +297,9 @@ export function WorldMap() {
         <Link href="/dex" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
           DEX
         </Link>
+        <Link href="/interview" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
+          MOCK INTERVIEW
+        </Link>
       </nav>
     </main>
   );

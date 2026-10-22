@@ -12,7 +12,7 @@ import { GENERATORS } from "./generators";
 /** Questions per battle (the deck cycles if the battle runs longer). */
 export const DECK_SIZE = 10;
 
-/** Each gym's chapter (gym 9, the gauntlet, draws from everything). */
+/** Each gym's chapter (gym 9, the interview gauntlet, asks its own bank). */
 export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   1: ["models"],
   2: ["link"],
@@ -22,6 +22,7 @@ export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   6: ["application"],
   7: ["security"],
   8: ["journey"],
+  9: ["interview"],
 };
 
 /** A gym battle's deck: its chapter's cards first, then any chapter's, never the same card twice. */
