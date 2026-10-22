@@ -537,3 +537,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/interview.test.ts` (subnet answers solved by `lib/net/ipv4`, gym 9 deck, deck/timing/scoring) and all 14 answers pinned in `tests/questions.test.ts`.
 - Verified: lint, typecheck, tests, `build:pages` (149 files precached). Playwright at 1280x800 and iPhone 14 on the built export: played a full run on desktop to the scorecard; no console errors, no horizontal overflow; reviewed screenshots.
 - Next: 3.1 Daily challenge (date-seeded) and streaks.
+
+## 2026-10-22 (evening): 3.1 Daily challenge and streaks
+- Main was green (no stale lock).
+- **Engine** (`game/engine/daily.ts`): local-day key, calendar day numbers, a date-seeded 5-question deck over the whole bank and generators (same deck all day, new generator numbers each day), pure streak logic (`completeDaily`, `liveStreak`: consecutive days extend, a gap restarts, a day counts once), `normalizeDaily` for old saves.
+- **Save** (`lib/save.ts`): new `daily` field with `recordDaily`; older saves load with an empty streak.
+- **Page** (`/daily`, `components/daily/DailyChallenge.tsx`): untimed, explanations after each answer (misses feed the Leitner box), result screen with streak and best, replay for practice that does not change the streak. DAILY button on the map's bottom bar.
+- Tests: `tests/daily.test.ts` (day arithmetic across month/year/leap, same deck per day and different next day, every daily question answerable, streak rules, normalisation); 498 total.
+- Verified: lint, typecheck, 498 tests, `build:pages` (157 files precached). Playwright at 1280x800 and iPhone 14 against the built export: played a full run to the result screen, no console errors, no horizontal overflow; reviewed screenshots.
+- Next: 3.2 Accessibility and performance pass on iPhone.

@@ -5,6 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import type { Partner } from "@/game/engine/party";
+import { EMPTY_DAILY, completeDaily, normalizeDaily, type DailyState } from "@/game/engine/daily";
 import { EMPTY_LEITNER, normalizeLeitner, review, startSession, type LeitnerState } from "@/game/engine/leitner";
 
 export interface Settings {
@@ -24,6 +25,7 @@ export interface SaveData {
   partner: Partner | null; // the player's creature (null = the starter, see STARTER)
   leitner: LeitnerState; // spaced-repetition boxes, keyed by question id (see cardKey)
   lessonsSeen: number[]; // gyms whose lesson cards were read or skipped once
+  daily: DailyState; // the daily challenge streak
   settings: Settings;
 }
 
@@ -39,6 +41,7 @@ const DEFAULT: SaveData = {
   partner: null,
   leitner: EMPTY_LEITNER,
   lessonsSeen: [],
+  daily: EMPTY_DAILY,
   settings: { volume: 0.6, music: true, reducedMotion: false, zen: false },
 };
 
@@ -51,7 +54,7 @@ function load(): SaveData {
     const raw = localStorage.getItem(KEY);
     const parsed = raw ? JSON.parse(raw) : null;
     cache = parsed
-      ? { ...DEFAULT, ...parsed, leitner: normalizeLeitner(parsed.leitner), settings: { ...DEFAULT.settings, ...(parsed.settings ?? {}) } }
+      ? { ...DEFAULT, ...parsed, leitner: normalizeLeitner(parsed.leitner), daily: normalizeDaily(parsed.daily), settings: { ...DEFAULT.settings, ...(parsed.settings ?? {}) } }
       : { ...DEFAULT };
   } catch {
     cache = { ...DEFAULT };
@@ -81,6 +84,11 @@ export function startLeitnerSession() {
 /** Record one answer in the Leitner box. */
 export function recordReview(questionId: string, correct: boolean) {
   updateSave((s) => ({ ...s, leitner: review(s.leitner, questionId, correct) }));
+}
+
+/** The day's challenge is finished with `score` right. */
+export function recordDaily(key: string, score: number) {
+  updateSave((s) => ({ ...s, daily: completeDaily(s.daily, key, score) }));
 }
 
 export function resetSave() {
