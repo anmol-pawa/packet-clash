@@ -587,6 +587,7 @@ export const LESSONS: Record<number, Lesson[]> = {
       id: "url-journey",
       title: "Typing a URL: the whole journey",
       figure: "journey",
+      tool: { href: "/url", label: "STEP THROUGH IT ▶" },
       caption: "Nine steps from the address bar to pixels, in order.",
       paras: [
         "The browser first parses the URL (scheme, host, port, path), checks its HSTS list and its HTTP cache, and looks for the IP address in its own and the OS DNS cache. Only a miss goes on the wire. The first packet out is a DNS query to the recursive resolver; because the resolver is off-link, the host sends it to the default gateway and so needs the gateway's MAC address, which is what ARP is for (broadcast request, unicast reply, then cached).",

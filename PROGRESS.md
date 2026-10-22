@@ -520,3 +520,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 4 new gym 8 tests (480 total), figures added to the sprite validity test.
 - Verified: lint, typecheck, 480 tests, `build:pages` (134 files precached). Playwright at 1280×800 and iPhone 14 on `/dev/sprites`: no console errors or horizontal overflow; reviewed screenshots.
 - Next: 2.8d animated journey page (`/url`), linked from the gym 8 lessons.
+
+## 2026-10-22 (23:15 IST): 2.8d Animated URL journey page
+- Main was green (no lock). This finishes 2.8.
+- **Engine** (`game/engine/journeyTrip.ts`): each of the nine `URL_JOURNEY` steps gets a route over laptop / router / resolver / server (reply or one way, round trips added), keyed by journey ids so it cannot drift from the lesson. Round trips sum to 4 = `journeyRtts("answer", "tcp-tls13")`.
+- **Page** (`/url`, `components/lessons/UrlJourney.tsx`): BACK / RESET / NEXT, a packet that hops node to node (stepped CSS transition, jumps to the end under reduced motion), lit path in the phase colour, running RTT counter, step list. Linked from the gym 8 "Typing a URL" lesson.
+- Tests: 5 new in `tests/journeyTrip.test.ts` (485 total).
+- Verified: lint, typecheck, 485 tests, `build:pages` (142 files precached; note the first build run after install fails with a Next.js security-advisory notice, the identical retry passes). Playwright at 1280x800 and iPhone 14 against the built export: no console errors, no horizontal overflow; reviewed screenshots (moved the description above the list so it is visible on mobile).
+- Next: 2.9 Interview gauntlet (split first).
