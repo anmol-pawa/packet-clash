@@ -118,10 +118,10 @@ describe("pickDeck", () => {
     expect(deck).toHaveLength(6);
     expect(pickDeck(s, BANK, GENERATORS, { seed: 3, size: 6 })).toEqual(deck);
     expect(new Set(deck.map((q) => cardKey(q.id))).size).toBe(6);
-    const full = pickDeck(s, BANK, GENERATORS, { seed: 3, size: 100 });
+    const full = pickDeck(s, BANK, GENERATORS, { seed: 3, size: all });
     expect(full).toHaveLength(all);
     expect(new Set(full.map((q) => cardKey(q.id)))).toEqual(
-      new Set(buildDeck(BANK, GENERATORS, { seed: 3, size: 100 }).map((q) => cardKey(q.id))),
+      new Set(buildDeck(BANK, GENERATORS, { seed: 3, size: all }).map((q) => cardKey(q.id))),
     );
   });
 

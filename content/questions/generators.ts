@@ -21,6 +21,7 @@ import { IPV6_GENERATORS } from "./ipv6Generators";
 import { ERROR_GENERATORS } from "./errorGenerators";
 import { LINK_GENERATORS } from "./linkGenerators";
 import { SWITCH_GENERATORS } from "./switchGenerators";
+import { ROUTING_GENERATORS } from "./routingGenerators";
 
 const pick = <T>(r: () => number, xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];
 
@@ -508,5 +509,6 @@ export const GENERATORS: readonly Generator[] = [
   ...LINK_GENERATORS,
   ...SWITCH_GENERATORS,
   ...ADDRESS_GENERATORS,
+  ...ROUTING_GENERATORS,
   ...IPV6_GENERATORS,
 ];
