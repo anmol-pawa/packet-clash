@@ -334,6 +334,20 @@ describe("the bank", () => {
       "syn-flood-defence": "SYN cookies: encode the connection details in the SYN-ACK's sequence number",
       "tls13-round-trips": "1",
       "https-guarantees": "The traffic's contents are encrypted, Tampering with the data in transit is detected, The server proves its identity with a certificate",
+      "url-fragment": "The fragment, #setup",
+      "url-journey-order":
+        "1. Parse the URL and check local caches  2. Look for the IP in the browser and OS DNS caches  3. ARP for the default gateway's MAC address  4. DNS query to the recursive resolver  5. TCP three-way handshake with the server  6. TLS handshake  7. HTTP request: GET /  8. Server responds 200 OK with the HTML  9. Parse the HTML and render the page",
+      "dns-before-tcp": "TCP can only connect to an IP address, and the URL has a name",
+      "onlink-decision": "AND both addresses with the mask: they differ, so send it to the default gateway",
+      "frame-dest-mac": "The default gateway's",
+      "dns-transport": "A UDP datagram to port 53",
+      "journey-nat": "Replaces the private source IP with its public IP, Replaces the source port with one from its pool and records the mapping, Recomputes the IP and TCP checksums",
+      "journey-phases": "Finding the server: DNS query for the A record, ARP request for the gateway; Connection setup: TCP SYN, TLS ClientHello; Page transfer: HTTP GET /, HTTP 200 OK with the HTML",
+      "journey-cdn-dns": "DNS returns the address of an edge close to the resolver (or via anycast)",
+      "journey-http-cache": "Uses the cached copy with no network traffic at all",
+      "journey-hsts": "The browser upgrades to https before sending anything",
+      "journey-repeat-visit": "The DNS lookup, from a cached record, The ARP exchange, from the ARP cache, The TCP handshake, by reusing a keep-alive connection",
+      "journey-render-blocking": "Parsing pauses until the script is downloaded and run",
       "dijkstra-steps":
         "1. Set the source's cost to 0 and every other node's to infinity  2. Settle the unsettled node with the smallest cost  3. Relax its neighbours: lower D(v) if D(u) + c(u,v) is smaller  4. Repeat until every node is settled",
     };

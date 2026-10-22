@@ -503,3 +503,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 4 new (gym 7 lessons: figure order, TLS flow matches the solver's handshake and encryption boundary, chain links, DH numbers).
 - Verified: lint, typecheck, tests, `build:pages` (134 files precached). Playwright at 1280×800 and iPhone 14: no console errors or horizontal overflow; reviewed screenshots.
 - Next: 2.8 "What happens when you type a URL" end-to-end boss battle (split first).
+
+## 2026-10-22 (21:15 IST): 2.8a/2.8b URL journey solver, generators and cards
+- Main was green (no lock). Split 2.8 into 2.8a solver/generators, 2.8b cards, 2.8c lessons, 2.8d animated page; did a and b this run.
+- **Solver** (`lib/net/journey.ts`): the nine-step cold HTTPS journey (caches, ARP for the gateway, DNS, TCP, TLS, HTTP, response, render), `dnsRtts` (built on `dnsCost`), `connectRtts` for TCP / TLS 1.3 / TLS 1.2 / QUIC / QUIC 0-RTT, and `journeyRtts` to the first byte of HTML. ARP is placed before the DNS query because the resolver is off-link; it is excluded from the RTT total (LAN only, cached).
+- **Generators** (`content/questions/journeyGenerators.ts`): first-byte time from cache level × transport × RTT, and ordering a consecutive slice of the journey. New `journey` topic; `GYM_TOPICS[8] = ["journey"]`, so the Fetchimera gym now asks its own chapter.
+- **Bank**: 13 new cards (URL parts, full order, DNS before TCP, off-link decision, gateway MAC, DNS transport, NAT, phases sort, CDN, HTTP cache, HSTS, repeat visit, render blocking).
+- Tests: `tests/journey.test.ts` (cached plain HTTP = 2 RTT as in K&R, cold DNS = 4 RTT = dnsCost messages/2, TLS 1.3 cold = 7, generators recomputed from ids, deck) plus all 13 card answers pinned in `tests/questions.test.ts` (476 total).
+- Verified: lint, typecheck, 476 tests, `build:pages` (134 files precached). Text-only cards on existing panels, so no new screenshots.
+- Next: 2.8c Gym 8 concept lessons (journey timeline, RTT budget bars, TLS 1.2 vs 1.3 vs QUIC figures).
