@@ -1,5 +1,6 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstra, dijkstraSteps, nextHop, pathTo } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate } from "@/lib/net/addressing";
@@ -17,7 +18,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh";
 
 export interface Lesson {
   id: string;
@@ -119,6 +120,8 @@ const dnsTld = dnsCost("iterative", "tld");
 const dnsAnswer = dnsCost("iterative", "answer");
 const httpRtts = { np: pageLoadRtts("non-persistent", HTTP_DEMO.objects), p: pageLoadRtts("persistent", HTTP_DEMO.objects), pl: pageLoadRtts("pipelined", HTTP_DEMO.objects), np4: pageLoadRtts("non-persistent", HTTP_DEMO.objects, 4) };
 const dhcp = dhcpTimers(DHCP_DEMO.leaseHours * 3600);
+
+const dh = diffieHellman(DH_DEMO.p, DH_DEMO.g, DH_DEMO.a, DH_DEMO.b);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -521,6 +524,54 @@ export const LESSONS: Record<number, Lesson[]> = {
       example: {
         title: `A ${DHCP_DEMO.leaseHours}-hour lease on ${DHCP_DEMO.ip}`,
         lines: [`Order: ${DHCP_DORA.join(" → ")}.`, `T1 = 50% × ${DHCP_DEMO.leaseHours} h = ${dhcp.t1 / 3600} h: renew with the same server.`, `T2 = 87.5% × ${DHCP_DEMO.leaseHours} h = ${dhcp.t2 / 3600} h: rebind with any server.`, `At ${DHCP_DEMO.leaseHours} h the lease expires.`],
+      },
+    },
+  ],
+  7: [
+    {
+      id: "tls-handshake",
+      title: "TLS 1.3: one round trip to keys",
+      figure: "tls",
+      caption: "Keys after one round trip; everything past ServerHello is encrypted.",
+      paras: [
+        "TLS sits between TCP and HTTP and gives HTTPS its three guarantees: confidentiality (encryption), integrity (tampering is detected) and authentication (you are talking to the real server). It does this by first agreeing on a fresh symmetric key with an asymmetric exchange, then encrypting the traffic with that fast symmetric cipher.",
+        "In TLS 1.3 the client guesses a key-exchange group and sends its key share in the ClientHello. The server answers with its own share in the ServerHello, so both sides can already derive the keys. The certificate, the proof that the server owns its key (CertificateVerify) and the Finished messages all travel encrypted. Each Finished covers the whole transcript, so a tampered handshake is caught.",
+      ],
+      example: {
+        title: "A full TLS 1.3 handshake",
+        lines: [...TLS13_HANDSHAKE.map((s, i) => `${i + 1}. ${s}`), `Round trips before the client can send HTTP data: 1 (TLS 1.2 needed 2).`],
+      },
+    },
+    {
+      id: "cert-chain",
+      title: "Certificates and the chain of trust",
+      figure: "pki",
+      caption: "Each certificate is signed by the one above; the root is already trusted.",
+      paras: [
+        "A certificate binds a name to a public key and is signed by a certificate authority (CA). Anyone can claim a key, so the browser checks that a CA it trusts vouched for it. The server sends its own (leaf) certificate plus the intermediate CAs; the root is not sent because the browser already has it in its trust store.",
+        "The browser checks that the name matches the site and the dates are valid, then verifies each signature with the public key of the certificate above: the leaf with the intermediate's key, the intermediate with the root's. A root is self-signed, so trust must come from the store. A CA signs with its private key; verification uses its public key, and the server proves it owns the leaf's key in CertificateVerify.",
+      ],
+      example: {
+        title: "Validating example.com",
+        lines: CERT_CHAIN.map((c, i) => `${i + 1}. ${c.subject}: signed by ${c.signedBy.toLowerCase()}${i === 0 ? ", found in the trust store" : ""}.`),
+      },
+    },
+    {
+      id: "diffie-hellman",
+      title: "Diffie-Hellman: a shared secret in public",
+      figure: "dh",
+      caption: `p = ${DH_DEMO.p}, g = ${DH_DEMO.g}: both sides end with the key ${dh.secret}.`,
+      paras: [
+        "Two parties agree on a prime p and a generator g in the open. Each picks a private exponent, sends g raised to it (mod p), and raises what it receives to its own exponent. Both land on g^(ab) mod p, because (g^a)^b = (g^b)^a. An eavesdropper sees p, g, g^a and g^b but recovering a means solving the discrete logarithm problem, which is hard for large primes.",
+        "Plain Diffie-Hellman gives no authentication, so a man in the middle could run one exchange with each side. TLS therefore signs the exchange with the certificate's key. Real deployments use 2048-bit primes or elliptic curves (ECDHE), and a fresh exponent per connection gives forward secrecy: stealing the server's key later does not reveal old sessions.",
+      ],
+      example: {
+        title: `p = ${DH_DEMO.p}, g = ${DH_DEMO.g}, a = ${DH_DEMO.a}, b = ${DH_DEMO.b}`,
+        lines: [
+          `Alice sends ${DH_DEMO.g}^${DH_DEMO.a} mod ${DH_DEMO.p} = ${dh.publicA}.`,
+          `Bob sends ${DH_DEMO.g}^${DH_DEMO.b} mod ${DH_DEMO.p} = ${dh.publicB}.`,
+          `Alice computes ${dh.publicB}^${DH_DEMO.a} mod ${DH_DEMO.p} = ${dh.secret}; Bob computes ${dh.publicA}^${DH_DEMO.b} mod ${DH_DEMO.p} = ${dh.secret}.`,
+        ],
       },
     },
   ],

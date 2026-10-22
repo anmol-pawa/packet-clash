@@ -3,6 +3,7 @@ import { crc, hammingCoverage, hammingEncode } from "@/lib/net/errors";
 import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstraSteps, type Graph } from "@/lib/net/routing";
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate, type Route } from "@/lib/net/addressing";
 import { DHCP_DORA, dhcpTimers, pageLoadRtts, type HttpMode } from "@/lib/net/application";
+import { diffieHellman } from "@/lib/net/security";
 import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissions, type TcpState } from "@/lib/net/transport";
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
@@ -1148,5 +1149,188 @@ export function doraFigure(): SpriteDef {
   c.ctext((at(t1) + at(t2)) / 2, barY + 2, "RENEW", INK);
   c.ctext(at(t1), barY + 12, `T1 ${t1 / 3600} H`, DIM);
   c.ctext(at(t2), barY + 18, `T2 ${t2 / 3600} H`, DIM);
+  return c.sprite();
+}
+
+/** A horizontal arrow from column `xa` to `xb` at row `y`. */
+function arrow(c: Canvas, xa: number, xb: number, y: number, col: string) {
+  const dir = xb > xa ? 1 : -1;
+  for (let x = xa; x !== xb + dir; x += dir) c.set(x, y, col);
+  for (let k = 1; k <= 3; k++) {
+    c.set(xb - dir * k, y - k, col);
+    c.set(xb - dir * k, y + k, col);
+  }
+}
+
+/** The TLS 1.3 card: one round trip to keys, everything after ServerHello encrypted. `step` indexes TLS13_HANDSHAKE. */
+export interface TlsMsg {
+  step: number;
+  dir: "right" | "left" | "both";
+  label: string;
+  note: string;
+  encrypted: boolean;
+}
+export const TLS_FLOW: readonly TlsMsg[] = [
+  {
+    step: 0,
+    dir: "right",
+    label: "CLIENTHELLO",
+    note: "KEY SHARE",
+    encrypted: false,
+  },
+  {
+    step: 1,
+    dir: "left",
+    label: "SERVERHELLO",
+    note: "KEY SHARE",
+    encrypted: false,
+  },
+  {
+    step: 2,
+    dir: "left",
+    label: "CERT AND PROOF",
+    note: "ENCRYPTED",
+    encrypted: true,
+  },
+  {
+    step: 3,
+    dir: "left",
+    label: "FINISHED",
+    note: "ENCRYPTED",
+    encrypted: true,
+  },
+  {
+    step: 4,
+    dir: "right",
+    label: "FINISHED",
+    note: "ENCRYPTED",
+    encrypted: true,
+  },
+  {
+    step: 5,
+    dir: "both",
+    label: "HTTP DATA",
+    note: "ENCRYPTED",
+    encrypted: true,
+  },
+];
+
+export function tlsFigure(): SpriteDef {
+  const cx = 24;
+  const sx = 136;
+  const rowH = 20;
+  const top = 18;
+  const c = new Canvas(160, top + TLS_FLOW.length * rowH + 16);
+  c.panel();
+  const firstEnc = TLS_FLOW.findIndex((m) => m.encrypted);
+  const encTop = top + firstEnc * rowH;
+  c.rect(cx + 2, encTop, sx - cx - 3, c.h - encTop - 14, "#16392f");
+  c.brick(cx - 16, 1, 32, 13, ramp("APPLICATION"));
+  c.ctext(cx, 5, "CLIENT", INK);
+  c.brick(sx - 16, 1, 32, 13, ramp("TRANSPORT"));
+  c.ctext(sx, 5, "SERVER", INK);
+  c.vline(cx, 14, c.h - 14, TIMELINE);
+  c.vline(sx, 14, c.h - 14, TIMELINE);
+  TLS_FLOW.forEach((m, i) => {
+    const y = top + i * rowH + 11;
+    const col = m.dir === "right" ? GOLD : m.dir === "left" ? "#4f8fe8" : "#4fc26a";
+    if (m.dir !== "left") arrow(c, cx + 2, sx - 2, y, col);
+    if (m.dir !== "right") arrow(c, sx - 2, cx + 2, y, col);
+    c.ctext((cx + sx) / 2, y - 9, m.label, INK);
+    c.ctext((cx + sx) / 2, y + 3, m.note, m.encrypted ? "#7fe0b0" : DIM);
+    c.ctext(cx - 10, y - 2, String(i + 1), GOLD);
+  });
+  const by = c.h - 11;
+  c.text(8, by, "1 RTT TO KEYS", GOLD);
+  c.text(86, by, "KEYS FROM STEP 2", DIM);
+  return c.sprite();
+}
+
+/** The PKI card: a chain of certificates, each signed by the one above; trust ends at a root in the store. */
+export const CERT_CHAIN = [
+  {
+    name: "ROOT CA",
+    subject: "ROOT CA",
+    signedBy: "ITSELF",
+    note: "IN TRUST STORE",
+  },
+  {
+    name: "INTERMEDIATE CA",
+    subject: "INTERMEDIATE CA",
+    signedBy: "ROOT CA",
+    note: "SENT BY SERVER",
+  },
+  {
+    name: "EXAMPLE.COM",
+    subject: "EXAMPLE.COM",
+    signedBy: "INTERMEDIATE CA",
+    note: "SENT BY SERVER",
+  },
+] as const;
+
+export function certChainFigure(): SpriteDef {
+  const rowH = 44;
+  const top = 6;
+  const bw = 84;
+  const c = new Canvas(160, top + CERT_CHAIN.length * rowH + 14);
+  c.panel();
+  const types: PacketType[] = ["SECURITY", "NETWORK", "APPLICATION"];
+  CERT_CHAIN.forEach((cert, i) => {
+    const y = top + i * rowH;
+    c.brick(6, y, bw, 30, ramp(types[i]));
+    c.text(11, y + 4, cert.name, INK);
+    c.text(11, y + 12, `SIGNED BY`, "#cfc8f5");
+    c.text(11, y + 19, cert.signedBy, INK);
+    c.text(98, y + 6, cert.note, i === 0 ? "#7fe0b0" : DIM);
+    if (i > 0) {
+      // the issuer's key signed this certificate: an arrow up to the one above
+      const ax = 48;
+      c.vline(ax, y - 13, 13, GOLD);
+      for (let k = 1; k <= 3; k++) {
+        c.set(ax - k, y - 13 + k - 1, GOLD);
+        c.set(ax + k, y - 13 + k - 1, GOLD);
+      }
+      c.text(ax + 6, y - 10, "VERIFY WITH ITS KEY", GOLD);
+    }
+  });
+  c.text(8, c.h - 9, "CHECK NAME DATES AND SIGNATURES", DIM);
+  return c.sprite();
+}
+
+/** The Diffie-Hellman card: the p = 23, g = 5 exchange, with private exponents a = 6 and b = 15. */
+export const DH_DEMO = { p: 23, g: 5, a: 6, b: 15 };
+
+export function dhFigure(): SpriteDef {
+  const { p, g, a, b } = DH_DEMO;
+  const ex = diffieHellman(p, g, a, b);
+  const ax = 30;
+  const bx = 130;
+  const c = new Canvas(160, 112);
+  c.panel();
+  c.brick(ax - 16, 1, 32, 13, ramp("APPLICATION"));
+  c.ctext(ax, 5, "ALICE", INK);
+  c.brick(bx - 16, 1, 32, 13, ramp("TRANSPORT"));
+  c.ctext(bx, 5, "BOB", INK);
+  c.vline(ax, 14, 98, TIMELINE);
+  c.vline(bx, 14, 98, TIMELINE);
+  c.ctext(80, 18, `PUBLIC  P ${p}  G ${g}`, GOLD);
+  c.ctext(ax + 2, 28, `SECRET A ${a}`, "#e0564c");
+  c.ctext(bx - 2, 28, `SECRET B ${b}`, "#e0564c");
+  c.ctext(ax + 2, 36, `G TO A MOD P`, DIM);
+  c.ctext(bx - 2, 36, `G TO B MOD P`, DIM);
+  c.ctext(ax + 2, 43, `${ex.publicA}`, INK);
+  c.ctext(bx - 2, 43, `${ex.publicB}`, INK);
+  arrow(c, ax + 3, bx - 3, 55, GOLD);
+  c.ctext(80, 48, `SEND ${ex.publicA}`, INK);
+  arrow(c, bx - 3, ax + 3, 70, "#4f8fe8");
+  c.ctext(80, 63, `SEND ${ex.publicB}`, INK);
+  c.ctext(ax + 2, 78, `${ex.publicB} TO A MOD P`, DIM);
+  c.ctext(bx - 2, 78, `${ex.publicA} TO B MOD P`, DIM);
+  const key = [lighten("#4fc26a", 0.35), "#4fc26a", darken("#4fc26a", 0.25), darken("#4fc26a", 0.5)];
+  c.brick(ax - 14, 86, 28, 11, key);
+  c.ctext(ax, 89, `KEY ${ex.secret}`, INK);
+  c.brick(bx - 14, 86, 28, 11, key);
+  c.ctext(bx, 89, `KEY ${ex.secret}`, INK);
+  c.ctext(80, 102, `EAVESDROPPER SEES ONLY P G ${ex.publicA} ${ex.publicB}`, DIM);
   return c.sprite();
 }

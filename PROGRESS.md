@@ -495,3 +495,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: all 14 answers pinned in `tests/questions.test.ts` (462 tests in all).
 - Verified: lint, typecheck, 462 tests, `build:pages` (134 files precached). Text-only cards on existing panels, so no new screenshots.
 - Next: 2.7c Gym 7 concept lessons (TLS 1.3 handshake, certificate chain, Diffie-Hellman figures).
+
+## 2026-10-22 (20:15 IST): 2.7c Gym 7 concept lessons
+- Main was green (no lock). This finishes 2.7 Security.
+- **Cards** (`content/lessons.ts`, gym 7): TLS 1.3 (one round trip to keys, encrypted after ServerHello; steps from `TLS13_HANDSHAKE`), certificate chain (leaf, intermediate, self-signed root in the trust store), Diffie-Hellman (p=23, g=5, a=6, b=15 from `diffieHellman`: 8, 19, key 2; MITM and forward secrecy in the text).
+- **Art** (`game/art/lessons.ts`): `tlsFigure` (client/server timelines, six numbered arrows, green encrypted band), `certChainFigure` (three shaded certificate bricks with verify arrows), `dhFigure` (public values, secrets, the two sends, matching key bricks). On `/dev/sprites`. Screenshots caught missing micro-font glyphs (+ ^ = ,), overlapping labels and a clipped footer.
+- Tests: 4 new (gym 7 lessons: figure order, TLS flow matches the solver's handshake and encryption boundary, chain links, DH numbers).
+- Verified: lint, typecheck, tests, `build:pages` (134 files precached). Playwright at 1280×800 and iPhone 14: no console errors or horizontal overflow; reviewed screenshots.
+- Next: 2.8 "What happens when you type a URL" end-to-end boss battle (split first).

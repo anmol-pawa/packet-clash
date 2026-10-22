@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { TLS13_HANDSHAKE, diffieHellman, modPow } from "@/lib/net/security";
 import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
-import { DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
@@ -267,9 +268,41 @@ describe("gym 6 lessons", () => {
   });
 });
 
+describe("gym 7 lessons", () => {
+  it("has three cards: TLS, certificate chain, Diffie-Hellman", () => {
+    expect(lessonsFor(7).map((l) => l.figure)).toEqual(["tls", "pki", "dh"]);
+  });
+
+  it("draws the TLS 1.3 handshake in the solver's order, encrypted after ServerHello", () => {
+    expect(TLS_FLOW.map((m) => m.step)).toEqual(TLS13_HANDSHAKE.map((_, i) => i));
+    expect(TLS_FLOW.map((m) => m.dir)).toEqual(["right", "left", "left", "left", "right", "both"]);
+    expect(TLS_FLOW.map((m) => m.encrypted)).toEqual([false, false, true, true, true, true]);
+    const lines = lessonsFor(7).find((l) => l.id === "tls-handshake")!.example!.lines;
+    expect(lines).toHaveLength(7);
+    expect(lines[0]).toBe("1. ClientHello (with a key share)");
+  });
+
+  it("chains each certificate to the issuer above it, ending at a self-signed root", () => {
+    expect(CERT_CHAIN[0].signedBy).toBe("ITSELF");
+    CERT_CHAIN.slice(1).forEach((c, i) => expect(c.signedBy).toBe(CERT_CHAIN[i].subject));
+  });
+
+  it("works the p = 23, g = 5 exchange to the shared key 2", () => {
+    const { p, g, a, b } = DH_DEMO;
+    expect(diffieHellman(p, g, a, b)).toEqual({
+      publicA: 8,
+      publicB: 19,
+      secret: 2,
+    });
+    expect(modPow(8, b, p)).toBe(2);
+    const lines = lessonsFor(7).find((l) => l.id === "diffie-hellman")!.example!.lines;
+    expect(lines).toEqual(["Alice sends 5^6 mod 23 = 8.", "Bob sends 5^15 mod 23 = 19.", "Alice computes 19^6 mod 23 = 2; Bob computes 8^15 mod 23 = 2."]);
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale
