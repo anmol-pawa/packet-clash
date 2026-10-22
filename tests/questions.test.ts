@@ -316,6 +316,24 @@ describe("the bank", () => {
       "mail-protocols": "Sending mail (push): SMTP; Reading mail (pull): IMAP, POP3",
       "dhcp-ports": "UDP; the server listens on 67 and the client on 68",
       "ssh-ftp": "FTP uses a control connection on port 21 and a separate data connection, SSH runs over TCP port 22 and encrypts the whole session",
+      "tls13-handshake-order":
+        "1. ClientHello with a key share  2. ServerHello with its key share  3. EncryptedExtensions, Certificate and CertificateVerify  4. Server Finished, then Client Finished",
+      "sym-vs-asym": "Symmetric (one shared key): AES, ChaCha20; Asymmetric (public/private key pair): RSA, ECDSA",
+      "hybrid-crypto": "Symmetric ciphers are far faster, so asymmetric crypto only sets up and authenticates the shared session key",
+      "cert-chain-verify":
+        "1. Check the server (leaf) certificate's name and validity dates  2. Verify the leaf's signature using the intermediate CA's public key  3. Verify the intermediate's signature using the root CA's public key  4. Confirm the root is in the browser's trust store",
+      "cert-signing-key": "Signed with the CA's private key, verified with the CA's public key",
+      "hash-properties": "The digest has a fixed size whatever the input length, It should be infeasible to recover an input from its digest, Changing one input bit should change about half of the output bits",
+      "mac-vs-hash": "The HMAC needs a shared secret key, so the attacker cannot compute a valid tag for a changed message",
+      "firewall-types":
+        "Stateless packet filter: Rules look only at addresses, ports and protocol of each packet, Judges every packet on its own, with no memory of earlier ones; Stateful firewall: Keeps a connection table so replies to outgoing requests are allowed; Application-layer gateway: Relays requests after inspecting the HTTP content",
+      "vpn-tunnel": "Encrypts and encapsulates them inside new packets addressed to the VPN gateway",
+      "attack-kinds":
+        "Availability (deny service): DDoS, SYN flood; Intercepts or alters traffic: Man-in-the-middle, ARP spoofing; Abuses a web page or browser session: XSS, CSRF",
+      "xss-csrf-defences": "XSS: escape output and set a Content-Security-Policy; CSRF: anti-CSRF tokens and SameSite cookies",
+      "syn-flood-defence": "SYN cookies: encode the connection details in the SYN-ACK's sequence number",
+      "tls13-round-trips": "1",
+      "https-guarantees": "The traffic's contents are encrypted, Tampering with the data in transit is detected, The server proves its identity with a certificate",
       "dijkstra-steps":
         "1. Set the source's cost to 0 and every other node's to infinity  2. Settle the unsettled node with the smallest cost  3. Relax its neighbours: lower D(v) if D(u) + c(u,v) is smaller  4. Repeat until every node is settled",
     };

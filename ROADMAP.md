@@ -76,7 +76,7 @@ The hourly routine works top to bottom: take the first unchecked box. Split big 
   - [x] 2.6c Gym 6 concept lessons: illustrated cards (DNS resolution, HTTP/1.1 vs 2 vs 3 timelines, DORA).
 - [ ] 2.7 Security: TLS 1.3 handshake ordering, symmetric vs asymmetric crypto, certificates and PKI, hashing and MACs, firewalls, VPNs, common attacks (MITM, DDoS, spoofing, XSS/CSRF at interview level).
   - [x] 2.7a Security solvers and generators: `lib/net/security` (modPow, Diffie-Hellman, toy RSA, key counts, brute-force time, password entropy, TLS 1.3 order) with five seeded gym 7 generators and a new `security` topic.
-  - [ ] 2.7b Gym 7 hand-written cards: TLS 1.3 handshake order, symmetric vs asymmetric, certificates/PKI, hashing and MACs, firewalls, VPNs, attacks (MITM, DDoS, spoofing, XSS/CSRF).
+  - [x] 2.7b Gym 7 hand-written cards: TLS 1.3 handshake order, symmetric vs asymmetric, certificates/PKI, hashing and MACs, firewalls, VPNs, attacks (MITM, DDoS, spoofing, XSS/CSRF).
   - [ ] 2.7c Gym 7 concept lessons: illustrated cards (TLS 1.3 handshake, certificate chain, Diffie-Hellman).
 - [ ] 2.8 "What happens when you type a URL": a full end-to-end animated journey (DNS, ARP, TCP, TLS, HTTP, rendering) as an order-the-steps boss battle.
 - [ ] 2.9 Interview gauntlet: the top networking interview questions (TCP vs UDP, how DNS works, HTTP vs HTTPS, subnetting on the spot, load balancers L4 vs L7, CDN, WebSockets, NAT traversal) as a timed mock interview with a scorecard.

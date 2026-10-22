@@ -488,3 +488,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 19 in `tests/security.test.ts` (462 total). Forouzan RSA (7, 11, 13 → d 37, 5 → 26), the 61/53/17 example (d 2753, 65 → 2790), DH p=23, g=5 (8, 19, secret 2), and each generator over 300 seeds recomputed independently from its own id.
 - Verified: lint, typecheck, 462 tests, `build:pages`. Numeric questions on existing panels, so no new screenshots.
 - Next: 2.7b Gym 7 hand-written cards.
+
+## 2026-10-22 (19:15 IST): 2.7b Gym 7 hand-written cards
+- Main was green (no lock).
+- **Bank** (14 new security cards): TLS 1.3 handshake order, symmetric vs asymmetric (sort), why TLS goes hybrid, certificate chain validation order, which key signs a certificate, hash properties (multi), HMAC vs plain hash, firewall types (sort), VPN tunnelling, attack kinds (sort), XSS vs CSRF defences, SYN cookies, TLS 1.3 round trips (1), what HTTPS guarantees (multi).
+- Tests: all 14 answers pinned in `tests/questions.test.ts` (462 tests in all).
+- Verified: lint, typecheck, 462 tests, `build:pages` (134 files precached). Text-only cards on existing panels, so no new screenshots.
+- Next: 2.7c Gym 7 concept lessons (TLS 1.3 handshake, certificate chain, Diffie-Hellman figures).
