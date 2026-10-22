@@ -434,3 +434,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 26 in `tests/transport.test.ts` (415 total). K&R §3.4 utilisation (8000 b, 1 Gbps, 30 ms: 0.00027, three packets 0.0008), Fig. 3.22 GBN vs SR, Fig. 3.53-style cwnd series, and over 300 seeds each generator is recomputed independently from its own id (send log for GBN/SR, a hand-rolled cwnd loop, a utilisation check at the answer and one below it). Corrected my own first guess for the pipelined figure (0.0008, not 0.00081) before committing.
 - Verified: lint, typecheck, 415 tests, `build:pages` (125 files precached). Numeric questions on existing panels, so no new screenshots.
 - Next: 2.5b Gym 5 hand-written cards.
+
+## 2026-10-22 (12:15 IST): 2.5b Gym 5 hand-written cards
+- Main was green (no lock).
+- **Bank** (12 new transport cards, 15 on gym 5's chapter): TCP vs UDP services, UDP header size (8 bytes), the socket 4-tuple, port/protocol pairings (multi-select), SYN-ACK acknowledges x+1, TIME_WAIT's purpose, SYN floods and SYN cookies, flow control (rwnd) vs congestion control (cwnd), fast retransmit after 3 duplicate ACKs, the Reno cwnd life (order), Go-Back-N vs Selective Repeat on a lost packet, and head-of-line blocking (TCP, HTTP/2, QUIC).
+- Tests: all 12 answers pinned in `tests/questions.test.ts` (415 tests; they sit in the single expected-answers test).
+- Verified: lint, typecheck, 415 tests, `build:pages` (125 files precached). Text-only cards on existing panels, so no new screenshots.
+- Next: 2.5c Gym 5 concept lessons (handshake/teardown state machine, GBN/SR window, cwnd sawtooth) plus the animated state machine.

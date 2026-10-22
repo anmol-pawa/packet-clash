@@ -289,6 +289,18 @@ describe("the bank", () => {
       "bgp-policy": "Between ISPs, routes are chosen by business policy first (for example customer routes over peer routes over provider routes); AS-path length is only a later tie-breaker",
       "default-route": "It matches every destination, Any longer matching prefix wins over it, A stub network or home router typically uses it to send everything unknown to its ISP",
       "static-vs-dynamic": "A small stub network with a single exit, where the route never needs to change",
+      "tcp-vs-udp": "Reliable in-order delivery and congestion control",
+      "udp-header-size": "8 bytes",
+      "socket-tuple": "TCP demultiplexes on the 4-tuple: source IP, source port, destination IP, destination port",
+      "well-known-ports": "HTTPS: TCP 443, DNS queries: UDP 53 (TCP 53 for large replies), SMTP: TCP 25",
+      "handshake-isn": "x + 1",
+      "time-wait": "To let the final ACK be retransmitted if lost, and to let old duplicate segments die out before the 4-tuple is reused",
+      "syn-flood": "The queue of half-open connections; SYN cookies",
+      "flow-vs-congestion": "Flow control protects the receiver's buffer (rwnd); congestion control protects the network (cwnd)",
+      "fast-retransmit": "3",
+      aimd: "1. Slow start: cwnd doubles every RTT  2. cwnd reaches ssthresh, switch to congestion avoidance  3. Congestion avoidance: cwnd grows by 1 MSS per RTT  4. Three duplicate ACKs: ssthresh and cwnd are halved",
+      "gbn-vs-sr": "Go-Back-N resends 3, 4 and 5; Selective Repeat buffers 4 and 5 and resends only 3",
+      "head-of-line": "TCP delivers bytes in order, so one lost segment holds back later data that already arrived, HTTP/2 multiplexes streams over one TCP connection, so a loss can stall all of them, QUIC, over UDP, retransmits per stream so a loss stalls only that stream",
       "dijkstra-steps":
         "1. Set the source's cost to 0 and every other node's to infinity  2. Settle the unsettled node with the smallest cost  3. Relax its neighbours: lower D(v) if D(u) + c(u,v) is smaller  4. Repeat until every node is settled",
     };
