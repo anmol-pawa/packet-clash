@@ -457,3 +457,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 4 new (425 total): start and end states, every state change is a legal `TCP_TRANSITIONS` edge, each side's visited states equal the textbook active/passive lists, notes present and the lesson links to `/tcp`.
 - Verified: lint, typecheck, 425 tests, `build:pages` (134 files precached). Playwright on the static export at 1280×800 and iPhone 14, stepping through all steps: no console errors, no horizontal overflow; reviewed screenshots.
 - Next: 2.6 Application layer (split it first: DNS resolution solver/generators).
+
+## 2026-10-22 (15:15 IST): 2.6a Application solvers and generators
+- Main was green (no lock). Split 2.6 into 2.6a (this), 2.6b (hand-written cards) and 2.6c (lessons).
+- **Solvers** (`lib/net/application.ts`): `dnsCost` (servers consulted, queries the local server sends, wire messages; iterative vs recursive, root/TLD/authoritative caches, extra delegations), `pageLoadRtts` (non-persistent with parallel connections, persistent, pipelined), `cacheAverageDelay`, `linkUtilization`, `accessDelay` (K&R Δ/(1−Δβ)), `dhcpTimers` (T1 50%, T2 87.5%) and the DORA order.
+- **Generators** (`content/questions/applicationGenerators.ts`, 5 new, gym 6's first problems): DNS queries/messages, HTTP page-load time, web-cache average delay, access-link utilisation before/after a cache, DHCP timers.
+- Tests: 18 in `tests/application.test.ts`. K&R Figs. 2.18/2.19 (8 DNS messages cold, both modes), the §2.2.5 access-link example (15 req/s × 1 Mbit on 15 Mbps = 1.0, 0.6 with a 40% hit rate), and each generator over 300 seeds is recomputed independently from its own id. The test caught a real bug: rounding the request rate up could push utilisation to exactly 1.0, so it now rounds down.
+- Verified: lint, typecheck, full test suite, `build:pages` (134 files precached). Numeric questions on existing panels, so no new screenshots.
+- Next: 2.6b Gym 6 hand-written cards.
