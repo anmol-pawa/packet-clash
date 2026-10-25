@@ -109,7 +109,7 @@ export function DailyChallenge() {
           </span>
           <span className="text-[#ffd257]">{score} RIGHT</span>
         </div>
-        <p className="text-xl leading-snug text-white sm:text-2xl">{q.prompt}</p>
+        <p className="whitespace-pre-line text-xl leading-snug text-white sm:text-2xl">{q.prompt}</p>
       </div>
       <QuestionPanel key={i} q={q} seed={i + 1} locked={locked} response={response} info={[`QUESTION ${i + 1}/${deck.length}`, locked ? (ok ? "CORRECT!" : "MISSED!") : "ANSWER!"]} onSubmit={submit} />
       {locked && (

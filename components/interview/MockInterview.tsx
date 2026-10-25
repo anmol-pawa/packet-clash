@@ -145,7 +145,7 @@ export function MockInterview() {
         <div className="h-2 w-full bg-[#0b0818]" aria-hidden>
           <div className="h-full bg-[#ffd257]" style={{ width: `${locked ? 0 : (shown / limit) * 100}%` }} />
         </div>
-        <p className="text-xl leading-snug text-white sm:text-2xl">{q.prompt}</p>
+        <p className="whitespace-pre-line text-xl leading-snug text-white sm:text-2xl">{q.prompt}</p>
       </div>
       <QuestionPanel key={i} q={q} seed={seed + i} locked={locked} response={response} info={[`QUESTION ${i + 1}/${deck.length}`, locked ? (last?.correct ? "CORRECT!" : last?.timedOut ? "TIME UP!" : "MISSED!") : "ANSWER!"]} onSubmit={(r) => finish(r)} />
       {locked && (

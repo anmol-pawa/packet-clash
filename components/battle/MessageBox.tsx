@@ -9,7 +9,7 @@ export function MessageBox({ text, more, onAdvance }: { text: string; more?: boo
   const typed = useTyped(text);
   return (
     <div
-      className="pixel-box relative min-h-[5.5rem] cursor-pointer select-none p-3 pr-8 text-lg leading-snug sm:text-xl"
+      className="pixel-box relative min-h-[5.5rem] cursor-pointer select-none whitespace-pre-line p-3 pr-8 text-lg leading-snug sm:text-xl"
       role="status"
       aria-live="polite"
       data-testid="message"

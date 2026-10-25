@@ -366,6 +366,27 @@ describe("the bank", () => {
       "journey-render-blocking": "Parsing pauses until the script is downloaded and run",
       "dijkstra-steps":
         "1. Set the source's cost to 0 and every other node's to infinity  2. Settle the unsettled node with the smallest cost  3. Relax its neighbours: lower D(v) if D(u) + c(u,v) is smaller  4. Repeat until every node is settled",
+      "ccna-l3-switch": "Route packets between VLANs and subnets in hardware",
+      "ccna-ips-inline": "An intrusion prevention system (IPS)",
+      "ccna-wlc": "Over a CAPWAP tunnel, which carries control and client data",
+      "ccna-device-roles": "Forwards frames by MAC address: Layer-2 switch, Bridge; Forwards packets by IP address: Router; Joins wireless clients to the LAN: Access point; Filters traffic by security policy: Firewall",
+      "ccna-utp-cat": "Category 6a",
+      "ccna-utp-length": "100 m",
+      "ccna-fibre": "It has a much narrower core (about 9 µm), It is driven by a laser and reaches kilometres",
+      "ccna-poe-standards": "802.3af (PoE): 15.4 W; 802.3at (PoE+): 30 W; 802.3bt (PoE++): 60 W, 100 W",
+      "ccna-poe-loss": "It is lost as heat in the cable",
+      "ccna-auto-mdix": "Detects the cable type and swaps its transmit and receive pairs to match",
+      "ccna-duplex-mismatch": "Late collisions",
+      "ccna-interface-counters": "A frame shorter than 64 bytes: Runts; A frame longer than 1518 bytes: Giants; A frame that failed the FCS check: CRC errors",
+      "ccna-crc-causes": "A damaged or over-length cable, Electromagnetic interference, A duplex mismatch",
+      "ccna-ping-symbols": "Echo reply received: !; Timed out: .; Destination unreachable: U, N",
+      "ccna-ping-first-dot": "The first echo waited on ARP, which timed out the first packet",
+      "ccna-ping-u": "A router on the path replied with ICMP destination unreachable, often because it has no route",
+      "ccna-traceroute-how": "It sends probes with TTL 1, 2, 3, … and each router that drops one returns ICMP time exceeded",
+      "ccna-traceroute-stars": "Check the routing table and ACLs on hop 3, and that a route back exists",
+      "ccna-tcp-refused": "The host is reachable but nothing is listening on that port (it answered with a TCP RST)",
+      "ccna-tcp-timeout": "A firewall or ACL is dropping TCP port 443",
+      "ccna-udp-closed": "ICMP destination unreachable, port unreachable",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);
