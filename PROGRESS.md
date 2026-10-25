@@ -576,3 +576,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/acl.test.ts` (textbook wildcard examples, parse round-trips, evaluator cases, generator answers re-solved by re-parsing the ACL printed in each prompt) and all 14 card answers pinned in `tests/questions.test.ts`; 535 total.
 - Verified: lint, typecheck, 535 tests, `build:pages` (157 files precached; first build after install stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots; ACL prompts reuse the multi-line prompt rendering reviewed in 4.1.
 - Next: 4.3 IP routing on Cisco.
+
+## 2026-10-25: 4.3a IP routing on Cisco I
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification. 4.3 was split: 4.3a done, 4.3b (OSPF/EIGRP) is next.
+- **Solver** (`lib/net/iproute.ts`): Cisco default AD table, `selectRoute` (longest prefix, then AD, then metric), `installedFor`, `floatingAd`, `show ip route` line printer/parser (codes C/L/S/S*/R/D/O/B).
+- **Content**: 12 hand-written cards (`content/questions/iprouteBank.ts`: AD ordering, longest prefix over AD, floating static, route codes, local /32 routes, default route and gateway of last resort, bracket meaning, no-route behaviour, ECMP, interface-down static) and 3 seeded generators (`iprouteGenerators.ts`: which route forwards a destination from a printed table, AD winner between two protocols, floating-static AD). Still the `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/iproute.test.ts` (AD table, selection cases, floating static, generator answers re-solved by parsing the table printed in each prompt) and all 12 card answers pinned in `tests/questions.test.ts`.
+- Verified: lint, typecheck, all tests, `build:pages` (157 files precached; first build stops on the Next.js advisory notice, identical retry passes). No UI changed, so no new screenshots.
+- Next: 4.3b OSPF and EIGRP.

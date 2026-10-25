@@ -17,6 +17,7 @@ import {
 import { blockSize, broadcastOf, formatIp, maskOf, usableHosts, type Cidr } from "@/lib/net/ipv4";
 import { randInt, rng, shuffled } from "@/lib/rng";
 import { ACL_GENERATORS } from "./aclGenerators";
+import { IPROUTE_GENERATORS } from "./iprouteGenerators";
 import { CCNA_GENERATORS } from "./ccnaGenerators";
 import { ADDRESS_GENERATORS } from "./addressGenerators";
 import { IPV6_GENERATORS } from "./ipv6Generators";
@@ -523,4 +524,5 @@ export const GENERATORS: readonly Generator[] = [
   ...IPV6_GENERATORS,
   ...CCNA_GENERATORS,
   ...ACL_GENERATORS,
+  ...IPROUTE_GENERATORS,
 ];

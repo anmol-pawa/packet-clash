@@ -401,6 +401,18 @@ describe("the bank", () => {
       "acl-established": "TCP segments with the ACK or RST flag set (not the first SYN)",
       "acl-block-subnet": "172.16.32.0 0.0.15.255",
       "acl-log-order": "1. A packet arrives on the interface  2. The ACL is checked line by line from the top  3. The first matching line decides: permit or deny  4. If no line matches, the implicit deny drops it",
+      "iprt-ad-order": "1. Connected (0)  2. Static (1)  3. EIGRP (90)  4. OSPF (110)  5. RIP (120)",
+      "iprt-longest-prefix": "10.1.0.0/16 via RIP",
+      "iprt-ad-tie": "OSPF, because 110 < 120",
+      "iprt-floating": "ip route 192.168.9.0 255.255.255.0 10.0.0.2 130",
+      "iprt-route-codes": "Learned dynamically: O  (OSPF), D  (EIGRP), R  (RIP); Configured or directly attached: S  (static), C  (connected), L  (local)",
+      "iprt-local-route": "C 192.168.1.0/24 and L 192.168.1.1/32",
+      "iprt-default-route": "ip route 0.0.0.0 0.0.0.0 203.0.113.1",
+      "iprt-gateway-last-resort": "A default route exists; packets with no more specific match go to 10.0.0.2",
+      "iprt-brackets": "Administrative distance and OSPF cost (metric)",
+      "iprt-no-route": "Drops it and sends an ICMP destination unreachable to the sender",
+      "iprt-equal-cost": "Installs both and load-balances (ECMP)",
+      "iprt-ip-route-parts": "The static route is removed from the routing table",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);
