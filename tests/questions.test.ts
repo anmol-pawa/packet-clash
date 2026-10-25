@@ -387,6 +387,20 @@ describe("the bank", () => {
       "ccna-tcp-refused": "The host is reachable but nothing is listening on that port (it answered with a TCP RST)",
       "ccna-tcp-timeout": "A firewall or ACL is dropping TCP port 443",
       "ccna-udp-closed": "ICMP destination unreachable, port unreachable",
+      "acl-wildcard-24": "0.0.0.255",
+      "acl-host-any": "0.0.0.0 (match every bit): host 10.1.1.1, 10.1.1.1 0.0.0.0; 255.255.255.255 (match no bit): any, 0.0.0.0 255.255.255.255",
+      "acl-implicit-deny": "It is dropped by the implicit deny at the end",
+      "acl-first-match": "It is permitted by line 1; line 2 is never reached",
+      "acl-placement": "As close to the source as possible: Extended ACL (source, destination, protocol, port), Extended ACL that blocks Telnet from one subnet; As close to the destination as possible: Standard ACL (source address only)",
+      "acl-numbers": "Standard: access-list 10, access-list 99, access-list 1350; Extended: access-list 100, access-list 150, access-list 2005",
+      "acl-standard-match": "The source IP address only",
+      "acl-direction": "One per protocol, per direction (one inbound and one outbound for IPv4)",
+      "acl-outbound-router": "No: outbound ACLs only filter traffic passing through, not traffic the router originates",
+      "acl-vty": "`access-class 5 in` under line vty 0 15",
+      "acl-edit-named": "You can delete or insert single lines by sequence number",
+      "acl-established": "TCP segments with the ACK or RST flag set (not the first SYN)",
+      "acl-block-subnet": "172.16.32.0 0.0.15.255",
+      "acl-log-order": "1. A packet arrives on the interface  2. The ACL is checked line by line from the top  3. The first matching line decides: permit or deny  4. If no line matches, the implicit deny drops it",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

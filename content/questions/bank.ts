@@ -3,6 +3,7 @@
  * this; every answer is checked in tests/questions.test.ts.
  */
 import type { Question } from "@/game/engine/questions";
+import { ACL_BANK } from "./aclBank";
 import { CCNA_BANK } from "./ccnaBank";
 import { INTERVIEW_BANK } from "./interviewBank";
 
@@ -1711,4 +1712,4 @@ const CHAPTER_BANK: readonly Question[] = [
   },
 ];
 
-export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK];
+export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK];

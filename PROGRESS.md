@@ -568,3 +568,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/devices.test.ts` (10), `tests/ccna.test.ts` (generator answers re-solved from the text in each prompt), all 21 card answers pinned in `tests/questions.test.ts`; 518 total.
 - Verified: lint, typecheck, 518 tests, `build:pages` (157 files precached; the first run after install stops on a Next.js advisory notice, the identical retry passes). Playwright at 1280x800 and iPhone 14 against the built export: no console errors, no horizontal overflow; reviewed the iPhone screenshot of a multi-line traceroute prompt and a sort question.
 - Next: 4.2 Wildcard masks and ACLs.
+
+## 2026-10-25: 4.2 Wildcard masks and ACLs
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/acl.ts`): wildcard from prefix/mask, contiguity and prefix recovery, match counts (also for odd patterns like 0.0.254.255), `parseAclLine`/`formatAclLine` for standard and extended lines (`host`, `any`, `eq/gt/lt/range`, service names), first-match `evaluateAcl` with the implicit deny, numbered-ACL ranges, placement rule.
+- **Content**: 14 hand-written ACL cards (`content/questions/aclBank.ts`: wildcards, host/any, implicit deny, first match, placement, numbering, standard vs extended, one ACL per direction, outbound vs router-originated traffic, `access-class` on VTY, named ACL sequence numbers, `established`, /20 wildcard, processing order) and 4 seeded generators (`aclGenerators.ts`: wildcard for a network, addresses matched by a wildcard, permit/deny verdict of a 3-line ACL, which line decides). All still in the `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/acl.test.ts` (textbook wildcard examples, parse round-trips, evaluator cases, generator answers re-solved by re-parsing the ACL printed in each prompt) and all 14 card answers pinned in `tests/questions.test.ts`; 535 total.
+- Verified: lint, typecheck, 535 tests, `build:pages` (157 files precached; first build after install stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots; ACL prompts reuse the multi-line prompt rendering reviewed in 4.1.
+- Next: 4.3 IP routing on Cisco.
