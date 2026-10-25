@@ -554,3 +554,8 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Audit: Playwright over all 13 routes on the built export at 1280x800 and iPhone 14: no console errors, no horizontal overflow, no unnamed buttons/links, no sub-40 px tap targets on iPhone (desktop mouse still has compact back links by design).
 - Verified: lint, typecheck, 498 tests, `build:pages` (157 files precached). Caveat: the headless Chromium here renders the Pixi battle scene blank/partial even on the unchanged baseline (software WebGL), so battle art was not judged this run; changes are CSS/markup only.
 - Next: no unchecked roadmap tasks remain; check ROADMAP.md for new sections.
+
+## 2026-10-25: Roadmap extended (CCNA + FAANG coverage audit)
+- Audited `content/` and `lib/net/` against the CCNA 200-301 blueprint and typical FAANG SDE networking loops. Theory (layers, subnetting, routing, TCP, DNS/HTTP, TLS) is solid; gaps are Cisco config/ACL/OSPF/STP-election/EtherChannel/FHRP/wireless/QoS/automation and system-design topics (load-balancing algorithms, consistent hashing, rate limiting, BBR/QUIC, Clos/VPC/Kubernetes, sockets/epoll, capture debugging).
+- Added ROADMAP sections 4 (CCNA, 4.1-4.10), 5 (FAANG, 5.1-5.10) and 6 (game integration). No code changed.
+- Next: 4.1 Network fundamentals II.
