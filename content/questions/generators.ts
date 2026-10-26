@@ -20,6 +20,7 @@ import { ACL_GENERATORS } from "./aclGenerators";
 import { IPROUTE_GENERATORS } from "./iprouteGenerators";
 import { OSPF_GENERATORS } from "./ospfGenerators";
 import { IPV6_ADDR_GENERATORS } from "./ipv6AddrGenerators";
+import { IPSERVICES_GENERATORS } from "./ipservicesGenerators";
 import { SWITCHING_GENERATORS } from "./switchingGenerators";
 import { CCNA_GENERATORS } from "./ccnaGenerators";
 import { ADDRESS_GENERATORS } from "./addressGenerators";
@@ -531,4 +532,5 @@ export const GENERATORS: readonly Generator[] = [
   ...OSPF_GENERATORS,
   ...IPV6_ADDR_GENERATORS,
   ...SWITCHING_GENERATORS,
+  ...IPSERVICES_GENERATORS,
 ];

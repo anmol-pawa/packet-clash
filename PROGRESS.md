@@ -608,3 +608,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/ipv6addr.test.ts` (RFC 4291 EUI-64 and solicited-node examples, classification edges, subnet carving; generator answers re-solved from the printed prompt and choices checked distinct) and all 16 card answers pinned in `tests/questions.test.ts`; 587 total.
 - Verified: lint, typecheck, 587 tests, `build:pages` (157 files precached; first build stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
 - Next: 4.6 IP services.
+
+## 2026-10-26: 4.6 CCNA IP services
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/ipservices.ts`): NAT address terms (inside local/global, outside local/global) and dynamic-pool exhaustion, syslog severity threshold, AFxy/CS/EF DSCP values and the ToS byte, HSRP election (priority, then highest IP), pre-empt on recovery, HSRPv1/v2 and VRRP virtual MACs.
+- **Content**: 27 hand-written cards (`content/questions/ipservicesBank.ts`: NAT types/terms/overload command/pool exhaustion, NTP stratum and port, DHCP relay and giaddr, DNS client, SNMP versions/ports/MIB, syslog levels and trap threshold, DSCP/CoS/EF/AF, policing vs shaping, FHRP purpose/standards/election/preempt/MACs/multicast, GLBP AVG) and 6 seeded generators (`ipservicesGenerators.ts`, ids `gen-ccna-*`: NAT term in a PAT flow, dynamic pool denied hosts, syslog filtered severity, AF DSCP, HSRP active router, HSRP virtual MAC). `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/ipservices.test.ts` (solver cases, all 27 card answers pinned, generator answers re-solved from the printed prompts, choices distinct) and the card answers also pinned in `tests/questions.test.ts`; 602 total.
+- Verified: lint, typecheck, 602 tests, `build:pages` (157 files precached). No UI changed, so no new screenshots.
+- Next: 4.7 Wireless and security fundamentals.
