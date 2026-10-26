@@ -616,3 +616,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/ipservices.test.ts` (solver cases, all 27 card answers pinned, generator answers re-solved from the printed prompts, choices distinct) and the card answers also pinned in `tests/questions.test.ts`; 602 total.
 - Verified: lint, typecheck, 602 tests, `build:pages` (157 files precached). No UI changed, so no new screenshots.
 - Next: 4.7 Wireless and security fundamentals.
+
+## 2026-10-26: 4.7 CCNA wireless and security fundamentals
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/wireless.ts`): 2.4 GHz channel centre frequencies (2407 + 5n, ch 14 = 2484), overlap rule (22 MHz width), max non-overlapping channels, 802.11 a/b/g/n/ac/ax table (bands, rates, Wi-Fi names) and a well-known port table (RADIUS 1812/1813, TACACS+ TCP 49, IKE 500, NAT-T 4500, CAPWAP 5246/5247, SSH, Telnet).
+- **Content**: 23 hand-written cards (`content/questions/wirelessBank.ts`: 1/6/11, 5 GHz trade-offs, standards, SSID vs BSSID, autonomous vs lightweight AP, CAPWAP, WPA2/WPA3, AES-CCMP, 802.1X roles, AAA, RADIUS vs TACACS+, DoS, site-to-site vs remote-access VPN, IPsec modes/IKE phases/ESP vs AH, SSH vs Telnet, enable secret, port hardening, DHCP snooping, roaming) and 3 seeded generators (`wirelessGenerators.ts`, ids `gen-ccna-*`: non-overlapping channel, channel centre frequency, protocol port). `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/wireless.test.ts` (solver cases, all card answers pinned, generator answers re-solved from the printed prompts) and the answers also pinned in `tests/questions.test.ts`; 611 total.
+- Verified: lint, typecheck, 611 tests, `build:pages` (157 files precached; the build intermittently stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
+- Next: 4.8 Automation and programmability.
