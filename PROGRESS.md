@@ -584,3 +584,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/iproute.test.ts` (AD table, selection cases, floating static, generator answers re-solved by parsing the table printed in each prompt) and all 12 card answers pinned in `tests/questions.test.ts`.
 - Verified: lint, typecheck, all tests, `build:pages` (157 files precached; first build stops on the Next.js advisory notice, identical retry passes). No UI changed, so no new screenshots.
 - Next: 4.3b OSPF and EIGRP.
+
+## 2026-10-26: 4.3b IP routing on Cisco II (OSPF and EIGRP)
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/ospf.ts`): OSPF cost from the reference bandwidth (truncated, minimum 1) and path cost, DR/BDR election (priority, then numeric router ID, priority 0 ineligible), router-ID selection, neighbour states and which pairs reach Full, classic EIGRP metric (256 x (10^7 / min kbps + delay/10)) with default interface bandwidth/delay.
+- **Content**: 16 hand-written cards (`content/questions/ospfBank.ts`: cost formula, FastE = GigE gotcha, reference bandwidth, neighbour state order, DR election and non-pre-emption, priority 0, router ID order, 2-Way on DROTHERs, matching parameters, passive interface, 224.0.0.5, area 0, EIGRP metric inputs, feasible successor, neighbour requirements) and 3 seeded generators (`ospfGenerators.ts`: lowest-cost path, DR/BDR of a segment, EIGRP metric of a path). Still the `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/ospf.test.ts` (cost defaults, election cases, router ID, EIGRP single-link values 2816/28160 and a hand-worked T1 + FastEthernet path; generator answers re-solved from the text in each prompt) and all 16 card answers pinned in `tests/questions.test.ts`; 561 total. One card id collided with an existing `ospf-areas`, so mine is `ospf-area0`.
+- Verified: lint, typecheck, 561 tests, `build:pages` (157 files precached; first build stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
+- Next: 4.4 Switching II.

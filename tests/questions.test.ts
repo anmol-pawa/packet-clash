@@ -413,6 +413,22 @@ describe("the bank", () => {
       "iprt-no-route": "Drops it and sends an ICMP destination unreachable to the sender",
       "iprt-equal-cost": "Installs both and load-balances (ECMP)",
       "iprt-ip-route-parts": "The static route is removed from the routing table",
+      "ospf-cost-formula": "10",
+      "ospf-gig-cost": "The reference bandwidth is 100 Mbps, so anything faster rounds up to the minimum cost of 1",
+      "ospf-ref-bw": "auto-cost reference-bandwidth 10000",
+      "ospf-states": "1. Down  2. Init  3. 2-Way  4. ExStart  5. Exchange  6. Loading  7. Full",
+      "ospf-dr-election": "Highest interface priority, then highest router ID",
+      "ospf-dr-nonpreempt": "Nothing: the election is not pre-emptive, the existing DR stays until it fails or OSPF restarts",
+      "ospf-priority-zero": "The router can never become DR or BDR on that segment",
+      "ospf-router-id": "Manual router-id, then highest loopback IP, then highest active interface IP",
+      "ospf-twoway": "2-Way",
+      "ospf-hello-match": "Area ID, Hello and dead timers, Subnet and mask on the link",
+      "ospf-passive": "The network is still advertised, but no hellos are sent so no neighbours form on it",
+      "ospf-multicast": "224.0.0.5",
+      "ospf-area0": "Area 0, the backbone",
+      "eigrp-metric-inputs": "Minimum bandwidth along the path and cumulative delay",
+      "eigrp-successor": "A backup next hop whose reported distance is lower than the successor's feasible distance",
+      "eigrp-config": "Autonomous system number and K values",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);
