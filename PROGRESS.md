@@ -592,3 +592,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/ospf.test.ts` (cost defaults, election cases, router ID, EIGRP single-link values 2816/28160 and a hand-worked T1 + FastEthernet path; generator answers re-solved from the text in each prompt) and all 16 card answers pinned in `tests/questions.test.ts`; 561 total. One card id collided with an existing `ospf-areas`, so mine is `ospf-area0`.
 - Verified: lint, typecheck, 561 tests, `build:pages` (157 files precached; first build stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
 - Next: 4.4 Switching II.
+
+## 2026-10-26: 4.4 CCNA switching II
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/stp.ts`): 802.1D short port costs, extended-system-ID priority (priority + VLAN), `computeStp` (lowest bridge ID root, Dijkstra root path costs, root port with neighbour-ID tie-break, designated/blocked ends per link), EtherChannel mode compatibility (LACP active/passive, PAgP desirable/auto, `on`), port-security violation outcomes.
+- **Content**: 20 hand-written cards (`content/questions/switchingBank.ts`: root election, default priority 32768+VLAN, root port, STP costs, port states, PortFast, BPDU guard, RSTP, EtherChannel modes/matching/purpose, port-security modes/defaults/sticky, DHCP snooping, DAI, router-on-a-stick, native VLAN, DTP, CDP vs LLDP) and 4 seeded generators (`switchingGenerators.ts`, ids `gen-ccna-*`: root bridge from bridge IDs, blocked port on a triangle, root path cost on a 4-switch ring, whether an EtherChannel mode pair forms). `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/stp.test.ts` (costs, election, triangle and longer-but-cheaper-path cases, EtherChannel rule table, generator answers re-solved from the printed prompt) and all 20 card answers pinned in `tests/questions.test.ts`; 575 total. Caught a generator-id collision with the older `gen-stp-*` generators via the Leitner deck test, so the new ids are prefixed `gen-ccna-`.
+- Verified: lint, typecheck, 575 tests, `build:pages` (157 files precached). No UI changed, so no new screenshots.
+- Next: 4.5 IPv6 in depth.
