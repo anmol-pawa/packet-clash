@@ -600,3 +600,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/stp.test.ts` (costs, election, triangle and longer-but-cheaper-path cases, EtherChannel rule table, generator answers re-solved from the printed prompt) and all 20 card answers pinned in `tests/questions.test.ts`; 575 total. Caught a generator-id collision with the older `gen-stp-*` generators via the Leitner deck test, so the new ids are prefixed `gen-ccna-`.
 - Verified: lint, typecheck, 575 tests, `build:pages` (157 files precached). No UI changed, so no new screenshots.
 - Next: 4.5 IPv6 in depth.
+
+## 2026-10-26: 4.5 CCNA IPv6 in depth
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/ipv6addr.ts`): address-type classification by prefix (2000::/3, fe80::/10, fc00::/7, ff00::/8, ::1, ::), modified EUI-64 from a MAC, link-local and SLAAC address building, solicited-node multicast, `/48` → `/64` subnet IDs and subnet counts. Reuses `lib/net/ipv6` for parsing and compression.
+- **Content**: 16 hand-written cards (`content/questions/ipv6Bank.ts`, ids `v6-*`: GUA/link-local/ULA ranges, no broadcast, EUI-64, SLAAC, stateless vs stateful DHCPv6, NDP messages, solicited-node, DAD, SLAAC step order, `ipv6 unicast-routing`, link-local static next hops, OSPFv3, dual stack, tunnelling) and 3 seeded generators (`ipv6AddrGenerators.ts`, ids `gen-ccna-*`: link-local from MAC, address type, nth /64 of a /48). `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/ipv6addr.test.ts` (RFC 4291 EUI-64 and solicited-node examples, classification edges, subnet carving; generator answers re-solved from the printed prompt and choices checked distinct) and all 16 card answers pinned in `tests/questions.test.ts`; 587 total.
+- Verified: lint, typecheck, 587 tests, `build:pages` (157 files precached; first build stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
+- Next: 4.6 IP services.

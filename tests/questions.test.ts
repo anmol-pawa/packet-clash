@@ -449,6 +449,23 @@ describe("the bank", () => {
       "native-vlan": "The VLAN whose frames are sent untagged (VLAN 1 by default)",
       "dtp-modes": "dynamic auto on both sides",
       "cdp-lldp": "CDP is Cisco-proprietary; LLDP (802.1AB) is the open standard",
+      "v6-gua-range": "2000::/3",
+      "v6-link-local": "Only on the local link; routers never forward it",
+      "v6-ula": "Unique local, fc00::/7 (in practice fd00::/8)",
+      "v6-no-broadcast": "Multicast, such as ff02::1 (all nodes)",
+      "v6-eui64": "Insert FFFE in the middle of the MAC and flip the 7th bit of the first byte",
+      "v6-slaac": "The /64 prefix from a Router Advertisement; the host builds the 64-bit interface ID itself",
+      "v6-dhcpv6-modes": "The host forms its address by SLAAC and DHCPv6 only supplies extra options such as DNS servers",
+      "v6-ndp-messages": "Router Solicitation, Router Advertisement, Neighbor Solicitation, Neighbor Advertisement",
+      "v6-solicited-node": "The solicited-node multicast address ff02::1:ffXX:XXXX built from the last 24 bits of the target address",
+      "v6-dad": "Sending a Neighbor Solicitation for the host's own tentative address; any reply means the address is in use",
+      "v6-slaac-steps":
+        "1. Build a link-local address (fe80::/64 + interface ID)  2. Run DAD on that link-local address  3. Send a Router Solicitation to ff02::2  4. Receive a Router Advertisement with the prefix  5. Build a global address from the prefix and run DAD again",
+      "v6-routing-enable": "ipv6 unicast-routing",
+      "v6-static-route": "fe80:: addresses repeat on every link, so the router cannot tell which link the next hop is on",
+      "v6-ospfv3": "It runs per link, uses link-local addresses for neighbours, and still needs a 32-bit router ID",
+      "v6-dualstack": "A host that runs IPv4 and IPv6 at the same time on its interface",
+      "v6-transition": "Tunnelling (for example 6in4 or GRE)",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

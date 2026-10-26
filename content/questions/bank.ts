@@ -6,6 +6,7 @@ import type { Question } from "@/game/engine/questions";
 import { ACL_BANK } from "./aclBank";
 import { IPROUTE_BANK } from "./iprouteBank";
 import { OSPF_BANK } from "./ospfBank";
+import { IPV6_BANK } from "./ipv6Bank";
 import { SWITCHING_BANK } from "./switchingBank";
 import { CCNA_BANK } from "./ccnaBank";
 import { INTERVIEW_BANK } from "./interviewBank";
@@ -1715,4 +1716,4 @@ const CHAPTER_BANK: readonly Question[] = [
   },
 ];
 
-export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK];
+export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK];
