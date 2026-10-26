@@ -22,6 +22,7 @@ import { OSPF_GENERATORS } from "./ospfGenerators";
 import { IPV6_ADDR_GENERATORS } from "./ipv6AddrGenerators";
 import { IPSERVICES_GENERATORS } from "./ipservicesGenerators";
 import { WIRELESS_GENERATORS } from "./wirelessGenerators";
+import { AUTOMATION_GENERATORS } from "./automationGenerators";
 import { SWITCHING_GENERATORS } from "./switchingGenerators";
 import { CCNA_GENERATORS } from "./ccnaGenerators";
 import { ADDRESS_GENERATORS } from "./addressGenerators";
@@ -535,4 +536,5 @@ export const GENERATORS: readonly Generator[] = [
   ...SWITCHING_GENERATORS,
   ...IPSERVICES_GENERATORS,
   ...WIRELESS_GENERATORS,
+  ...AUTOMATION_GENERATORS,
 ];

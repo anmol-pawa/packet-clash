@@ -624,3 +624,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/wireless.test.ts` (solver cases, all card answers pinned, generator answers re-solved from the printed prompts) and the answers also pinned in `tests/questions.test.ts`; 611 total.
 - Verified: lint, typecheck, 611 tests, `build:pages` (157 files precached; the build intermittently stops on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
 - Next: 4.8 Automation and programmability.
+
+## 2026-10-26: 4.8 CCNA automation and programmability
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/automation.ts`): HTTP verb table (CRUD mapping, safe, idempotent), JSON path reader and `countWhere`, device function → plane (data/control/management) table, and the Ansible/Puppet/Chef/Terraform agent/pull/language table.
+- **Content**: 24 hand-written cards (`content/questions/automationBank.ts`, ids `auto-*`: planes, SDN, northbound vs southbound, underlay/overlay, DNA Center, REST verbs, idempotency, 401/404, JSON/YAML/XML, NETCONF (SSH 830), RESTCONF, YANG, Ansible vs Puppet/Chef, Terraform, declarative vs imperative, drift, reading a JSON path and a config diff) and 4 seeded generators (`automationGenerators.ts`, ids `gen-ccna-*`: IP of interface[n] in a RESTCONF JSON reply, count enabled interfaces in a JSON reply, HTTP verb for a CRUD action, plane of a device function). `ccna` topic; no gym uses it yet (6.1).
+- Tests: `tests/automation.test.ts` (solver cases, all 24 card answers pinned, generators re-solved by parsing the JSON printed in each prompt) and the answers also pinned in `tests/questions.test.ts`; 623 total.
+- Verified: lint, typecheck, 623 tests, `build:pages` (157 files precached; first build stopped on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
+- Next: 4.9 CCNA lab-style questions (`/lab`).
