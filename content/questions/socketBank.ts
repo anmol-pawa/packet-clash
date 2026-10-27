@@ -1,0 +1,100 @@
+/**
+ * 5.6 sockets and OS networking (FAANG SDE coverage): the socket API, blocking vs non-blocking
+ * I/O, select/poll/epoll, the C10K problem, accept queues and fd limits.
+ * Answers are pinned in tests/questions.test.ts.
+ */
+import type { Difficulty, Question } from "@/game/engine/questions";
+import { CLIENT_CALLS, SERVER_CALLS } from "@/lib/net/sockets";
+
+/** Build an MCQ; the right answer is slotted at position `slot` (0-3) among the three wrong ones. */
+function card(id: string, difficulty: Difficulty, slot: number, prompt: string, right: string, wrong: [string, string, string], explain: string): Question {
+  const choices = [...wrong];
+  choices.splice(slot, 0, right);
+  return { id, kind: "mcq", topic: "interview", type: "NETWORK", difficulty, prompt, choices, answer: slot, explain };
+}
+
+export const SOCKET_BANK: readonly Question[] = [
+  {
+    id: "sock-server-order",
+    kind: "order",
+    topic: "interview",
+    type: "NETWORK",
+    difficulty: 2,
+    prompt: "Put a TCP server's socket calls in the order it makes them to serve one client.",
+    steps: [...SERVER_CALLS],
+    explain: "socket() creates the endpoint, bind() gives it a local address and port, listen() turns it into a passive socket with a backlog, accept() returns a new connected socket per client, read/write exchange data on that new socket, and close() ends it.",
+  },
+  {
+    id: "sock-client-order",
+    kind: "order",
+    topic: "interview",
+    type: "NETWORK",
+    difficulty: 1,
+    prompt: "Put a TCP client's socket calls in order.",
+    steps: [...CLIENT_CALLS],
+    explain: "The client needs no bind() (the kernel picks an ephemeral port) and no listen() or accept(). connect() triggers the three-way handshake, then both sides exchange data until close().",
+  },
+  card("sock-accept-new", 2, 0, "What does accept() return?", "A new connected socket for that client, while the listening socket keeps waiting",
+    ["The same listening socket, now connected", "The client's IP address as a string", "A UDP socket"],
+    "The listener is only for new connections. Each accepted connection gets its own file descriptor and its own 4-tuple."),
+  card("sock-bind-client", 2, 1, "Why does a typical client skip bind()?", "connect() makes the kernel pick a free ephemeral source port and the right local IP automatically",
+    ["Clients cannot use ports", "bind() is only for UDP", "The server assigns the client port"],
+    "Servers bind() because clients must know their port in advance. A client's source port can be anything unique for the 4-tuple."),
+  card("sock-listen-backlog", 3, 2, "What does the backlog argument to listen() control?", "How many established connections may wait in the accept queue before the application calls accept()",
+    ["The maximum number of clients ever served", "The number of threads created", "The packet size"],
+    "Linux uses two queues: a SYN queue for half-open connections and an accept queue for completed handshakes. The accept queue is capped at min(backlog, net.core.somaxconn)."),
+  card("sock-accept-full", 3, 3, "The accept queue is full and a client's final handshake ACK arrives. What typically happens on Linux?", "The ACK is dropped (or the connection is reset, per tcp_abort_on_overflow), so the client retries and may see delays or timeouts",
+    ["The kernel allocates more memory for the queue", "The server is forced to accept() immediately", "The client is told to use UDP"],
+    "A slow accept() loop or a tiny backlog causes SYN retransmits and mysterious latency spikes of about 1 s, 3 s, 7 s under load."),
+  card("sock-syn-queue", 3, 0, "How are SYN floods related to the SYN queue, and what mitigates them?", "Spoofed SYNs fill the half-open queue; SYN cookies encode state in the SYN-ACK sequence number so no queue slot is needed",
+    ["They fill the accept queue; the fix is a larger read buffer", "They exhaust fds; the fix is UDP", "They only affect UDP servers"],
+    "With SYN cookies the server stores nothing until a valid ACK returns, at the cost of losing some TCP options."),
+  card("sock-blocking", 2, 1, "What does a blocking read() on a socket do when no data has arrived?", "The thread sleeps in the kernel until data arrives (or the connection closes or a timeout fires)",
+    ["Returns 0 immediately", "Returns an error immediately", "Spins the CPU until data arrives"],
+    "That is simple to program but ties up one thread per connection. Non-blocking mode returns EAGAIN/EWOULDBLOCK instead."),
+  card("sock-nonblocking", 2, 2, "What does a read() on a non-blocking socket return when there is no data?", "-1 with errno EAGAIN / EWOULDBLOCK; the program should try again when the socket is readable",
+    ["0, meaning the peer closed", "It blocks for the SO_RCVTIMEO time", "The data from the previous call"],
+    "A return of 0 means orderly close (EOF), not 'no data'. Non-blocking sockets pair with a readiness API such as epoll."),
+  card("sock-c10k", 3, 3, "What was the C10K problem?", "Serving 10,000 concurrent connections: one thread or process per connection did not scale, motivating event-driven I/O",
+    ["A 10 KB packet limit", "A 10,000 connections-per-second DNS limit", "A bug in the checksum"],
+    "Thread stacks, context switches and the O(n) cost of select/poll made big connection counts expensive. epoll, kqueue and IOCP, plus event loops, were the answer."),
+  card("sock-select-poll", 3, 0, "Why do select() and poll() scale poorly to tens of thousands of descriptors?", "Each call passes the whole fd set to the kernel and scans it, so cost grows with the number of watched fds (O(n))",
+    ["They only support 10 descriptors", "They need one thread per fd", "They cannot watch sockets"],
+    "select() is also capped at FD_SETSIZE (1024) and rewrites its bitmaps every call. poll() removes the cap but still scans linearly."),
+  card("sock-epoll", 3, 1, "How does epoll avoid the O(n) scan of select/poll?", "You register fds once with epoll_ctl, and epoll_wait returns only the ready ones, so cost grows with ready events",
+    ["It reads every socket in a loop faster", "It uses one thread per fd", "It disables interrupts"],
+    "The kernel keeps an interest list and a ready list. That makes idle connections nearly free, which is how Nginx and Node hold huge connection counts."),
+  card("sock-lt-et", 3, 2, "Level-triggered vs edge-triggered epoll: which statement is right?", "Level-triggered reports a socket as long as data remains; edge-triggered reports only on a new arrival, so you must read until EAGAIN",
+    ["Edge-triggered repeats events until you read; level-triggered fires once", "They differ only in the maximum fd count", "Edge-triggered works only for files"],
+    "With edge-triggered mode, a partial read leaves data stranded with no further notification. It requires non-blocking sockets."),
+  card("sock-thread-per-conn", 3, 3, "Why is thread-per-connection costly at 50,000 connections?", "Each thread reserves a stack (often 1-8 MB virtual), adds scheduler and context-switch overhead, and most threads sit idle",
+    ["Threads cannot share sockets", "TCP forbids more than 1,000 threads", "It uses more ports"],
+    "Event loops handle I/O-bound work with a few threads; you still need a worker pool for CPU-heavy tasks so they do not stall the loop."),
+  card("sock-eventloop-block", 3, 0, "What goes wrong if an event-loop server runs a slow CPU-bound handler on the loop thread?", "Every other connection stalls, because nothing else can run until the handler returns",
+    ["Only that one connection is slowed", "The kernel preempts it onto another loop", "Nothing; epoll buffers the work"],
+    "Offload to a worker pool, or split work into short steps. This is why Node warns about synchronous code and long loops."),
+  card("sock-fd-limit", 2, 1, "A server fails to accept new connections with 'Too many open files' at about 1,024 clients. What is the likely cause?", "The per-process file-descriptor limit (ulimit -n) is 1024; raise it (and fs.file-max if needed)",
+    ["The CPU is out of cache", "TCP only allows 1024 ports", "The NIC has 1024 queues"],
+    "Every socket is a file descriptor. Raise RLIMIT_NOFILE via ulimit, systemd LimitNOFILE or limits.conf."),
+  card("sock-fd-4tuple", 3, 2, "Can one server on port 443 hold more than 65,535 client connections?", "Yes; a connection is identified by the 4-tuple, so the limit is memory and fds, not the 65,535 port numbers",
+    ["No; each client needs its own server port", "Only with UDP", "Only after binding extra IPs"],
+    "The 64K limit applies to one client IP connecting to one server IP:port (ephemeral ports), not to a listening server."),
+  card("sock-zerocopy", 3, 3, "What does sendfile() (zero-copy) save when serving a static file over a socket?", "It moves data from the page cache to the NIC inside the kernel, avoiding copies to and from user space",
+    ["It compresses the file", "It skips TCP", "It removes the need for a file descriptor"],
+    "A read()+write() copies disk data to a user buffer and back. sendfile (or splice, MSG_ZEROCOPY) cuts copies and context switches."),
+  card("sock-reuseaddr", 3, 0, "Why set SO_REUSEADDR on a listening socket?", "So a restarted server can bind its port while old connections linger in TIME_WAIT",
+    ["To let two hosts share an IP", "To speed up the handshake", "To skip bind()"],
+    "Without it, bind() can fail with EADDRINUSE for a minute or so after a restart. It does not let two live listeners share one port; SO_REUSEPORT does."),
+  card("sock-reuseport", 3, 1, "What does SO_REUSEPORT enable?", "Several sockets (often one per worker) can listen on the same port, and the kernel load-balances new connections between them",
+    ["Several clients to share a source port", "Reusing a connection after close", "Binding below port 1024 without root"],
+    "It removes the single accept-lock hot spot and lets each worker own its listener and accept queue."),
+  card("sock-tcp-stream", 2, 2, "A sender calls write() twice with 100 bytes each. Why might the receiver's single read() return 200 bytes, or only 150?", "TCP is a byte stream with no message boundaries, so the application must frame messages itself",
+    ["TCP preserves each write as a packet", "The receiver is broken", "Only UDP merges data"],
+    "Use length prefixes or delimiters and loop until a full message arrives. UDP, by contrast, preserves datagram boundaries."),
+  card("sock-eof", 2, 3, "recv() returns 0 on a TCP socket. What does that mean?", "The peer closed its side of the connection (EOF); no more data will arrive",
+    ["No data is ready yet", "The socket is non-blocking", "A timeout occurred"],
+    "Ignoring a 0 return makes loops spin forever. ECONNRESET, by contrast, signals an abrupt reset."),
+  card("sock-sigpipe", 3, 0, "Writing to a socket whose peer has already closed it can kill a process by default. Why?", "The kernel raises SIGPIPE (and write returns EPIPE); ignore the signal or use MSG_NOSIGNAL and handle EPIPE",
+    ["Because the buffer overflowed", "Because UDP has no ports", "The kernel deletes the socket"],
+    "Servers usually call signal(SIGPIPE, SIG_IGN) so a vanished client doesn't terminate them."),
+];

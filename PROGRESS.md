@@ -690,3 +690,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/datacenter.test.ts` (3:1 example, fat-tree k=4/k=48, VXLAN 1550, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 701 total.
 - Verified: lint, typecheck, 701 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.6 Sockets and OS networking.
+
+## 2026-10-27: 5.6 Sockets and OS networking
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/sockets.ts`): server/client socket call orders, accept queue size = min(backlog, somaxconn), fd-limited connection count, thread-per-connection stack memory (C10K), single event-loop request rate.
+- **Content**: 21 hand-written `interview`-topic cards plus 2 order-the-calls questions (`content/questions/socketBank.ts`, ids `sock-*`: server and client call order, accept() semantics, why clients skip bind(), listen backlog, full accept queue, SYN queue and SYN cookies, blocking vs non-blocking, C10K, select/poll vs epoll, level vs edge triggered, thread-per-connection cost, blocking the event loop, fd limits, 4-tuple vs 65,535 ports, sendfile zero-copy, SO_REUSEADDR vs SO_REUSEPORT, TCP stream framing, recv()==0, SIGPIPE) and 4 seeded generators (`socketGenerators.ts`, ids `gen-sde-*`: effective backlog, fd-limited connections, thread stack MiB, event-loop req/s). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/sockets.test.ts` (call order, clamping, C10K stack arithmetic, order questions grade only the right sequence, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 709 total.
+- Verified: lint, typecheck, 709 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.7 Web security for SDE.
