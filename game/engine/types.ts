@@ -113,6 +113,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   gigaroc: ["PHYSICAL", "NETWORK"],
   // A spanning tree over switches: layer 2 (Link) with a secured topology.
   spantoise: ["LINK"],
+  // OSPF areas and link-state routing: layer 3, with a backbone of Link below it.
+  areadon: ["NETWORK"],
 };
 
 /** A creature's types (Network if it isn't listed). */
