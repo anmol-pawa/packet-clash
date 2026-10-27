@@ -641,3 +641,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Fix found by the screenshots: long answer text (IPv6 addresses) overflowed the move buttons on iPhone; `MoveMenu` buttons now wrap (`min-w-0`, `overflow-wrap:anywhere`).
 - Verified: lint, typecheck, tests, `build:pages` (165 files precached); Playwright played all 15 scenarios at 1280x900 and iPhone 14 with no console errors and no horizontal overflow; screenshots reviewed.
 - Next: 4.10 CCNA mock exam.
+
+## 2026-10-27: 4.10 CCNA mock exam (`/ccna`)
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Engine** (`game/engine/ccnaExam.ts`): every `ccna` card and generator is filed into one of the six 200-301 domains by id (`domainOf`); `examDeck(seed)` deals 40 questions 8/8/10/4/6/4 (20/20/25/10/15/10%, largest-remainder `allocate`) without repeats, mixing cards and seeded generators; `examScorecard` is domain-weighted (READY ≥ 82, CLOSE ≥ 65, else KEEP STUDYING; the real pass mark is unpublished, so this is a study target) with per-domain scores, weakest domain and missed list.
+- **Page** `/ccna` (`components/ccna/CcnaExam.tsx`): one 60-minute clock for the whole exam, no feedback until the end, per-domain bars, expandable REVISIT list with explanations; answers and timed-out questions feed the Leitner box. Linked from the world map ("CCNA EXAM").
+- Tests: `tests/ccnaExam.test.ts` (blueprint weights, every ccna item has a domain, deep pools, seeded unique decks in proportion with gradable answers, scorecard weighting); 643 total.
+- Verified: lint, typecheck, 643 tests, `build:pages` (171 files precached); Playwright completed a full 40-question exam at 1280x900 and iPhone 14 with no console errors and no horizontal overflow; screenshots reviewed.
+- Next: 5.1 Load balancing and traffic management.
