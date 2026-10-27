@@ -739,3 +739,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/faangLoop.test.ts` (deck uniqueness and answerability across seeds, round pools, boundaries, verdict cap, pool ids); 747 total.
 - Verified: lint, typecheck, tests, `build:pages` (185 files precached; first build hit the known advisory stop, retry passed). Playwright desktop and iPhone 14: question and scorecard screens checked, no console errors, no horizontal overflow.
 - Next: 6.1 Extend the world (first Cisco Cove gym boss).
+
+## 2026-10-27: 6.1a Extend the world: data model
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- 6.1 is too big for one run (two region maps, seven 96x96 bosses), so it is split in `ROADMAP.md` into 6.1a-i.
+- **Data** (`content/regions.ts`): Cisco Cove (gyms 10-13: Trunk Reef/Spantoise, Static Strand/Areadon, Service Shoal/Nattopus, Shield Haven/Aclaw) and Scale Citadel (gyms 14-16: Balancer Bluff/Hashorn, Fabric Fort/Spineback, Offer Spire/Loopwarden), with /24 towns 10.0.10-16.0, /30 routes r12-r18 from 10.255.0.44, per-region map positions and a one-line design brief per leader. Deliberately not merged into `TOWNS` yet (no region maps, so the live map and its 9-gym tests are untouched).
+- **Badges**: 9x9 emblems for gyms 10-16 added to `game/art/world/badges.ts` (verified every emblem is 9x9; not yet visible in-game).
+- Tests: `tests/regions.test.ts` (numbering, uniqueness, non-overlapping subnets and /30s, unlock chain from the Backbone Summit, positions).
+- Verified: see run summary (lint, typecheck, tests, build:pages). No visible UI change, so no screenshots.
+- Next: 6.1b Region maps.

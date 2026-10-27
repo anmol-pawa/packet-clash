@@ -126,6 +126,11 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
 
 ## 6. Game integration for the new chapters
 
-- [ ] 6.1 Extend the world: two new regions after the Backbone Summit (a CCNA "Cisco Cove" arc with 4 gyms and a FAANG "Scale Citadel" arc with 3 gyms), town data, badges, unlock order, and an original boss creature per gym following the Art quality bar (96x96, front/back, full animations), done one boss per run.
+- [ ] 6.1 Extend the world (split below; one boss per run).
+  - [x] 6.1a Data model: `content/regions.ts` with the 7 new towns (gyms 10-13 Cisco Cove, 14-16 Scale Citadel), routes r12-r18, badges and emblems 10-16, boss briefs; consistency tests.
+  - [ ] 6.1b Region maps: paint the Cisco Cove and Scale Citadel overworlds, a region switcher on the map, merge `NEW_TOWNS`/`NEW_ROUTES` into `TOWNS`/`ROUTES` (fix the tests that assume 9), badge counters "of 16", `GYM_TOPICS` for gyms 10-16.
+  - [ ] 6.1c Boss gym 10 Spantoise (96x96 front/back, idle/attack/hurt/faint/evolve, on `/dev/sprites`).
+  - [ ] 6.1d Boss gym 11 Areadon. - [ ] 6.1e Boss gym 12 Nattopus. - [ ] 6.1f Boss gym 13 Aclaw.
+  - [ ] 6.1g Boss gym 14 Hashorn. - [ ] 6.1h Boss gym 15 Spineback. - [ ] 6.1i Boss gym 16 Loopwarden.
 - [ ] 6.2 Lesson cards and figures for the new chapters (ACL matching, STP election, EtherChannel, consistent-hash ring, token bucket, Clos fabric), one per run, each on `/dev/sprites` and reviewed in screenshots.
 - [ ] 6.3 Update the Leitner box, daily challenge and interview deck to draw from the new topics; migrate saves safely (older saves load with empty progress for new gyms).
