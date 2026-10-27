@@ -61,7 +61,7 @@ export function MoveMenu({
               onPointerEnter={() => !locked && setCursor(i)}
               onFocus={() => setCursor(i)}
               onClick={() => onPick(i)}
-              className={`move-button relative min-h-14 py-2 pl-6 pr-2 text-left text-base leading-tight sm:pl-7 sm:text-lg ${state}`}
+              className={`move-button relative min-h-14 min-w-0 [overflow-wrap:anywhere] py-2 pl-6 pr-2 text-left text-base leading-tight sm:pl-7 sm:text-lg ${state}`}
             >
               <span aria-hidden className="move-cursor absolute left-1.5 top-1/2 -translate-y-1/2 font-pixel text-[10px] sm:left-2 sm:text-xs">
                 ▶

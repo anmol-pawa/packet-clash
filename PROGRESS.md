@@ -632,3 +632,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/automation.test.ts` (solver cases, all 24 card answers pinned, generators re-solved by parsing the JSON printed in each prompt) and the answers also pinned in `tests/questions.test.ts`; 623 total.
 - Verified: lint, typecheck, 623 tests, `build:pages` (157 files precached; first build stopped on the Next.js advisory notice, retry passes). No UI changed, so no new screenshots.
 - Next: 4.9 CCNA lab-style questions (`/lab`).
+
+## 2026-10-27: 4.9 CCNA lab-style questions (`/lab`)
+- Main was green (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Page** `/lab` (`components/lab/LabSession.tsx`): one scenario at a time, with monospace IOS config / `show` exhibits above a multiple-choice question (reuses `QuestionPanel`/`ExplainBox`), a score screen, and answers recorded in the Leitner box. Linked from the world map ("CONFIG LAB").
+- **Scenarios** (`content/lab/scenarios.ts`, 15 seeded builders): STP root and blocked port, trunk allowed-VLAN list, port-security violation, EtherChannel modes, ACL verdict/forwarding/kind-and-placement, longest-prefix next hop, installed route by AD, OSPF DR election, OSPF path cost, failing ping (host settings), DHCP pool size, IPv6 link-local from MAC. Exhibits and answers are built from the same structured data and solved by the existing `lib/net` solvers; new checkers in `lib/net/lab.ts` (`diagnoseHost`, `parseVlanList`, `etherChannelOutcome`).
+- Tests: `tests/lab.test.ts` (checkers; every builder over 60 seeds yields 4 distinct choices and a gradable answer; ACL, next-hop, STP root, OSPF cost and DHCP scenarios re-solved by parsing the printed exhibit text); 634+ total.
+- Fix found by the screenshots: long answer text (IPv6 addresses) overflowed the move buttons on iPhone; `MoveMenu` buttons now wrap (`min-w-0`, `overflow-wrap:anywhere`).
+- Verified: lint, typecheck, tests, `build:pages` (165 files precached); Playwright played all 15 scenarios at 1280x900 and iPhone 14 with no console errors and no horizontal overflow; screenshots reviewed.
+- Next: 4.10 CCNA mock exam.
