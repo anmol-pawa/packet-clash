@@ -665,3 +665,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/ratelimit.test.ts` (solver cases incl. boundary burst, nginx-style traces, breaker reopen; generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 669 total.
 - Verified: lint, typecheck, 669 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.3 Modern transport and performance.
+
+## 2026-10-27: 5.3 Modern transport and performance
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/perf.ts`): Mathis throughput bound, window-limited throughput, bandwidth-delay product, smallest window-scale shift for a pipe, slow-start rounds from an initial window, TIME_WAIT / ephemeral-port connection-rate limit, bufferbloat queueing delay, and round trips to first byte for TCP+TLS1.2, TCP+TLS1.3, TLS1.3 0-RTT, QUIC and QUIC 0-RTT.
+- **Content**: 21 hand-written `interview`-topic cards (`content/questions/perfBank.ts`, ids `tp-*`: CUBIC vs BBR, SACK, window scaling, IW10, TIME_WAIT and port exhaustion, SO_REUSEADDR vs SO_REUSEPORT, Nagle plus delayed ACK, keepalive, bufferbloat, QUIC over UDP, HoL blocking, connection migration, 0-RTT replay, HTTP/2 multiplexing, push removal, HTTP/3, TLS resumption, OCSP stapling, Mathis, BDP) and 6 seeded generators (`perfGenerators.ts`, ids `gen-sde-*`: Mathis Mbit/s, window-scale shift, slow-start RTTs, TIME_WAIT conn/s, bufferbloat ms, time to first byte). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/perf.test.ts` (Mathis scaling, 64 KB/100 ms cap, 1 Gbit/s x 80 ms = 10 MB, window-scale boundaries, Linux 470 conn/s, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 681 total.
+- Verified: lint, typecheck, 681 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Note: file names use `perf*` because `transport*` already exists for chapter 2.5.
+- Next: 5.4 Real-time and API protocols.
