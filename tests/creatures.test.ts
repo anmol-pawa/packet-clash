@@ -6,6 +6,7 @@ import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { ETHERNET, FIELDS, FRAMADILLO, IDLE_FIELDS, LAMP_POS as FRAME_LAMPS, ethernetFrame } from "@/game/art/creatures/framadillo";
 import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
 import { AREADON, LINK_MBPS, RINGS, digitRows, litAreas, ospfCost } from "@/game/art/creatures/areadon";
+import { ACLAW, ACL_LINES, BAR_Y, IMPLICIT_LINE, PROBES, clawBadge, lampBar, probeResult } from "@/game/art/creatures/aclaw";
 import { NATTOPUS, NAT_TABLE, TAG_POS, tagRows, translatedArms } from "@/game/art/creatures/nattopus";
 import { BLOCKED, PLATES, SPANTOISE, depth, litPlates } from "@/game/art/creatures/spantoise";
 import { GIGAROC, PULSE_POS, bandwidthDelayProduct, bitWidth, nodalDelay, propagationDelay, storeAndForward, transmissionDelay } from "@/game/art/creatures/gigaroc";
@@ -23,7 +24,7 @@ import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -72,7 +73,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -915,6 +916,49 @@ describe("Nattopus's address tags", () => {
       for (let i = 1; i < cyan.length; i++) expect(cyan[i]).toBeGreaterThan(cyan[i - 1]);
       expect(cyan[0]).toBe(0);
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/c/);
+    }
+  });
+});
+
+describe("Aclaw's access list", () => {
+  it("evaluates the probes first-match-wins, falling through to the implicit deny", () => {
+    expect(ACL_LINES).toHaveLength(3);
+    expect(PROBES.map((_, i) => probeResult(i))).toEqual([
+      { line: 0, action: "permit" },
+      { line: 1, action: "deny" },
+      { line: 2, action: "permit" },
+      { line: IMPLICIT_LINE, action: "deny" },
+    ]);
+    expect(BAR_Y).toHaveLength(IMPLICIT_LINE + 1);
+  });
+
+  it("draws 21x3 lamp bars (implicit deny dashed) and 9x7 claw badges", () => {
+    for (let l = 0; l <= IMPLICIT_LINE; l++) for (const s of ["lit", "dim", "dark"] as const) {
+      const rows = lampBar(l, s);
+      expect(rows).toHaveLength(3);
+      for (const row of rows) expect(row).toHaveLength(21);
+    }
+    expect(lampBar(IMPLICIT_LINE, "lit")[0]).toContain(".");
+    expect(lampBar(0, "lit")[0]).not.toContain(".");
+    for (const k of ["permit", "deny"] as const) for (const s of ["lit", "dim", "dark"] as const) {
+      const rows = clawBadge(k, s);
+      expect(rows).toHaveLength(7);
+      for (const row of rows) expect(row).toHaveLength(9);
+    }
+    expect(clawBadge("permit", "lit")[3]).not.toBe(clawBadge("deny", "lit")[3]);
+  });
+
+  it("lights the matching claw and line in each idle frame, and everything on the attack", () => {
+    for (const view of [ACLAW.front, ACLAW.back]) {
+      view.idle.forEach((f, i) => {
+        const text = f.rows.join("");
+        const res = probeResult(i);
+        // the winning claw is lit (bright fill), the other dim
+        expect(text.includes("g") && text.includes("r"), `frame ${i}`).toBe(true);
+        expect(res.action === "permit" ? /H/.test(text) : /Q/.test(text)).toBe(true);
+      });
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[grGRHQ]/);
+      for (const f of view.attack) expect(f.rows.join("")).toMatch(/H[\s\S]*Q|Q[\s\S]*H/);
     }
   });
 });

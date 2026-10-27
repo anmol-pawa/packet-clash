@@ -779,3 +779,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: locals private and globals public, one shared global with distinct ports, arm-by-arm translation, tag plate shape, idle cyan count rising per frame, none when hurt or fainted, plus the shared creature and boss checks; 783 total.
 - Verified: lint, typecheck, 783 tests, `build:pages` (185 files precached; first build hit the known advisory stop, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The eye was enlarged after the first screenshot.
 - Next: 6.1f Boss gym 13 Aclaw.
+
+## 2026-10-27: 6.1f Boss gym 13 Aclaw
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Art** (`game/art/creatures/aclaw.ts`): 96x96 shaded rose-armoured gatekeeper crab. Left claw wears a red X (deny), right claw a green tick (permit). The shell is a four-lamp access list (three written lines plus a dashed implicit deny). Idle (4 frames) sends a probe down the list via `evaluateAcl` (permit, deny, permit, implicit deny): the first match lights its lamp with arrows and the matching claw glows. Attack lights everything; hurt and faint go dark; front and back sprites. Exports `ACL_LINES`, `PROBES`, `probeResult`, `lampBar`, `clawBadge`. Wired into `BOSS_ART`, the sprite viewer, types (Security + Network) and `regions.ts` (`bossSprite: "aclaw"`; gym 13 is open, Aclaw joins the Packetdex).
+- Tests: probes resolve first-match-wins with the implicit deny fallthrough, lamp/badge shapes, matching claw lit per idle frame, dark when hurt or fainted, plus shared creature and boss checks; 791 total.
+- Verified: lint, typecheck, 791 tests, `build:pages` (185 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Claws were pulled inward after the outline test caught clipping at the frame edge.
+- Next: 6.1g Boss gym 14 Hashorn.

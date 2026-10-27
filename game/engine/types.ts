@@ -117,6 +117,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   areadon: ["NETWORK"],
   // Address translation sits at layer 3, with port rewriting reaching up into Transport.
   nattopus: ["NETWORK", "TRANSPORT"],
+  // An access list filters packets at the edge: a Security gatekeeper that reads layer 3/4 headers.
+  aclaw: ["SECURITY", "NETWORK"],
 };
 
 /** A creature's types (Network if it isn't listed). */
