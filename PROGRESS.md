@@ -674,3 +674,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 681 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Note: file names use `perf*` because `transport*` already exists for chapter 2.5.
 - Next: 5.4 Real-time and API protocols.
+
+## 2026-10-27: 5.4 Real-time and API protocols
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/realtime.ts`): RFC 3550 interarrival jitter (J += (|D| − J)/16), RTP loss from sequence numbers and the RTCP 8-bit fraction lost, jitter-buffer size (max − min transit), VoIP packetisation bandwidth with RTP/UDP/IPv4 headers (G.711 at 20 ms = 80 kbit/s), polling and long-polling request rates and mean staleness.
+- **Content**: 22 hand-written `interview`-topic cards (`content/questions/realtimeBank.ts`, ids `rt-*`: short vs long polling, SSE vs WebSockets, the WebSocket upgrade, scaling stateful sockets, WebRTC/ICE/STUN/TURN, UDP for games and calls, jitter and buffers, RTP fields, RTCP, gRPC on HTTP/2 + protobuf, its four call shapes, L4 balancing of gRPC, REST vs GraphQL, GraphQL caching, pub/sub vs queues, at-least-once delivery, polling cost, heartbeats, HLS/DASH vs RTP) and 6 seeded generators (`realtimeGenerators.ts`, ids `gen-sde-*`: RTP jitter, packets lost, jitter buffer, VoIP kbit/s, polling req/s, long-poll req/s). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/realtime.test.ts` (RFC 3550 hand-computed cases, G.711/G.729 bandwidth, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 691 total.
+- Verified: lint, typecheck, 691 tests, `build:pages` (171 files precached). No UI changed, so no screenshots.
+- Next: 5.5 Datacenter and cloud networking.
