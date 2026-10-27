@@ -1,6 +1,6 @@
 # Packet Clash roadmap
 
-The hourly routine works top to bottom: take the first unchecked box. Split big items into sub-boxes when you start them.
+The routine (daily since 2026-10-28) works top to bottom: take the first unchecked box. Split big items into sub-boxes when you start them.
 
 ## 0. Bootstrap (reuse Query Clash's engine)
 
@@ -138,3 +138,69 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
   - [x] 6.1i Boss gym 16 Loopwarden.
 - [ ] 6.2 Lesson cards and figures for the new chapters (ACL matching, STP election, EtherChannel, consistent-hash ring, token bucket, Clos fabric), one per run, each on `/dev/sprites` and reviewed in screenshots.
 - [ ] 6.3 Update the Leitner box, daily challenge and interview deck to draw from the new topics; migrate saves safely (older saves load with empty progress for new gyms).
+
+## 7. Correctness and coverage gate (added 2026-10-28; runs are daily now, so each box is one meaningful slice)
+
+Do 6.2 and 6.3 first (they are above), then this section in order.
+
+- [ ] 7.1 Whole-bank audit test (`tests/bankAudit.test.ts`): unique ids across every gym, CCNA, FAANG and interview bank, every keyed answer valid, every explanation present, and **answer-position balance** (no bank where the correct MCQ slot is predictable); every generator deterministic and well-formed over 40 seeds. Fix whatever it flags.
+- [ ] 7.2 `docs/COVERAGE.md`: a matrix mapping the CCNA 200-301 blueprint and typical SDE networking interview topics (TCP/UDP, DNS, HTTP/2/3, TLS, load balancing, CDN, sockets, debugging, cloud networking, security) to the lessons, generators and questions that cover them. Fill any hole it shows (add boxes below if a hole needs more than one run).
+- [ ] 7.3 Freshness pass (web-check, stamp "as of October 2026"): the current CCNA exam blueprint version, HTTP/3 and QUIC adoption, TLS 1.3 features (ECH, post-quantum hybrid key exchange in browsers), DoH/DoT, RPKI deployment, IPv6 adoption. Update lessons and questions with the stamp; never present a guessed number as fact.
+
+## 8. Hands-on labs (turn the quiz into a game with a simulator)
+
+- [ ] 8.1 Network simulator engine (`lib/net/sim/`, pure and deterministic, no DOM):
+  - [ ] 8.1a Model and L2: hosts, switches, interfaces, cables, MAC learning, VLAN tags, ARP request/reply, an event trace. Tests on known topologies.
+  - [ ] 8.1b L3 and ICMP: routers, longest-prefix forwarding, static routes, default gateway, TTL, ICMP echo/unreachable/time-exceeded, `traceroute`. Tests against the `lib/net` solvers.
+  - [ ] 8.1c Services: NAT/PAT table, ACL hooks (reusing `lib/net/acl`), DHCP (DORA) and DNS resolution as simulated services.
+- [ ] 8.2 Topology canvas (`/lab/sim`): place devices, drag cables, set IPs and gateways, press Ping to watch the packet travel (ARP first, then ICMP) with the trace listed beside it. Touch-friendly, screenshot-verified on iPhone 14.
+- [ ] 8.3 Fix-the-network challenges, 12 in total in batches of 3 (8.3a-d): wrong subnet mask, wrong gateway, missing return route, ACL blocking the wrong flow, VLAN mismatch, missing NAT, wrong DNS server, duplicate IP, MTU black hole. Graded by running the simulator: every required ping/lookup succeeds and every forbidden one fails.
+- [ ] 8.4 IOS-style CLI emulator:
+  - [ ] 8.4a Parser and modes (user/privileged/config/interface), abbreviations, `?` help, and the core `show` commands (`show ip route`, `show ip interface brief`, `show vlan brief`, `show running-config`), unit-tested per command against the simulator state.
+  - [ ] 8.4b Configuration commands (interface/IP, static routes, VLANs and trunks, ACLs, NAT, OSPF basics).
+  - [ ] 8.4c Terminal UI on `/lab/cli` (mobile keyboard friendly, history, tab completion).
+- [ ] 8.5 CLI lab scenarios (10, batches of 3-4): build the network from a brief, graded by end-state checks and `show` output, with a 3-rung hint ladder each.
+- [ ] 8.6 Packet builder and decoder: assemble an IPv4 header byte by byte, compute the header checksum, build a TCP segment with the pseudo-header checksum, decode a hex dump. Tasks are generated and checked by `lib/net`; links from the captures page.
+- [ ] 8.7 Socket-programming code reading: port the `bugspot` and `fill` question kinds from Kernel Clash (copy and adapt, never import) and add 10 networking snippets: echo server with partial reads/writes, missing `SO_REUSEADDR`, ignoring `EINTR`, accept loop bugs, HTTP framing (Content-Length vs chunked), retry without backoff, rate-limiter race, half-close handling.
+- [ ] 8.8 Trouble tickets: 15 multi-step incidents ("site slow for one office", "intermittent timeouts", "only large uploads fail") with a diagnostic command menu whose outputs come from the simulator or authored traces, scored on root cause, steps taken and avoiding red herrings.
+
+## 9. New gyms (Internet-scale and modern application networking)
+
+Each gym is three boxes: (a) lessons, ~25 cards and generators checked by `lib/net` solvers; (b) the boss (original 96×96, front/back, idle/attack/hurt/faint/evolve, `/dev/sprites`); (c) world and wiring (town, route, badge, `GYM_TOPICS`, counters "of N", tests). Fix every hard-coded "16".
+
+- [ ] 9.1 Gym 17 "Internet-scale": BGP policy and route leaks, prefix hijacks and RPKI, anycast, peering and IXPs, CDN request routing, DNSSEC, undersea-cable latency budgets.
+  - [ ] 9.1a Lessons, cards and generators.
+  - [ ] 9.1b Boss art.
+  - [ ] 9.1c World and wiring.
+- [ ] 9.2 Gym 18 "Modern application networking": service mesh and sidecars, gRPC load balancing, HTTP/3 rollout, zero-trust and mTLS, Kubernetes networking (CNI, kube-proxy, ingress), eBPF at concept level.
+  - [ ] 9.2a Lessons, cards and generators.
+  - [ ] 9.2b Boss art.
+  - [ ] 9.2c World and wiring.
+- [ ] 9.3 Gym 19 "Observability and reliability": SLO and error-budget maths, tail latency and fan-out amplification (p99 of N calls), packet-loss and jitter analysis, retry storms, postmortem reading.
+  - [ ] 9.3a Lessons, cards and generators.
+  - [ ] 9.3b Boss art.
+  - [ ] 9.3c World and wiring.
+
+## 10. Interview readiness and post-game
+
+- [ ] 10.1 Readiness report: CCNA readiness by exam domain and SDE-networking readiness by topic, from Leitner boxes, mock scores and lab completions, with a ranked weak-area plan linking to lessons and labs.
+- [ ] 10.2 Interview follow-up chains: questions that escalate like a real interviewer ("what is TCP?" → "what happens on packet loss?" → "how would you tune it for a 200 ms link?"), wrong answers get a hint and a gentler next step; 8 chains in batches of 4.
+- [ ] 10.3 The League, unlocked after gym 19: four elite bosses (Cisco ops, Cloud, Security, Performance) and a champion, each a multi-phase mixed battle (cards → a sim challenge → a capture reading).
+  - [ ] 10.3a Data, gating, flow and ending scene (pure logic tested).
+  - [ ] 10.3b-e One elite boss per box (original 96×96 art, full animation set).
+  - [ ] 10.3f Champion, credits and a Hall of Fame screen.
+- [ ] 10.4 Interview difficulty toggle for gym rematches: hidden variants only, no hints, a timer; best times saved.
+- [ ] 10.5 Trainer card and achievements, saved and shown in the Packetdex.
+- [ ] 10.6 Audio: synthesised looping music per region and an SFX audit (mute persists, silent-mode expectations on iPhone).
+
+## 11. Quality and maintenance
+
+- [ ] 11.1 Commit a Playwright smoke script (`scripts/smoke.mjs`) that visits every route at desktop and iPhone 14 and fails on console errors or horizontal overflow; document it in the README.
+- [ ] 11.2 Save export/import plus migration tests with fixtures of every older save shape.
+- [ ] 11.3 Offline check: after one online load every route reloads with the network off; add an update prompt for new service-worker versions.
+- [ ] 11.4 Performance budget: measure first-load JS per route and battle frame cost on a throttled iPhone profile; record numbers in PROGRESS.
+- [ ] 11.5 README refresh with new screenshots and a short guide on adding a generator, a gym and a boss.
+
+## When every box above is checked
+
+Run a gap analysis from `docs/COVERAGE.md`, the weakest Leitner topics and the labs' completion stats, then append a new numbered section of 5-8 run-sized boxes, tick nothing in it, and do the first one.
