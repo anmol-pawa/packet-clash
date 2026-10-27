@@ -121,6 +121,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   aclaw: ["SECURITY", "NETWORK"],
   // A load balancer picks a backend per connection or request: Transport (L4) with Application (L7) awareness.
   hashorn: ["TRANSPORT", "APPLICATION"],
+  // A leaf-spine fabric is a datacenter network of switches and routed equal-cost paths: Network with Link.
+  spineback: ["NETWORK", "LINK"],
 };
 
 /** A creature's types (Network if it isn't listed). */

@@ -8,6 +8,7 @@ import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, p
 import { AREADON, LINK_MBPS, RINGS, digitRows, litAreas, ospfCost } from "@/game/art/creatures/areadon";
 import { ACLAW, ACL_LINES, BAR_Y, IMPLICIT_LINE, PROBES, clawBadge, lampBar, probeResult } from "@/game/art/creatures/aclaw";
 import { HASHORN, KEYS, NODES, RING, RING_R, VNODES, angleOf, beadRows, keyPos, ownerBead, ownerOf } from "@/game/art/creatures/hashorn";
+import { SPINEBACK, FABRIC, FLOWS, LEAVES, LEAF_X, LEAF_Y, LINKS, SPINES, SPINE_X, SPINE_Y, ecmpSpine, leafHops, linkPixels, plateRows } from "@/game/art/creatures/spineback";
 import { ringLookup } from "@/lib/net/loadbalance";
 import { NATTOPUS, NAT_TABLE, TAG_POS, tagRows, translatedArms } from "@/game/art/creatures/nattopus";
 import { BLOCKED, PLATES, SPANTOISE, depth, litPlates } from "@/game/art/creatures/spantoise";
@@ -26,7 +27,7 @@ import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -75,7 +76,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -1012,6 +1013,63 @@ describe("Hashorn's hash ring", () => {
       });
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[AaCcPpy]/);
       for (const f of view.attack) expect(f.rows.join("")).toMatch(/A[\s\S]*C[\s\S]*P|P[\s\S]*C[\s\S]*A|A[\s\S]*P[\s\S]*C|C[\s\S]*A[\s\S]*P|C[\s\S]*P[\s\S]*A|P[\s\S]*A[\s\S]*C/);
+    }
+  });
+});
+
+describe("Spineback's leaf-spine fabric", () => {
+  it("matches the leaf-spine formulas: every leaf reaches every other leaf in two hops, one path per spine", () => {
+    expect(LEAVES).toBe(4);
+    expect(SPINES).toBe(2);
+    expect(FABRIC).toEqual({ downPerLeaf: 6, leaves: 4, servers: 24, pathsBetweenLeaves: 2 });
+    expect(FABRIC.leaves).toBe(LEAVES);
+    expect(FABRIC.pathsBetweenLeaves).toBe(SPINES);
+    expect(LINKS).toBe(8);
+    expect(leafHops(0, 3)).toBe(2);
+    expect(leafHops(1, 1)).toBe(0);
+  });
+
+  it("draws every leaf-spine link, from the leaf plate up to the spine sail", () => {
+    expect(LEAF_X).toHaveLength(LEAVES);
+    expect(SPINE_X).toHaveLength(SPINES);
+    for (let l = 0; l < LEAVES; l++) for (let s = 0; s < SPINES; s++) {
+      const px = linkPixels(l, s);
+      expect(px[0][0]).toBe(LEAF_X[l]);
+      expect(px[0][1]).toBeGreaterThan(SPINE_Y);
+      expect(px[px.length - 1][0]).toBe(SPINE_X[s]);
+      expect(px[0][1]).toBeLessThan(LEAF_Y);
+    }
+  });
+
+  it("hashes each flow onto one spine (ECMP) deterministically, and the idle flows use both spines", () => {
+    for (const f of FLOWS) {
+      expect(f.src).not.toBe(f.dst);
+      expect(ecmpSpine(f)).toBe(ecmpSpine({ ...f }));
+      expect(ecmpSpine(f)).toBeGreaterThanOrEqual(0);
+      expect(ecmpSpine(f)).toBeLessThan(SPINES);
+    }
+    expect(new Set(FLOWS.map((f) => ecmpSpine(f)))).toEqual(new Set([0, 1]));
+    expect(ecmpSpine(FLOWS[0], 1)).toBe(0);
+  });
+
+  it("draws 9x5 plates", () => {
+    for (const k of ["leaf", "spine"] as const) for (const s of ["lit", "dim", "dark"] as const) {
+      const rows = plateRows(k, s);
+      expect(rows).toHaveLength(5);
+      for (const row of rows) expect(row).toHaveLength(9);
+    }
+  });
+
+  it("lights the ECMP path in idle (packet, amber link, sail), the whole fabric on the attack, and nothing when hurt or fainted", () => {
+    for (const view of [SPINEBACK.front, SPINEBACK.back]) {
+      view.idle.forEach((f, i) => {
+        const text = f.rows.join("");
+        expect(text.includes("y"), `frame ${i}`).toBe(true);
+        expect(text.includes("A"), `frame ${i}`).toBe(true);
+        expect(text.includes("P"), `frame ${i}`).toBe(true);
+      });
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[AaPpSsy]/);
+      for (const f of view.attack) expect(f.rows.join("")).toMatch(/A[\s\S]*P|P[\s\S]*A/);
     }
   });
 });

@@ -134,7 +134,7 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
   - [x] 6.1e Boss gym 12 Nattopus.
   - [x] 6.1f Boss gym 13 Aclaw.
   - [x] 6.1g Boss gym 14 Hashorn.
-  - [ ] 6.1h Boss gym 15 Spineback.
+  - [x] 6.1h Boss gym 15 Spineback.
   - [ ] 6.1i Boss gym 16 Loopwarden.
 - [ ] 6.2 Lesson cards and figures for the new chapters (ACL matching, STP election, EtherChannel, consistent-hash ring, token bucket, Clos fabric), one per run, each on `/dev/sprites` and reviewed in screenshots.
 - [ ] 6.3 Update the Leitner box, daily challenge and interview deck to draw from the new topics; migrate saves safely (older saves load with empty progress for new gyms).
