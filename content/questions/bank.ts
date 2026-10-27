@@ -11,6 +11,7 @@ import { IPSERVICES_BANK } from "./ipservicesBank";
 import { WIRELESS_BANK } from "./wirelessBank";
 import { AUTOMATION_BANK } from "./automationBank";
 import { LOADBALANCE_BANK } from "./loadBalanceBank";
+import { RATELIMIT_BANK } from "./rateLimitBank";
 import { SWITCHING_BANK } from "./switchingBank";
 import { CCNA_BANK } from "./ccnaBank";
 import { INTERVIEW_BANK } from "./interviewBank";
@@ -1720,4 +1721,4 @@ const CHAPTER_BANK: readonly Question[] = [
   },
 ];
 
-export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK, ...IPSERVICES_BANK, ...WIRELESS_BANK, ...AUTOMATION_BANK, ...LOADBALANCE_BANK];
+export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK, ...IPSERVICES_BANK, ...WIRELESS_BANK, ...AUTOMATION_BANK, ...LOADBALANCE_BANK, ...RATELIMIT_BANK];

@@ -657,3 +657,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/loadbalance.test.ts` (nginx 5/1/1 sequence, FNV-1a vectors, ring moves only to the new node at about 1/(N+1), vnodes improve balance, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 657 total.
 - Verified: lint, typecheck, 657 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.2 Rate limiting and resilience.
+
+## 2026-10-27: 5.2 Rate limiting and resilience
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/ratelimit.ts`): token bucket, leaky-bucket meter, fixed window, sliding log and sliding-window counter (integer arithmetic) each deciding allow/deny for a request trace; backoff ceiling and total wait, retry amplification (attempts^layers), and a circuit-breaker state machine (closed / open / half-open, cooldown, probe).
+- **Content**: 22 hand-written `interview`-topic cards (`content/questions/rateLimitBank.ts`, ids `rl-*`: 429 and Retry-After, bucket size vs refill rate, token vs leaky, fixed-window boundary flaw, sliding log vs counter, distributed limiting, limit keys, fail open/closed, what to retry, backoff and jitter, cache stampede, retry amplification, timeouts, breaker states, idempotency keys, backpressure, load shedding, bulkheads) and 5 seeded generators (`rateLimitGenerators.ts`, ids `gen-sde-*`: token-bucket allowed count, fixed-window allowed count on a boundary burst, backoff total wait, breaker calls reaching the backend, worst-case retry amplification). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/ratelimit.test.ts` (solver cases incl. boundary burst, nginx-style traces, breaker reopen; generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 669 total.
+- Verified: lint, typecheck, 669 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.3 Modern transport and performance.
