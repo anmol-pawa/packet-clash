@@ -706,3 +706,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/websec.test.ts` (MDN same-origin table, SameSite and CORS truth tables, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 716 total.
 - Verified: lint, typecheck, 716 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.8 Debugging with captures and tools.
+
+## 2026-10-27: 5.8a Debugging with captures and tools (cards, solvers, generators)
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- Split 5.8: this run did the content and solvers; the interactive capture-reading page is the new 5.8b.
+- **Solver** (`lib/net/debug.ts`): curl timing phases (time to first byte, total, dominant phase), traceroute biggest-jump hop, mtr loss reading (ICMP rate limiting vs real loss), MSS from MTU, path MTU, PMTUD outcome (fits / adapts / black hole), `ss` Recv-Q/Send-Q diagnosis, retransmit rate, the 3-dup-ACK fast-retransmit threshold.
+- **Content**: 25 hand-written `interview`-topic cards (`content/questions/debugBank.ts`, ids `dbg-*`: SYN with no reply vs RST, zero window, dup ACKs and fast retransmit vs RTO, curl -v and --resolve, dig TTL/+trace/NXDOMAIN vs NODATA, ss queues on ESTABLISHED and LISTEN, TIME_WAIT, CLOSE_WAIT, traceroute stars and RTT jumps, mtr loss, TTL mechanics, PMTUD black holes, MSS clamping, latency budget, tcpdump filters, Nagle plus delayed ACK) and 6 seeded generators (`debugGenerators.ts`, ids `gen-sde-*`: dominant phase, curl TTFB, traceroute jump hop, MSS, PMTUD outcome, ss bottleneck). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/debug.test.ts` (solver cases, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 723 total.
+- Verified: lint, typecheck, 723 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.8b Capture-reading page.
