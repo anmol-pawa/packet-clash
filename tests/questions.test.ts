@@ -717,6 +717,17 @@ describe("the bank", () => {
       "dbg-latency-budget": "The server's 900 ms of processing, which dominates the total",
       "dbg-tcpdump-filter": "tcpdump -i eth0 host 203.0.113.10 and tcp port 443",
       "dbg-nagle-delay": "Nagle's algorithm on the sender waiting for an ACK that the receiver's delayed ACK holds back",
+      "sd-url-edge": "A CDN or edge cache that serves the 301/302 from cache by code, with only misses reaching the origin",
+      "sd-video-delivery": "Segment it into a few-second chunks at several bitrates (HLS/DASH), served from CDN caches near viewers",
+      "sd-global-chat": "A persistent WebSocket (or similar) to a nearby gateway, with a message bus fanning out between gateways",
+      "sd-api-gateway": "A single entry point doing TLS termination, authentication, rate limiting and routing to backend services",
+      "sd-l4-l7": "A Layer 7 (HTTP-aware) load balancer, because routing depends on the URL path",
+      "sd-anycast": "Many sites announce the same IP; BGP sends each client to a nearby one and failures reroute automatically",
+      "sd-sort-tier": "Edge: CDN cache, Anycast DNS; Application tier: Stateless web server, API gateway; Data tier: Read replica, Primary database",
+      "sd-sort-scale": "Scales reads: Add read replicas, Put a cache in front; Scales writes: Shard by user ID, Use a write-ahead queue to batch inserts",
+      "sd-sort-stateful": "Stateless: add freely: Web server holding no session, Image resize worker; Stateful: needs partitioning or replication: Cache node, Database primary, WebSocket gateway",
+      "sd-sort-protocol": "HTTP/2 or HTTP/3 over HTTPS: Public REST API, Static asset delivery; WebSocket: Live chat presence, Collaborative cursor updates; UDP-based (QUIC, RTP, DNS): Voice call media, DNS lookup",
+      "sd-latency-ladder": "1. L1 cache reference  2. Main memory reference  3. Read 4 KB randomly from an SSD  4. Round trip within one datacenter  5. Disk seek  6. Round trip California to the Netherlands",
     };
     expect(Object.keys(expected).sort()).toEqual(BANK.map((q) => q.id).sort());
     for (const q of BANK) expect(answerText(q), q.id).toBe(expected[q.id]);

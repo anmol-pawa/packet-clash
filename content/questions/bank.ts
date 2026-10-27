@@ -15,6 +15,7 @@ import { DC_BANK } from "./dcBank";
 import { SOCKET_BANK } from "./socketBank";
 import { WEBSEC_BANK } from "./webSecBank";
 import { DEBUG_BANK } from "./debugBank";
+import { SYSDESIGN_BANK } from "./sysdesignBank";
 import { RATELIMIT_BANK } from "./rateLimitBank";
 import { PERF_BANK } from "./perfBank";
 import { REALTIME_BANK } from "./realtimeBank";
@@ -1727,4 +1728,4 @@ const CHAPTER_BANK: readonly Question[] = [
   },
 ];
 
-export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK, ...IPSERVICES_BANK, ...WIRELESS_BANK, ...AUTOMATION_BANK, ...LOADBALANCE_BANK, ...RATELIMIT_BANK, ...PERF_BANK, ...REALTIME_BANK, ...DC_BANK, ...SOCKET_BANK, ...WEBSEC_BANK, ...DEBUG_BANK];
+export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK, ...IPSERVICES_BANK, ...WIRELESS_BANK, ...AUTOMATION_BANK, ...LOADBALANCE_BANK, ...RATELIMIT_BANK, ...PERF_BANK, ...REALTIME_BANK, ...DC_BANK, ...SOCKET_BANK, ...WEBSEC_BANK, ...DEBUG_BANK, ...SYSDESIGN_BANK];

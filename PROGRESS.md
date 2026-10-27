@@ -723,3 +723,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/capture.test.ts` (hand-written traces, the analyser must find the injected fault for 80 seeds per kind, determinism, fast-retransmit under 200 ms vs RTO at least 200 ms, every scenario answer grades correct); 734 total.
 - Verified: lint, typecheck, 734 tests, `build:pages` (178 files precached; first build hit the known advisory stop, retry passed). Playwright at desktop and iPhone 14: no console errors, no horizontal overflow; trace lines were clipped at first, fixed by a compact line format (C/S named in the header) and a smaller mono size on narrow screens.
 - Next: 5.9 System-design networking drills.
+
+## 2026-10-27: 5.9 System-design networking drills
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/sysdesign.ts`): average and peak QPS, bandwidth in Mbit/s, fleet size, Little's law concurrency, CDN origin load from hit ratio, monthly egress cost, replicated storage, and the latency-numbers ladder.
+- **Content**: 10 hand-written `interview`-topic cards (`content/questions/sysdesignBank.ts`, ids `sd-*`): URL-shortener edge, video delivery (HLS/DASH + CDN), global chat (WebSocket + fan-out), API gateway, L4 vs L7, anycast, plus sorting cards (edge/app/data tier, scales reads vs writes, stateless vs stateful, transport per workload) and a latency-ladder ordering card. 6 seeded generators (`sysdesignGenerators.ts`, ids `gen-sde-*`: peak QPS, bandwidth, fleet size, Little's law, CDN origin QPS, egress bill). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/sysdesign.test.ts` (solver cases, generators re-solved from printed prompts for 80 seeds, ladder order) plus all card answers pinned in `tests/questions.test.ts`; 741 total.
+- Verified: lint, typecheck, 741 tests, `build:pages` (178 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.10 FAANG mock loop.
