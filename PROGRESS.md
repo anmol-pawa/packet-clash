@@ -698,3 +698,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/sockets.test.ts` (call order, clamping, C10K stack arithmetic, order questions grade only the right sequence, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 709 total.
 - Verified: lint, typecheck, 709 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.7 Web security for SDE.
+
+## 2026-10-27: 5.7 Web security for SDE
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/websec.ts`): same-origin (scheme/host/port, default ports), SameSite Strict/Lax/None cookie delivery, CORS simple-vs-preflight rules, DNS spoofing search space (16-bit ID x source ports), reflection amplification, HSTS max-age (preload minimum 31,536,000 s).
+- **Content**: 24 hand-written `interview`-topic cards (`content/questions/webSecBank.ts`, ids `websec-*`: HttpOnly/Secure/SameSite, SOP, CORS and preflight, wildcard + credentials, CSRF vs XSS defences, CSP, OAuth code+PKCE, OIDC, state, JWT alg and revocation pitfalls, certificate validation, mTLS, HSTS, SYN floods, amplification, DNS poisoning, DNSSEC) and 6 seeded generators (`webSecGenerators.ts`, ids `gen-sde-*`: same-origin, SameSite sent, preflight, DNS spoof space, amplified Mbit/s, HSTS seconds). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/websec.test.ts` (MDN same-origin table, SameSite and CORS truth tables, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 716 total.
+- Verified: lint, typecheck, 716 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.8 Debugging with captures and tools.

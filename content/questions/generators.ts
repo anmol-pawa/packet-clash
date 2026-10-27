@@ -26,6 +26,7 @@ import { AUTOMATION_GENERATORS } from "./automationGenerators";
 import { LOADBALANCE_GENERATORS } from "./loadBalanceGenerators";
 import { DC_GENERATORS } from "./dcGenerators";
 import { SOCKET_GENERATORS } from "./socketGenerators";
+import { WEBSEC_GENERATORS } from "./webSecGenerators";
 import { RATELIMIT_GENERATORS } from "./rateLimitGenerators";
 import { PERF_GENERATORS } from "./perfGenerators";
 import { REALTIME_GENERATORS } from "./realtimeGenerators";
@@ -549,4 +550,5 @@ export const GENERATORS: readonly Generator[] = [
   ...REALTIME_GENERATORS,
   ...DC_GENERATORS,
   ...SOCKET_GENERATORS,
+  ...WEBSEC_GENERATORS,
 ];
