@@ -682,3 +682,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/realtime.test.ts` (RFC 3550 hand-computed cases, G.711/G.729 bandwidth, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 691 total.
 - Verified: lint, typecheck, 691 tests, `build:pages` (171 files precached). No UI changed, so no screenshots.
 - Next: 5.5 Datacenter and cloud networking.
+
+## 2026-10-27: 5.5 Datacenter and cloud networking
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/datacenter.ts`): oversubscription ratio, two-tier leaf-spine sizing, k-ary fat-tree hosts/switches (Al-Fares), VXLAN overhead (+50 B; 1500 → 1550 underlay MTU), cloud VPC usable IPs (5 reserved), Kubernetes pod-CIDR node counts and per-node pod IPs, NAT source-port flow limit.
+- **Content**: 22 hand-written `interview`-topic cards (`content/questions/dcBank.ts`, ids `dc-*`: leaf-spine vs 3-tier, ECMP and elephant flows, oversubscription, VXLAN/MTU/source-port entropy, security groups vs NACLs, public subnets, NAT gateway, non-transitive peering, pod network model, Services, kube-proxy, Ingress, service mesh, mTLS, service discovery, DNS TTL, anycast) and 6 seeded generators (`dcGenerators.ts`, ids `gen-sde-*`: oversubscription, leaf-spine servers, fat-tree hosts, VXLAN underlay MTU, VPC usable IPs, pod CIDR nodes). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/datacenter.test.ts` (3:1 example, fat-tree k=4/k=48, VXLAN 1550, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 701 total.
+- Verified: lint, typecheck, 701 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.6 Sockets and OS networking.

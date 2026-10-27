@@ -24,6 +24,7 @@ import { IPSERVICES_GENERATORS } from "./ipservicesGenerators";
 import { WIRELESS_GENERATORS } from "./wirelessGenerators";
 import { AUTOMATION_GENERATORS } from "./automationGenerators";
 import { LOADBALANCE_GENERATORS } from "./loadBalanceGenerators";
+import { DC_GENERATORS } from "./dcGenerators";
 import { RATELIMIT_GENERATORS } from "./rateLimitGenerators";
 import { PERF_GENERATORS } from "./perfGenerators";
 import { REALTIME_GENERATORS } from "./realtimeGenerators";
@@ -545,4 +546,5 @@ export const GENERATORS: readonly Generator[] = [
   ...RATELIMIT_GENERATORS,
   ...PERF_GENERATORS,
   ...REALTIME_GENERATORS,
+  ...DC_GENERATORS,
 ];

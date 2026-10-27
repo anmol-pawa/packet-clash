@@ -1,0 +1,82 @@
+/**
+ * 5.5 datacenter and cloud networking (FAANG SDE coverage): leaf-spine, ECMP, oversubscription,
+ * VXLAN, VPC concepts, Kubernetes networking, service mesh and service discovery.
+ * Answers are pinned in tests/questions.test.ts.
+ */
+import type { Difficulty, Question } from "@/game/engine/questions";
+
+/** Build an MCQ; the right answer is slotted at position `slot` (0-3) among the three wrong ones. */
+function card(id: string, difficulty: Difficulty, slot: number, prompt: string, right: string, wrong: [string, string, string], explain: string): Question {
+  const choices = [...wrong];
+  choices.splice(slot, 0, right);
+  return { id, kind: "mcq", topic: "interview", type: "NETWORK", difficulty, prompt, choices, answer: slot, explain };
+}
+
+export const DC_BANK: readonly Question[] = [
+  card("dc-leafspine", 2, 0, "In a leaf-spine fabric, what does every leaf connect to?", "Every spine, and never another leaf; servers attach only to leaves",
+    ["Only the nearest spine", "Every other leaf in a full mesh", "A single core router"],
+    "Any two servers on different leaves are exactly leaf-spine-leaf apart, so latency is predictable and each extra spine adds an equal-cost path."),
+  card("dc-vs-3tier", 2, 1, "Why did datacenters move from the classic access-aggregation-core tree to leaf-spine?", "East-west (server-to-server) traffic dominates, and a tree funnels it through oversubscribed upper layers; leaf-spine gives uniform paths and scales by adding spines",
+    ["Leaf-spine needs no cables", "Spanning tree runs faster on it", "North-south traffic disappeared"],
+    "Microservices and storage replication talk sideways. Layer-3 leaf-spine with ECMP uses all links instead of blocking some with STP."),
+  card("dc-ecmp", 2, 2, "How does ECMP spread traffic over equal-cost paths without reordering a TCP flow?", "It hashes the 5-tuple, so every packet of one flow takes the same path while different flows spread out",
+    ["It sends each packet to the next path in turn", "It picks the path with the lowest load per packet", "It copies each packet down every path"],
+    "Per-packet round robin would reorder packets and upset TCP. Flow hashing keeps order but can collide: two elephant flows may land on one link."),
+  card("dc-elephant", 3, 3, "What problem can ECMP flow hashing cause for a few huge flows?", "Hash collisions can put several elephant flows on the same link while others sit idle",
+    ["Packets arrive out of order", "It disables the spine switches", "It breaks DNS"],
+    "Hashing is blind to flow size. Fixes include flowlet switching, more entropy (UDP source port in VXLAN), or load-aware routing."),
+  card("dc-oversub", 2, 0, "A leaf has 48 x 10 Gbit/s server ports and 4 x 40 Gbit/s uplinks. What does a ratio above 1:1 mean?", "Servers could together send more than the uplinks can carry, so heavy traffic may queue or drop at the leaf",
+    ["The uplinks are wasted", "The switch is broken", "Servers are limited to one flow each"],
+    "480 Gbit/s down over 160 Gbit/s up is 3:1. Oversubscription is a cost trade-off that works when not all servers burst at once."),
+  card("dc-vxlan", 3, 1, "What problem does VXLAN solve?", "It tunnels Layer-2 segments over a Layer-3 network (MAC-in-UDP) so tenants get isolated virtual networks across the fabric",
+    ["It encrypts every packet", "It replaces BGP", "It shrinks the MTU to 576"],
+    "The 24-bit VNI gives about 16 million segments versus 4,094 VLAN IDs. Hosts act as VTEPs that encapsulate and decapsulate."),
+  card("dc-vxlan-mtu", 3, 2, "VXLAN adds 50 bytes. What must you do for guests that use a 1500-byte MTU?", "Raise the underlay MTU to at least 1550 (jumbo frames are common), or lower the guest MTU",
+    ["Nothing; VXLAN compresses headers", "Disable TCP", "Use only UDP inside the tunnel"],
+    "Outer IP 20 + UDP 8 + VXLAN 8 + inner Ethernet 14 = 50. Without room, full-size packets fragment or are dropped when DF is set."),
+  card("dc-vxlan-sport", 3, 3, "Why does a VTEP derive the outer UDP source port from a hash of the inner flow?", "So the fabric's ECMP sees entropy and spreads different inner flows over different paths",
+    ["To avoid port exhaustion", "Because UDP requires a random port", "To bypass the firewall"],
+    "All VXLAN packets share destination port 4789 and the same VTEP IPs; the source port is the only varying field underlay switches hash."),
+  card("dc-vpc-sg-nacl", 2, 0, "Security groups versus network ACLs in a cloud VPC: which statement is right?", "Security groups are stateful and attach to instances; NACLs are stateless and apply per subnet, with ordered rules",
+    ["Both are stateful", "NACLs attach to instances; security groups to subnets", "Security groups are stateless and support explicit deny"],
+    "A stateful group lets return traffic through automatically. A stateless NACL must allow both directions, including ephemeral ports."),
+  card("dc-public-subnet", 2, 1, "What makes a VPC subnet 'public'?", "Its route table sends 0.0.0.0/0 to an internet gateway (and instances have public IPs)",
+    ["Its CIDR is a public range", "It has no security group", "It sits in a different region"],
+    "Nothing about the address range decides it. A private subnet instead routes 0.0.0.0/0 to a NAT gateway or has no default route."),
+  card("dc-nat-gw", 2, 2, "Why put a NAT gateway in a public subnet for private instances?", "Instances can start outbound connections to the internet, but the internet cannot start inbound ones",
+    ["It encrypts their traffic", "It gives each instance a public IP", "It replaces the security group"],
+    "The gateway rewrites private source addresses to its own public IP and tracks flows, so only replies come back."),
+  card("dc-peering", 3, 3, "VPC peering does not support transitive routing. What does that mean for A-B and B-C peerings?", "A cannot reach C through B; you need a direct A-C peering or a transit gateway",
+    ["A reaches C automatically", "Peering needs non-overlapping CIDRs only for A-C", "B must NAT for A"],
+    "Peering connects two VPCs only. A transit gateway is a hub, so N VPCs need N attachments instead of N(N-1)/2 peerings. CIDRs must not overlap."),
+  card("dc-k8s-pod", 2, 0, "What is the Kubernetes network model's basic rule for pods?", "Every pod gets its own IP and can reach every other pod without NAT",
+    ["Pods share the node's IP and use ports", "Pods may only talk through Services", "Each pod needs a public IP"],
+    "A CNI plugin (Calico, Cilium, flannel...) implements this with overlays or routed pod CIDRs, usually one block per node."),
+  card("dc-k8s-service", 2, 1, "Why use a Service instead of calling a pod IP directly?", "Pods are ephemeral, so a Service gives a stable virtual IP and DNS name that load-balances across the current ready pods",
+    ["Services make pods faster", "Pod IPs are always the same", "Services bypass kube-proxy"],
+    "ClusterIP is virtual: kube-proxy (iptables/IPVS) or eBPF rewrites it to a pod endpoint. Readiness probes decide which pods receive traffic."),
+  card("dc-k8s-types", 3, 2, "ClusterIP, NodePort and LoadBalancer Services: which is correct?", "NodePort exposes a port on every node; LoadBalancer asks the cloud for an external load balancer in front of it; ClusterIP is internal only",
+    ["ClusterIP is reachable from the internet", "NodePort allocates a cloud load balancer", "LoadBalancer works only inside the cluster"],
+    "They build on each other: LoadBalancer includes a NodePort, which includes a ClusterIP."),
+  card("dc-ingress", 3, 3, "What does an Ingress add that a plain Service does not?", "Layer-7 routing by host and path (plus TLS termination) to many Services behind one entry point",
+    ["Pod IP assignment", "Layer-2 switching", "DNS recursion"],
+    "An Ingress controller (nginx, Envoy...) implements the rules; the Gateway API is its more expressive successor."),
+  card("dc-kubeproxy", 3, 0, "What does kube-proxy do on each node?", "Programs rules (iptables, IPVS) so traffic to a Service IP is DNAT-ed to one of its backing pods",
+    ["Runs the pods", "Issues TLS certificates", "Provides node-to-node VXLAN"],
+    "It watches Services and EndpointSlices. iptables mode is O(rules) per lookup; IPVS uses hash tables and scales better."),
+  card("dc-mesh", 3, 1, "What does a service mesh sidecar (e.g. Envoy) provide?", "Per-hop mTLS, retries, timeouts, load balancing and metrics without changing application code",
+    ["A replacement for the CNI", "Persistent storage", "Faster pod scheduling"],
+    "The data plane proxies intercept pod traffic; a control plane pushes identities and policy. Cost: extra hops and resource use."),
+  card("dc-mtls", 3, 2, "How does mTLS differ from ordinary TLS?", "Both sides present certificates, so the server also authenticates the client (a workload identity)",
+    ["It uses UDP", "Only the client has a certificate", "It skips the handshake"],
+    "Meshes issue short-lived certificates per workload, so policies can say 'service A may call B' independent of IP addresses."),
+  card("dc-discovery", 2, 3, "Client-side versus server-side service discovery: which is right?", "Client-side: the client asks a registry and picks an instance; server-side: a load balancer or proxy does the lookup",
+    ["Server-side needs no registry", "Client-side hides instances behind a VIP", "They differ only in port numbers"],
+    "Kubernetes DNS plus Services is server-side (a virtual IP). gRPC with xDS or Eureka-style clients is client-side."),
+  card("dc-dns-ttl", 3, 0, "Why is a long DNS TTL risky for service discovery in a fast-changing fleet?", "Clients keep resolving to instances that have already gone away until the cache expires",
+    ["DNS cannot return several IPs", "It breaks TLS", "The TTL controls TCP timeouts"],
+    "Short TTLs, health-checked records or virtual IPs reduce staleness; some clients also cache past the TTL, which is why a proxy or sidecar is preferred."),
+  card("dc-anycast", 3, 1, "How do datacenters and CDNs use anycast?", "The same IP is announced from many sites via BGP and routing sends each client to a nearby one",
+    ["Each site gets a unique address", "Packets are copied to every site", "It requires DNS round robin"],
+    "Anycast suits stateless/short flows (DNS, CDN edges); a route change mid-connection can move a TCP session to another site."),
+];
