@@ -649,3 +649,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/ccnaExam.test.ts` (blueprint weights, every ccna item has a domain, deep pools, seeded unique decks in proportion with gradable answers, scorecard weighting); 643 total.
 - Verified: lint, typecheck, 643 tests, `build:pages` (171 files precached); Playwright completed a full 40-question exam at 1280x900 and iPhone 14 with no console errors and no horizontal overflow; screenshots reviewed.
 - Next: 5.1 Load balancing and traffic management.
+
+## 2026-10-27: 5.1 Load balancing and traffic management
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/loadbalance.ts`): round robin, smooth weighted round robin (nginx algorithm), least and weighted-least connections, power of two choices, octet-sum IP hash, `mod N` remapping count, and a consistent-hash ring (FNV-1a plus murmur3 finaliser, virtual nodes, `ringLookup`, `ringMoved`, `ringLoad`).
+- **Content**: 21 hand-written `interview`-topic cards (`content/questions/loadBalanceBank.ts`, ids `lb-*`: algorithm trade-offs, mod-N vs consistent hashing, vnodes, health checks and their depth, draining, L4 vs L7, DSR, X-Forwarded-For, sticky sessions, GeoDNS/anycast, balancer HA, safe retries, slow start) and 5 seeded generators (`loadBalanceGenerators.ts`, ids `gen-sde-*`: WRR share per cycle, least-connections pick, IP hash backend, keys moved by mod N, ring vs mod N). They join gym 9's pool via the `interview` topic.
+- Tests: `tests/loadbalance.test.ts` (nginx 5/1/1 sequence, FNV-1a vectors, ring moves only to the new node at about 1/(N+1), vnodes improve balance, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 657 total.
+- Verified: lint, typecheck, 657 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
+- Next: 5.2 Rate limiting and resilience.
