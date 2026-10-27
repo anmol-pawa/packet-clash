@@ -107,8 +107,11 @@ export function loopCard(results: readonly Result[]): LoopCard {
     return { round, card };
   });
   const redFlags = rounds.filter((x) => x.card.total > 0 && x.card.percent < ROUND_BAR).map((x) => x.round);
-  const p = overall.percent;
-  let verdict: LoopVerdict = p >= 85 ? "STRONG HIRE" : p >= 65 ? "HIRE" : p >= 45 ? "LEAN NO HIRE" : "NO HIRE";
-  if (redFlags.length > 0 && (verdict === "STRONG HIRE" || verdict === "HIRE")) verdict = "LEAN NO HIRE";
-  return { overall, rounds, verdict, redFlags };
+  return { overall, rounds, verdict: loopVerdict(overall.percent, redFlags.length), redFlags };
+}
+
+/** The verdict for a weighted total and the number of rounds under the bar. */
+export function loopVerdict(percent: number, redFlags: number): LoopVerdict {
+  const verdict: LoopVerdict = percent >= 85 ? "STRONG HIRE" : percent >= 65 ? "HIRE" : percent >= 45 ? "LEAN NO HIRE" : "NO HIRE";
+  return redFlags > 0 && (verdict === "STRONG HIRE" || verdict === "HIRE") ? "LEAN NO HIRE" : verdict;
 }

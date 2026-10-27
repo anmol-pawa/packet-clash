@@ -9,6 +9,8 @@ import { AREADON, LINK_MBPS, RINGS, digitRows, litAreas, ospfCost } from "@/game
 import { ACLAW, ACL_LINES, BAR_Y, IMPLICIT_LINE, PROBES, clawBadge, lampBar, probeResult } from "@/game/art/creatures/aclaw";
 import { HASHORN, KEYS, NODES, RING, RING_R, VNODES, angleOf, beadRows, keyPos, ownerBead, ownerOf } from "@/game/art/creatures/hashorn";
 import { SPINEBACK, FABRIC, FLOWS, LEAVES, LEAF_X, LEAF_Y, LINKS, SPINES, SPINE_X, SPINE_Y, ecmpSpine, leafHops, linkPixels, plateRows } from "@/game/art/creatures/spineback";
+import { LOOPWARDEN, LOOPS, ROUND_COUNT, ROUND_WEIGHTS, barColour, barHeight, plaqueRows, scaleTilt, verdictFor } from "@/game/art/creatures/loopwarden";
+import { ROUND_BAR, loopCard } from "@/game/engine/faangLoop";
 import { ringLookup } from "@/lib/net/loadbalance";
 import { NATTOPUS, NAT_TABLE, TAG_POS, tagRows, translatedArms } from "@/game/art/creatures/nattopus";
 import { BLOCKED, PLATES, SPANTOISE, depth, litPlates } from "@/game/art/creatures/spantoise";
@@ -27,7 +29,7 @@ import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK, LOOPWARDEN];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -76,7 +78,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK, LOOPWARDEN])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -1070,6 +1072,69 @@ describe("Spineback's leaf-spine fabric", () => {
       });
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[AaPpSsy]/);
       for (const f of view.attack) expect(f.rows.join("")).toMatch(/A[\s\S]*P|P[\s\S]*A/);
+    }
+  });
+});
+
+describe("Loopwarden's scorecard", () => {
+  it("has one bar per mock-loop round, weighted by the questions in each", () => {
+    expect(ROUND_COUNT).toBe(3);
+    expect(ROUND_WEIGHTS.reduce((a, b) => a + b, 0)).toBeCloseTo(1);
+    expect(ROUND_WEIGHTS[0]).toBeCloseTo(6 / 14);
+    for (const l of LOOPS) expect(l).toHaveLength(ROUND_COUNT);
+  });
+
+  it("scores loops with the real verdict rules: weighted total, and a round under the bar caps it at lean no hire", () => {
+    expect(verdictFor([100, 100, 100])).toBe("STRONG HIRE");
+    expect(verdictFor([90, 88, 80])).toBe("STRONG HIRE");
+    expect(verdictFor([70, 70, 70])).toBe("HIRE");
+    expect(verdictFor([100, ROUND_BAR - 1, 100])).toBe("LEAN NO HIRE");
+    expect(verdictFor([50, 50, 50])).toBe("LEAN NO HIRE");
+    expect(verdictFor([20, 20, 20])).toBe("NO HIRE");
+    // the verdicts shown in the idle loop: strong, capped by the red flag, weak, strong
+    expect(LOOPS.map(verdictFor)).toEqual(["STRONG HIRE", "LEAN NO HIRE", "LEAN NO HIRE", "STRONG HIRE"]);
+  });
+
+  it("agrees with loopCard on an empty loop (no marks, no hire)", () => {
+    expect(loopCard([]).verdict).toBe("NO HIRE");
+  });
+
+  it("tips the scale toward HIRE for hires and NO HIRE otherwise", () => {
+    expect(scaleTilt("STRONG HIRE")).toBeGreaterThan(scaleTilt("HIRE"));
+    expect(scaleTilt("HIRE")).toBeGreaterThan(0);
+    expect(scaleTilt("LEAN NO HIRE")).toBeLessThan(0);
+    expect(scaleTilt("NO HIRE")).toBeLessThan(scaleTilt("LEAN NO HIRE"));
+  });
+
+  it("draws bars in proportion, red under the round bar", () => {
+    expect(barHeight(0)).toBe(0);
+    expect(barHeight(100)).toBe(11);
+    expect(barHeight(50)).toBeLessThan(barHeight(90));
+    expect(barColour(ROUND_BAR)).toBe("G");
+    expect(barColour(ROUND_BAR - 1)).toBe("R");
+  });
+
+  it("draws a 21x15 plaque that reveals only the shown bars", () => {
+    const rows = plaqueRows([90, 30, 80], 2);
+    expect(rows).toHaveLength(15);
+    for (const row of rows) expect(row).toHaveLength(21);
+    const text = rows.join("");
+    expect(text).toContain("G");
+    expect(text).toContain("R");
+    expect(plaqueRows([90, 30, 80], 1).join("")).not.toContain("R");
+    expect(plaqueRows([90, 30, 80], 3, true).join("")).not.toMatch(/[GR]/);
+  });
+
+  it("lights a scorecard and a scale in idle, everything on the attack, and nothing when hurt or fainted", () => {
+    for (const view of [LOOPWARDEN.front, LOOPWARDEN.back]) {
+      view.idle.forEach((f, i) => {
+        const text = f.rows.join("");
+        expect(text.includes("G"), `frame ${i}`).toBe(true);
+        expect(text.includes("h") && text.includes("n"), `frame ${i}`).toBe(true);
+      });
+      expect(view.idle[1].rows.join("")).toContain("R");
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[GRhn]/);
+      for (const f of view.attack) expect(f.rows.join("")).toContain("B");
     }
   });
 });

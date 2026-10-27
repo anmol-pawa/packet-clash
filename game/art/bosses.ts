@@ -13,6 +13,7 @@ import { NATTOPUS } from "./creatures/nattopus";
 import { ACLAW } from "./creatures/aclaw";
 import { HASHORN } from "./creatures/hashorn";
 import { SPINEBACK } from "./creatures/spineback";
+import { LOOPWARDEN } from "./creatures/loopwarden";
 import { SYNACKLE } from "./creatures/synackle";
 
 /** Gym leaders' art by `Town.bossSprite` id. */
@@ -32,4 +33,5 @@ export const BOSS_ART: Record<string, CreatureArt> = {
   [ACLAW.id]: ACLAW,
   [HASHORN.id]: HASHORN,
   [SPINEBACK.id]: SPINEBACK,
+  [LOOPWARDEN.id]: LOOPWARDEN,
 };

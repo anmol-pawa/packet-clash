@@ -123,6 +123,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   hashorn: ["TRANSPORT", "APPLICATION"],
   // A leaf-spine fabric is a datacenter network of switches and routed equal-cost paths: Network with Link.
   spineback: ["NETWORK", "LINK"],
+  // A mock loop spans the whole stack: Application questions and Transport-level debugging.
+  loopwarden: ["APPLICATION", "TRANSPORT"],
 };
 
 /** A creature's types (Network if it isn't listed). */

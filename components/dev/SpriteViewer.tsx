@@ -16,6 +16,7 @@ import { NATTOPUS } from "@/game/art/creatures/nattopus";
 import { ACLAW } from "@/game/art/creatures/aclaw";
 import { HASHORN } from "@/game/art/creatures/hashorn";
 import { SPINEBACK } from "@/game/art/creatures/spineback";
+import { LOOPWARDEN } from "@/game/art/creatures/loopwarden";
 import { SPANTOISE } from "@/game/art/creatures/spantoise";
 import { KEYVERN } from "@/game/art/creatures/keyvern";
 import { OAKWIND } from "@/game/art/creatures/oakwind";
@@ -37,7 +38,7 @@ import { encapsulate } from "@/game/engine/encap";
 import { budgetFigure, connectFigure, journeyFigure, bellmanFordFigure, certChainFigure, dhFigure, tlsFigure, dnsFigure, doraFigure, httpFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, cwndFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, tcpFlowFigure, vlsmFigure, windowFigure } from "@/game/art/lessons";
 import { silhouette } from "@/lib/pixel";
 
-const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK];
+const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK, LOOPWARDEN];
 
 /**
  * /dev/sprites: every creature's front and back animations side by side, plus

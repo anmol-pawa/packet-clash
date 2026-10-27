@@ -45,7 +45,7 @@ export const NEW_TOWNS: Town[] = [
   { gym: 13, id: "shield-haven", name: "Shield Haven", subnet: "10.0.13.0/24", chapter: "4.7", topic: "Security, wireless and automation: ACLs, AAA, VPN, SDN", boss: "Aclaw", bossSprite: "aclaw", badge: "Shield Badge", badgeColor: "#d8708f", roof: "#8f2f58", x: 262, y: 56 },
   { gym: 14, id: "balancer-bluff", name: "Balancer Bluff", subnet: "10.0.14.0/24", chapter: "5.1", topic: "Load balancing, consistent hashing, rate limiting", boss: "Hashorn", bossSprite: "hashorn", badge: "Ring Badge", badgeColor: "#b6a2ff", roof: "#5a46b0", x: 60, y: 170 },
   { gym: 15, id: "fabric-fort", name: "Fabric Fort", subnet: "10.0.15.0/24", chapter: "5.5", topic: "Datacenter and cloud networking, QUIC and BBR, real-time", boss: "Spineback", bossSprite: "spineback", badge: "Fabric Badge", badgeColor: "#7fb8ff", roof: "#2f5fae", x: 160, y: 120 },
-  { gym: 16, id: "offer-spire", name: "Offer Spire", subnet: "10.0.16.0/24", chapter: "5.10", topic: "Debugging, system design and the FAANG mock loop", boss: "Loopwarden", bossSprite: null, badge: "Offer Badge", badgeColor: "#ffd86b", roof: "#a0762a", x: 252, y: 52 },
+  { gym: 16, id: "offer-spire", name: "Offer Spire", subnet: "10.0.16.0/24", chapter: "5.10", topic: "Debugging, system design and the FAANG mock loop", boss: "Loopwarden", bossSprite: "loopwarden", badge: "Offer Badge", badgeColor: "#ffd86b", roof: "#a0762a", x: 252, y: 52 },
 ];
 
 const R = (id: string, name: string, medium: string, from: string, to: string, n: number, via: [number, number][] = []): Route => ({ id, name, medium, from, to, link: `10.255.0.${n * 4}/30`, via });
