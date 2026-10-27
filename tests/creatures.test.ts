@@ -7,6 +7,8 @@ import { ETHERNET, FIELDS, FRAMADILLO, IDLE_FIELDS, LAMP_POS as FRAME_LAMPS, eth
 import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
 import { AREADON, LINK_MBPS, RINGS, digitRows, litAreas, ospfCost } from "@/game/art/creatures/areadon";
 import { ACLAW, ACL_LINES, BAR_Y, IMPLICIT_LINE, PROBES, clawBadge, lampBar, probeResult } from "@/game/art/creatures/aclaw";
+import { HASHORN, KEYS, NODES, RING, RING_R, VNODES, angleOf, beadRows, keyPos, ownerBead, ownerOf } from "@/game/art/creatures/hashorn";
+import { ringLookup } from "@/lib/net/loadbalance";
 import { NATTOPUS, NAT_TABLE, TAG_POS, tagRows, translatedArms } from "@/game/art/creatures/nattopus";
 import { BLOCKED, PLATES, SPANTOISE, depth, litPlates } from "@/game/art/creatures/spantoise";
 import { GIGAROC, PULSE_POS, bandwidthDelayProduct, bitWidth, nodalDelay, propagationDelay, storeAndForward, transmissionDelay } from "@/game/art/creatures/gigaroc";
@@ -24,7 +26,7 @@ import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -73,7 +75,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -959,6 +961,57 @@ describe("Aclaw's access list", () => {
       });
       for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[grGRHQ]/);
       for (const f of view.attack) expect(f.rows.join("")).toMatch(/H[\s\S]*Q|Q[\s\S]*H/);
+    }
+  });
+});
+
+describe("Hashorn's hash ring", () => {
+  it("places three servers with three virtual nodes each, sorted around the ring", () => {
+    expect(NODES).toHaveLength(3);
+    expect(RING).toHaveLength(NODES.length * VNODES);
+    for (const n of NODES) expect(RING.filter((p) => p.node === n)).toHaveLength(VNODES);
+    for (let i = 1; i < RING.length; i++) expect(RING[i].pos).toBeGreaterThanOrEqual(RING[i - 1].pos);
+    expect(RING_R).toBeGreaterThan(0);
+  });
+
+  it("sends each key to the first bead clockwise at or after its hash, wrapping around", () => {
+    KEYS.forEach((k, i) => {
+      const bead = RING[ownerBead(i)];
+      expect(bead.node).toBe(ownerOf(i));
+      expect(bead.node).toBe(ringLookup(RING, k));
+      const h = keyPos(i);
+      if (ownerBead(i) === 0) expect(h > RING[RING.length - 1].pos || h <= RING[0].pos).toBe(true);
+      else {
+        expect(bead.pos).toBeGreaterThanOrEqual(h);
+        expect(RING[ownerBead(i) - 1].pos).toBeLessThan(h);
+      }
+      expect(angleOf(h)).toBeGreaterThanOrEqual(0);
+      expect(angleOf(h)).toBeLessThan(Math.PI * 2);
+    });
+  });
+
+  it("uses keys that land on distinct beads and all three servers", () => {
+    expect(new Set(KEYS.map((_, i) => ownerBead(i))).size).toBe(KEYS.length);
+    expect(new Set(KEYS.map((_, i) => ownerOf(i)))).toEqual(new Set(NODES));
+  });
+
+  it("draws 5x5 beads", () => {
+    for (const n of NODES) for (const s of ["lit", "dim", "dark"] as const) {
+      const rows = beadRows(n, s);
+      expect(rows).toHaveLength(5);
+      for (const row of rows) expect(row).toHaveLength(5);
+    }
+  });
+
+  it("shows the key and lit bead in idle, flares every bead on the attack, and goes dark when hurt or fainted", () => {
+    for (const view of [HASHORN.front, HASHORN.back]) {
+      view.idle.forEach((f, i) => {
+        const text = f.rows.join("");
+        expect(text.includes("y"), `frame ${i}`).toBe(true);
+        expect(text).toMatch(/[APC]/);
+      });
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/[AaCcPpy]/);
+      for (const f of view.attack) expect(f.rows.join("")).toMatch(/A[\s\S]*C[\s\S]*P|P[\s\S]*C[\s\S]*A|A[\s\S]*P[\s\S]*C|C[\s\S]*A[\s\S]*P|C[\s\S]*P[\s\S]*A|P[\s\S]*A[\s\S]*C/);
     }
   });
 });

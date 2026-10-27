@@ -119,6 +119,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   nattopus: ["NETWORK", "TRANSPORT"],
   // An access list filters packets at the edge: a Security gatekeeper that reads layer 3/4 headers.
   aclaw: ["SECURITY", "NETWORK"],
+  // A load balancer picks a backend per connection or request: Transport (L4) with Application (L7) awareness.
+  hashorn: ["TRANSPORT", "APPLICATION"],
 };
 
 /** A creature's types (Network if it isn't listed). */

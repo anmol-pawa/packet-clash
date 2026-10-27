@@ -786,3 +786,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: probes resolve first-match-wins with the implicit deny fallthrough, lamp/badge shapes, matching claw lit per idle frame, dark when hurt or fainted, plus shared creature and boss checks; 791 total.
 - Verified: lint, typecheck, 791 tests, `build:pages` (185 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Claws were pulled inward after the outline test caught clipping at the frame edge.
 - Next: 6.1g Boss gym 14 Hashorn.
+
+## 2026-10-27: 6.1g Boss gym 14 Hashorn
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Art** (`game/art/creatures/hashorn.ts`): 96x96 shaded lavender-fleeced ram whose horn is a consistent-hash ring. Three servers (amber, cyan, pink) own three virtual-node beads each, placed on the ring by the real `ringHash` and `buildRing` from `lib/net/loadbalance`. Idle (4 frames) drops a request key on the ring at its hash position and lights the first bead clockwise at or after it (wrapping); attack flares every bead; hurt and faint go dark; front and back sprites. Exports `NODES`, `VNODES`, `RING`, `KEYS`, `ownerOf`, `ownerBead`, `keyPos`, `angleOf`, `beadRows`. Wired into `BOSS_ART`, the sprite viewer, types (Transport + Application) and `regions.ts` (`bossSprite: "hashorn"`; gym 14 is open, Hashorn joins the Packetdex).
+- Server names ("d", "web2", "edge-1") were picked by a search so no two beads sit closer than ~6px; keys ("user-17", "feed-2", "video-5", "cart-3") land on distinct beads and all three servers.
+- Tests: ring shape, each key's bead is the clockwise successor (incl. wraparound) and matches `ringLookup`, keys cover all servers, bead shapes, idle/attack/hurt/faint lighting, plus shared creature and boss checks (palette trimmed to 26 colours); 801 total.
+- Verified: lint, typecheck, 801 tests, `build:pages` (182 files precached; first builds hit the known advisory stop, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The ring first sat on the back like a saddle ornament; moved to the brow with a horn root after the first screenshot.
+- Next: 6.1h Boss gym 15 Spineback.
