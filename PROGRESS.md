@@ -731,3 +731,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/sysdesign.test.ts` (solver cases, generators re-solved from printed prompts for 80 seeds, ladder order) plus all card answers pinned in `tests/questions.test.ts`; 741 total.
 - Verified: lint, typecheck, 741 tests, `build:pages` (178 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.10 FAANG mock loop.
+
+## 2026-10-27: 5.10 FAANG mock loop
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Engine** (`game/engine/faangLoop.ts`): seeded three-round loop (6 rapid-fire concepts from the nine gyms, 4 debugging, 4 system design; about a third generated) and `loopCard()`: per-round scorecards and a STRONG HIRE / HIRE / LEAN NO HIRE / NO HIRE verdict, where any round under 40% caps the verdict at LEAN NO HIRE.
+- **Page** `/loop` (linked from the map as FAANG LOOP): `MockInterview` now takes an `InterviewMode`, so the loop reuses the timer, review and scorecard UI with round headings and a per-round breakdown. `/interview` now draws from the gauntlet plus the sockets, web security, debugging, system design, load balancing, rate limiting, realtime and performance banks (`MOCK_POOL`).
+- Tests: `tests/faangLoop.test.ts` (deck uniqueness and answerability across seeds, round pools, boundaries, verdict cap, pool ids); 747 total.
+- Verified: lint, typecheck, tests, `build:pages` (185 files precached; first build hit the known advisory stop, retry passed). Playwright desktop and iPhone 14: question and scorecard screens checked, no console errors, no horizontal overflow.
+- Next: 6.1 Extend the world (first Cisco Cove gym boss).

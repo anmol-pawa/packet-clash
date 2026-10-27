@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ExplainBox } from "@/components/battle/ExplainBox";
 import { QuestionPanel } from "@/components/battle/QuestionPanel";
 import { MOCK_LENGTH, interviewDeck, scorecard, timeLimit, type Result } from "@/game/engine/mockInterview";
-import { grade, type Response } from "@/game/engine/questions";
+import { grade, type Question, type Response } from "@/game/engine/questions";
 import { recordReview } from "@/lib/save";
 
 type Stage = "intro" | "ask" | "review" | "done";
@@ -13,9 +13,24 @@ type Stage = "intro" | "ask" | "review" | "done";
  * explanation after each, then a scorecard. A miss or timeout goes back into
  * the Leitner box like any battle answer.
  */
-export function MockInterview() {
+export interface InterviewMode {
+  /** A seeded deck. */
+  deal: (seed: number) => Question[];
+  intro: string;
+  /** Shown above question `n` when it opens a section (the loop's rounds). */
+  heading?: (n: number) => ReactNode;
+  /** Replaces the verdict banner and adds a breakdown on the scorecard. */
+  summary?: (results: Result[]) => { verdict: string; extra: ReactNode };
+}
+
+const CLASSIC: InterviewMode = {
+  deal: (seed) => interviewDeck(seed),
+  intro: `${MOCK_LENGTH} classic networking interview questions, each against the clock. Right answers earn marks equal to their difficulty; a timeout scores nothing. You get a scorecard and the questions to revisit at the end.`,
+};
+
+export function MockInterview({ mode = CLASSIC }: { mode?: InterviewMode }) {
   const [seed, setSeed] = useState(1);
-  const deck = useMemo(() => interviewDeck(seed), [seed]);
+  const deck = useMemo(() => mode.deal(seed), [mode, seed]);
   const [stage, setStage] = useState<Stage>("intro");
   const [i, setI] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
@@ -77,7 +92,7 @@ export function MockInterview() {
     return (
       <section className="pixel-box flex flex-col gap-3 p-3" data-testid="interview-intro">
         <p className="text-lg leading-snug text-white sm:text-xl">
-          {MOCK_LENGTH} classic networking interview questions, each against the clock. Right answers earn marks equal to their difficulty; a timeout scores nothing. You get a scorecard and the questions to revisit at the end.
+          {mode.intro}
         </p>
         <button type="button" className="pixel-button min-h-12 px-4 py-3 text-sm" onClick={start}>
           START INTERVIEW ▶
@@ -87,18 +102,20 @@ export function MockInterview() {
 
   if (stage === "done") {
     const sc = scorecard(results);
+    const sum = mode.summary?.(results);
     return (
       <section className="flex flex-col gap-3" data-testid="scorecard">
         <div className="pixel-box flex flex-col items-center gap-1 p-4 text-center">
           <p className="font-pixel text-[10px] text-[#9d93d6]">SCORECARD</p>
           <p className="font-pixel text-2xl text-[#ffd257]" data-testid="verdict">
-            {sc.verdict}
+            {sum?.verdict ?? sc.verdict}
           </p>
           <p className="font-digits text-3xl text-white">{sc.percent}%</p>
           <p className="text-lg text-[#c9c1ff]">
             {sc.correct}/{sc.total} right · {sc.timedOut} timed out · {sc.averageSeconds}s each
           </p>
         </div>
+        {sum?.extra}
         <div className="pixel-box grid grid-cols-3 gap-2 p-3 text-center">
           {([1, 2, 3] as const).map((d) => (
             <div key={d}>
@@ -133,6 +150,7 @@ export function MockInterview() {
   const shown = left ?? limit;
   return (
     <section className="flex flex-col gap-3" data-testid="interview-question">
+      {mode.heading?.(i)}
       <div className="pixel-box flex flex-col gap-2 p-3">
         <div className="flex items-center justify-between font-pixel text-[10px] text-[#9d93d6]">
           <span>

@@ -122,7 +122,7 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
 - [x] 5.8a Debugging cards, solvers and generators (curl timing phases, dig, ss queues, traceroute/mtr, MTU/PMTUD black holes, latency budgets).
 - [x] 5.8b Capture-reading page: a pretty-printed tcpdump/Wireshark trace page (`/captures`) where the player spots retransmissions, RST, zero window and handshake failures, with seeded traces graded by code. (Original 5.8: Debugging with captures and tools: reading a packet capture (a pretty-printed tcpdump/Wireshark trace page where the player spots retransmissions, RST, zero window, handshake failures), `dig`, `curl -v`, `ss`/`netstat`, `traceroute`/`mtr` output, MTU/PMTUD black holes, "why is this request slow" latency-budget scenarios.)
 - [x] 5.9 System-design networking drills: back-of-envelope generators (bandwidth, QPS, connections per server, latency numbers every programmer should know, CDN hit-rate savings, egress cost), plus 10 scenario cards ("design a URL shortener's edge", "video streaming delivery", "global chat", "API gateway") with correct-component sorting.
-- [ ] 5.10 FAANG mock loop: `/loop` three-round mock (rapid-fire concepts, a debugging scenario, a design-flavoured round) with a hire/no-hire scorecard, drawing from gyms 1-9 and the new chapters; update `/interview` to include the new banks.
+- [x] 5.10 FAANG mock loop: `/loop` three-round mock (rapid-fire concepts, a debugging scenario, a design-flavoured round) with a hire/no-hire scorecard, drawing from gyms 1-9 and the new chapters; update `/interview` to include the new banks.
 
 ## 6. Game integration for the new chapters
 
