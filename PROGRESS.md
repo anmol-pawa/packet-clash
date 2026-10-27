@@ -715,3 +715,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/debug.test.ts` (solver cases, generators re-solved from printed prompts) plus all card answers pinned in `tests/questions.test.ts`; 723 total.
 - Verified: lint, typecheck, 723 tests, `build:pages` (171 files precached; first build hit the known advisory stop, retry passed). No UI changed, so no screenshots.
 - Next: 5.8b Capture-reading page.
+
+## 2026-10-27: 5.8b Capture-reading page
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Solver** (`lib/net/capture.ts`): a TCP trace model, a compact tcpdump-style formatter, seeded trace builders for eight cases (healthy, SYN timeout, refused, missing final ACK, zero window, mid-stream RST, RTO tail loss, fast retransmit) and `diagnose()`, which reads the packets alone (duplicate ACK counting, resend delay, key packet number).
+- **Page** `/captures` (linked from the map as CAPTURES): ten seeded traces per run (all eight diagnoses plus two numeric: which packet number, resend delay in ms, SYN count), graded by code, feeding the Leitner box. Content in `content/captures/scenarios.ts`, UI in `components/captures/CaptureSession.tsx`.
+- Tests: `tests/capture.test.ts` (hand-written traces, the analyser must find the injected fault for 80 seeds per kind, determinism, fast-retransmit under 200 ms vs RTO at least 200 ms, every scenario answer grades correct); 734 total.
+- Verified: lint, typecheck, 734 tests, `build:pages` (178 files precached; first build hit the known advisory stop, retry passed). Playwright at desktop and iPhone 14: no console errors, no horizontal overflow; trace lines were clipped at first, fixed by a compact line format (C/S named in the header) and a smaller mono size on narrow screens.
+- Next: 5.9 System-design networking drills.

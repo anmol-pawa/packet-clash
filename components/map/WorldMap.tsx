@@ -306,6 +306,9 @@ export function WorldMap() {
         <Link href="/lab" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
           CONFIG LAB
         </Link>
+        <Link href="/captures" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
+          CAPTURES
+        </Link>
         <Link href="/ccna" className="pixel-button flex min-h-12 flex-1 items-center justify-center px-3 py-3 text-xs">
           CCNA EXAM
         </Link>
