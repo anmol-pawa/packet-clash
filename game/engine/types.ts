@@ -115,6 +115,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   spantoise: ["LINK"],
   // OSPF areas and link-state routing: layer 3, with a backbone of Link below it.
   areadon: ["NETWORK"],
+  // Address translation sits at layer 3, with port rewriting reaching up into Transport.
+  nattopus: ["NETWORK", "TRANSPORT"],
 };
 
 /** A creature's types (Network if it isn't listed). */

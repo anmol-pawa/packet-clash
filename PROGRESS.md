@@ -772,3 +772,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `ospfCost` (100/10 = 10, 100 Mbps = 1, faster than reference = 1, T1 = 64, reference raised to 10 Gbps), ring/area structure, flooding order in the idle frames, digit font, plus the shared creature and boss checks; 774 total.
 - Verified: lint, typecheck, 774 tests, `build:pages` (185 files precached; first build hit the known advisory stop, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The flippers were reshaped from round to fin-like after the first screenshot.
 - Next: 6.1e Boss gym 12 Nattopus.
+
+## 2026-10-27: 6.1e Boss gym 12 Nattopus
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Art** (`game/art/creatures/nattopus.ts`): 96x96 shaded coral octopus. Each of its four arms carries a 7x7 tag plate: amber "L" is an inside local (private) address, cyan "G" the translated inside global one. Idle (4 frames) translates the arms one after another; attack flips all four at once; hurt and faint go dark; front and back sprites. Exports `NAT_TABLE` (four RFC 1918 hosts sharing one public address, told apart by port, i.e. PAT, built with `natEntry`), `TAG_POS`, `tagRows`, `translatedArms`. Wired into `BOSS_ART`, the sprite viewer, types (Network + Transport) and `regions.ts` (`bossSprite: "nattopus"`; gym 12 is open, Nattopus joins the Packetdex).
+- Tests: locals private and globals public, one shared global with distinct ports, arm-by-arm translation, tag plate shape, idle cyan count rising per frame, none when hurt or fainted, plus the shared creature and boss checks; 783 total.
+- Verified: lint, typecheck, 783 tests, `build:pages` (185 files precached; first build hit the known advisory stop, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The eye was enlarged after the first screenshot.
+- Next: 6.1f Boss gym 13 Aclaw.

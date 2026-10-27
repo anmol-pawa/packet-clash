@@ -9,6 +9,7 @@ import { ORACLYNX } from "./creatures/oraclynx";
 import { STACKADON } from "./creatures/stackadon";
 import { SPANTOISE } from "./creatures/spantoise";
 import { AREADON } from "./creatures/areadon";
+import { NATTOPUS } from "./creatures/nattopus";
 import { SYNACKLE } from "./creatures/synackle";
 
 /** Gym leaders' art by `Town.bossSprite` id. */
@@ -24,4 +25,5 @@ export const BOSS_ART: Record<string, CreatureArt> = {
   [GIGAROC.id]: GIGAROC,
   [SPANTOISE.id]: SPANTOISE,
   [AREADON.id]: AREADON,
+  [NATTOPUS.id]: NATTOPUS,
 };

@@ -6,6 +6,7 @@ import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { ETHERNET, FIELDS, FRAMADILLO, IDLE_FIELDS, LAMP_POS as FRAME_LAMPS, ethernetFrame } from "@/game/art/creatures/framadillo";
 import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
 import { AREADON, LINK_MBPS, RINGS, digitRows, litAreas, ospfCost } from "@/game/art/creatures/areadon";
+import { NATTOPUS, NAT_TABLE, TAG_POS, tagRows, translatedArms } from "@/game/art/creatures/nattopus";
 import { BLOCKED, PLATES, SPANTOISE, depth, litPlates } from "@/game/art/creatures/spantoise";
 import { GIGAROC, PULSE_POS, bandwidthDelayProduct, bitWidth, nodalDelay, propagationDelay, storeAndForward, transmissionDelay } from "@/game/art/creatures/gigaroc";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
@@ -17,11 +18,12 @@ import { HANDSHAKE_STATES, LAMP_POS, STATE_LAMP, SYNACKLE, handshake } from "@/g
 import { TRACEVIX } from "@/game/art/creatures/tracevix";
 import { DOT1Q, LAMP_POS as TAG_LAMPS, TAGGED_FIELDS, TAGGED_IDLE, TRUNKADILLO, taggedFrame, vlanTci } from "@/game/art/creatures/trunkadillo";
 import { CWND_IDLE, HURT_LOST, OAKWIND, SEGMENTS as OAK_SEGMENTS, cwndTrace, lampPositions as oakLamps, segmentState as oakState } from "@/game/art/creatures/oakwind";
+import { isPrivate, parseIp } from "@/lib/net/ipv4";
 import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -70,7 +72,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -876,5 +878,43 @@ describe("Areadon's OSPF rings", () => {
   it("draws cost digits in a 3x5 font", () => {
     expect(digitRows(10)[0]).toHaveLength(7);
     expect(digitRows(1)).toEqual([".y.", "yy.", ".y.", ".y.", "yyy"]);
+  });
+});
+
+describe("Nattopus's address tags", () => {
+  it("translates private inside locals to one shared public inside global (PAT)", () => {
+    expect(NAT_TABLE).toHaveLength(TAG_POS.length);
+    for (const e of NAT_TABLE) {
+      expect(isPrivate(parseIp(e.insideLocal.split(":")[0]))).toBe(true);
+      expect(isPrivate(parseIp(e.insideGlobal.split(":")[0]))).toBe(false);
+    }
+    expect(new Set(NAT_TABLE.map((e) => e.insideGlobal.split(":")[0])).size).toBe(1);
+    // overload: the source ports tell the flows apart
+    expect(new Set(NAT_TABLE.map((e) => e.insideLocal.split(":")[1])).size).toBe(NAT_TABLE.length);
+  });
+
+  it("translates the arms one after another", () => {
+    expect(translatedArms(-1)).toEqual([]);
+    expect(translatedArms(0)).toEqual([]);
+    expect(translatedArms(2)).toEqual([0, 1]);
+    expect(translatedArms(4)).toEqual([0, 1, 2, 3]);
+  });
+
+  it("draws 7x7 L, G and dark tag plates", () => {
+    for (const k of ["L", "G", "dark"] as const) {
+      const rows = tagRows(k);
+      expect(rows).toHaveLength(7);
+      for (const row of rows) expect(row).toHaveLength(7);
+    }
+    expect(tagRows("L")[3]).not.toBe(tagRows("G")[3]);
+  });
+
+  it("shows more cyan global plates each idle frame, and none when hurt or fainted", () => {
+    for (const view of [NATTOPUS.front, NATTOPUS.back]) {
+      const cyan = view.idle.map((f) => (f.rows.join("").match(/c/g) ?? []).length);
+      for (let i = 1; i < cyan.length; i++) expect(cyan[i]).toBeGreaterThan(cyan[i - 1]);
+      expect(cyan[0]).toBe(0);
+      for (const f of [...view.hurt, ...view.faint]) expect(f.rows.join("")).not.toMatch(/c/);
+    }
   });
 });
