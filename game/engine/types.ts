@@ -111,6 +111,8 @@ export const CREATURE_TYPES: Record<string, readonly PacketType[]> = {
   fetchimera: ["APPLICATION", "TRANSPORT"],
   // Fibre underfoot, core routing above.
   gigaroc: ["PHYSICAL", "NETWORK"],
+  // A spanning tree over switches: layer 2 (Link) with a secured topology.
+  spantoise: ["LINK"],
 };
 
 /** A creature's types (Network if it isn't listed). */

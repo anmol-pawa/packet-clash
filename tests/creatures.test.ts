@@ -5,6 +5,7 @@ import { BRAIDWYRM } from "@/game/art/creatures/braidwyrm";
 import { CIDRAB } from "@/game/art/creatures/cidrab";
 import { ETHERNET, FIELDS, FRAMADILLO, IDLE_FIELDS, LAMP_POS as FRAME_LAMPS, ethernetFrame } from "@/game/art/creatures/framadillo";
 import { FETCHIMERA, JOURNEY, LAMP_POS as JOURNEY_LAMPS, PAGE_POS, journeyFor, pageLoadTime, parseUrl } from "@/game/art/creatures/fetchimera";
+import { BLOCKED, PLATES, SPANTOISE, depth, litPlates } from "@/game/art/creatures/spantoise";
 import { GIGAROC, PULSE_POS, bandwidthDelayProduct, bitWidth, nodalDelay, propagationDelay, storeAndForward, transmissionDelay } from "@/game/art/creatures/gigaroc";
 import { HOOTPATH, NODE_POS, ROUTE_LINKS, ROUTE_NODES, dijkstra } from "@/game/art/creatures/hootpath";
 import { GEM_POS, KEYHOLE_POS, KEYVERN, SHACKLE_POS, TLS13_HANDSHAKE, diffieHellman, lockState } from "@/game/art/creatures/keyvern";
@@ -19,7 +20,7 @@ import { typesOf } from "@/game/engine/types";
 import { Painter } from "@/lib/paint";
 import { parseSprite, silhouette } from "@/lib/pixel";
 
-const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC];
+const CREATURES = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE];
 
 describe("creature art", () => {
   for (const c of CREATURES) {
@@ -68,7 +69,7 @@ describe("creature art", () => {
 });
 
 describe("bosses", () => {
-  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC])
+  for (const boss of [BRAIDWYRM, STACKADON, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE])
   it(`${boss.name} is a 96×96 boss whose drawing fits the frame with room to rear up`, () => {
     expect(boss.size).toBe(96);
     expect(boss.signature).toMatch(/^[A-Z ]+$/);
@@ -810,5 +811,35 @@ describe("Oakwind's congestion-window tail", () => {
     // ssthresh never drops below 2 MSS
     expect(cwndTrace(3, { ssthresh: 8, variant: "reno", events: { 2: "3dup" } })[2]).toMatchObject({ cwnd: 5, ssthresh: 2 });
     expect(() => cwndTrace(0, { ssthresh: 8, variant: "reno" })).toThrow(RangeError);
+  });
+});
+
+describe("Spantoise's shell", () => {
+  it("is a spanning tree: seven switches, six tree links, one root", () => {
+    expect(PLATES).toHaveLength(7);
+    expect(PLATES.filter((p) => p.parent === null).map((p) => p.id)).toEqual(["R"]);
+    const ids = new Set(PLATES.map((p) => p.id));
+    for (const p of PLATES) if (p.parent) expect(ids.has(p.parent)).toBe(true);
+    // every plate reaches the root, so the tree is connected and loop-free
+    for (const p of PLATES) expect(depth(p.id)).toBeLessThan(PLATES.length);
+    expect(PLATES.filter((p) => p.parent)).toHaveLength(PLATES.length - 1);
+  });
+
+  it("blocks only redundant links, never a tree link", () => {
+    const tree = new Set(PLATES.filter((p) => p.parent).flatMap((p) => [`${p.parent}-${p.id}`, `${p.id}-${p.parent}`]));
+    for (const [a, b] of BLOCKED) expect(tree.has(`${a}-${b}`)).toBe(false);
+  });
+
+  it("idles as a BPDU spreading from the root, one hop deeper per frame", () => {
+    expect(litPlates(0)).toEqual(["R"]);
+    expect(litPlates(1)).toEqual(["R", "A", "B", "C"]);
+    expect(litPlates(2)).toHaveLength(7);
+    for (const view of [SPANTOISE.front, SPANTOISE.back]) {
+      const lit = view.idle.map((f) => (f.rows.join("").match(/y/g) ?? []).length);
+      expect(lit[0]).toBeLessThan(lit[1]);
+      expect(lit[1]).toBeLessThan(lit[2]);
+      // hurt and faint frames go dark
+      for (const f of view.faint) expect(f.rows.join("")).not.toMatch(/c/);
+    }
   });
 });

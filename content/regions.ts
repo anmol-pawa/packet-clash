@@ -39,7 +39,7 @@ export const BOSS_BRIEFS: Readonly<Record<string, string>> = {
 };
 
 export const NEW_TOWNS: Town[] = [
-  { gym: 10, id: "trunk-reef", name: "Trunk Reef", subnet: "10.0.10.0/24", chapter: "4.4", topic: "Switching: VLANs, trunks, STP, EtherChannel, port security", boss: "Spantoise", bossSprite: null, badge: "Tree Badge", badgeColor: "#4fd0e0", roof: "#1f7f9c", x: 56, y: 178 },
+  { gym: 10, id: "trunk-reef", name: "Trunk Reef", subnet: "10.0.10.0/24", chapter: "4.4", topic: "Switching: VLANs, trunks, STP, EtherChannel, port security", boss: "Spantoise", bossSprite: "spantoise", badge: "Tree Badge", badgeColor: "#4fd0e0", roof: "#1f7f9c", x: 56, y: 178 },
   { gym: 11, id: "static-strand", name: "Static Strand", subnet: "10.0.11.0/24", chapter: "4.3", topic: "IP connectivity: route selection, OSPF, EIGRP, FHRP", boss: "Areadon", bossSprite: null, badge: "Area Badge", badgeColor: "#6fe3a0", roof: "#2c8c5e", x: 132, y: 150 },
   { gym: 12, id: "service-shoal", name: "Service Shoal", subnet: "10.0.12.0/24", chapter: "4.6", topic: "IP services: NAT, NTP, DHCP relay, SNMP, QoS", boss: "Nattopus", bossSprite: null, badge: "Translate Badge", badgeColor: "#ffb06b", roof: "#c4682c", x: 214, y: 112 },
   { gym: 13, id: "shield-haven", name: "Shield Haven", subnet: "10.0.13.0/24", chapter: "4.7", topic: "Security, wireless and automation: ACLs, AAA, VPN, SDN", boss: "Aclaw", bossSprite: null, badge: "Shield Badge", badgeColor: "#d8708f", roof: "#8f2f58", x: 262, y: 56 },

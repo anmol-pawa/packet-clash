@@ -758,3 +758,10 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: 9-gym tests now use the mainland lists, and gym and unlock tests cover all 16. New region-map tests: town and route split, distinct maps with towns on dry land, roads under the courier, no walking across ferries, packets only on a region's open roads. 757 total.
 - Verified: lint, typecheck, 757 tests, `build:pages` (185 files precached). Playwright at desktop and iPhone 14 on all three maps plus a ferry crossing: no console errors and no horizontal overflow.
 - Next: 6.1c Spantoise boss art (gym 10).
+
+## 2026-10-27: 6.1c Boss gym 10 Spantoise
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Art** (`game/art/creatures/spantoise.ts`): 96x96 shaded sea-tortoise with a gold root-bridge crown. Its shell is a spanning tree of seven switch plates: cyan links forward, two dashed red links are blocked. Idle (4 frames) is a BPDU spreading from the root (root, children, leaves, converged); attack lights every link and turns the blocked ones solid; hurt and faint go dark; front and back sprites. Exports `PLATES`, `BLOCKED`, `depth`, `litPlates`. Wired into `BOSS_ART`, the sprite viewer, types (Link) and `regions.ts` (`bossSprite: "spantoise"`, so gym 10 is open and appears in the Packetdex as No. 016).
+- Tests: tree shape (seven plates, six tree links, one root), blocked links are never tree links, idle lights one hop deeper per frame, faint is dark, plus the shared creature and boss checks (outline, palette, 96x96, anchored); 765 total.
+- Verified: lint, typecheck, 765 tests, `build:pages` (185 files precached; first builds hit the known advisory stop, retry passed). Sprite viewer checked at desktop and iPhone 14 (no console errors, no overflow); the head was first hidden behind the shell, fixed by drawing it after the shell. The Pixi stage stayed blank in headless Chromium for gym 9 as well as 10 with my seeded save, so the in-battle look was not confirmed by screenshot.
+- Next: 6.1d Boss gym 11 Areadon.

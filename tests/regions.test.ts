@@ -49,13 +49,13 @@ describe("new regions (data model)", () => {
     const order = ["backbone-summit", ...NEW_TOWNS.map((t) => t.id)];
     for (let i = 1; i < order.length; i++) expect(NEW_ROUTES.some((r) => r.from === order[i - 1] && r.to === order[i])).toBe(true);
   });
-  it("keeps every town on its 320x224 map and leaves leaders to be drawn", () => {
+  it("keeps every town on its 320x224 map; leaders are opened as they are drawn", () => {
     for (const t of NEW_TOWNS) {
       expect(t.x).toBeGreaterThan(20);
       expect(t.x).toBeLessThan(300);
       expect(t.y).toBeGreaterThan(16);
       expect(t.y).toBeLessThan(208);
-      expect(t.bossSprite).toBeNull();
+      expect(t.bossSprite === null || t.bossSprite === t.boss.toLowerCase()).toBe(true);
     }
   });
 });
