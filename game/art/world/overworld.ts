@@ -1,5 +1,5 @@
 import type { SpriteDef } from "@/lib/pixel";
-import { ROUTES, routePoints, TOWNS, type Town } from "@/content/world";
+import { regionRoutes, regionTowns, routePoints, ROUTES as ALL_ROUTES, type RegionId, type Route, type Town } from "@/content/world";
 
 /**
  * The overworld painting: an island continent where every town is a LAN and
@@ -120,23 +120,33 @@ const idx = (x: number, y: number) => y * MAP_W + x;
 
 // ---------- terrain fields ----------
 
-/** Bays carved out of the land (harbours for Octet Harbor and Synport, an inland lake). */
-const BAYS: [number, number, number][] = [
-  [228, 196, 30],
-  [140, 158, 15],
-  [214, 96, 12],
-];
+/** What differs between the maps: bays carved out of the land, where the hills rise, and a noise seed offset. */
+interface Style {
+  bays: [number, number, number][];
+  /** Centre, radii and strength of the high ground. */
+  ridge: [cx: number, cy: number, rx: number, ry: number, amp: number];
+  seed: number;
+}
 
-function landField(x: number, y: number) {
+const STYLES: Record<RegionId, Style> = {
+  // harbours for Octet Harbor and Synport, an inland lake, a snowy range in the north-west
+  mainland: { bays: [[228, 196, 30], [140, 158, 15], [214, 96, 12]], ridge: [130, 22, 150, 52, 0.75], seed: 0 },
+  // a low coast of coves and lagoons with only a few southern hills
+  "cisco-cove": { bays: [[104, 100, 16], [226, 164, 24], [60, 80, 12]], ridge: [150, 214, 120, 30, 0.6], seed: 100 },
+  // highlands: a broad range across the north and a mountain lake
+  "scale-citadel": { bays: [[120, 164, 16], [230, 130, 14]], ridge: [170, 40, 170, 60, 1.0], seed: 200 },
+};
+
+function landField(x: number, y: number, towns: Town[], routes: ReturnType<typeof regionRoutes>, st: Style) {
   let f = -0.5;
-  for (const t of TOWNS) f = Math.max(f, 1 - Math.hypot(x - t.x, (y - t.y) * 1.1) / 62);
+  for (const t of towns) f = Math.max(f, 1 - Math.hypot(x - t.x, (y - t.y) * 1.1) / 62);
   // the road network keeps the island in one piece
-  for (const r of ROUTES) {
+  for (const r of routes) {
     const pts = routePoints(r);
     for (let i = 0; i + 1 < pts.length; i++) f = Math.max(f, 0.75 - segDist(x, y, pts[i], pts[i + 1]) / 34);
   }
-  f += (fbm(x, y, 11) - 0.5) * 0.7;
-  for (const [bx, by, br] of BAYS) f -= Math.max(0, 1 - Math.hypot(x - bx, y - by) / br) * 1.4;
+  f += (fbm(x, y, 11 + st.seed) - 0.5) * 0.7;
+  for (const [bx, by, br] of st.bays) f -= Math.max(0, 1 - Math.hypot(x - bx, y - by) / br) * 1.4;
   // fall off toward the frame so the sea surrounds the island
   const edge = Math.min(x, y - 8, MAP_W - 1 - x, MAP_H - 1 - y);
   if (edge < 14) f -= (14 - edge) / 14;
@@ -151,9 +161,10 @@ function segDist(px: number, py: number, a: [number, number], b: [number, number
 }
 
 /** Height on land, 0–1: rolling hills plus a mountain range in the north-west. */
-function elevation(x: number, y: number) {
-  const ridge = Math.max(0, 1 - Math.hypot((x - 130) / 150, (y - 22) / 52));
-  return Math.min(1, fbm(x, y, 21) * 0.55 + ridge * 0.75);
+function elevation(x: number, y: number, st: Style) {
+  const [cx, cy, rx, ry, amp] = st.ridge;
+  const ridge = Math.max(0, 1 - Math.hypot((x - cx) / rx, (y - cy) / ry));
+  return Math.min(1, fbm(x, y, 21 + st.seed) * 0.55 + ridge * amp);
 }
 
 /** Distance (in pixels, 4-connected) from every cell to the nearest cell where `src` is true. */
@@ -303,8 +314,8 @@ export function roadSamples(pts: [number, number][], seed: number): [number, num
   return samples;
 }
 
-/** The seed each route's road is painted with. */
-export const roadSeed = (routeIndex: number) => 40 + routeIndex;
+/** The seed each route's road is painted with (its place in the whole game's route list, so the mainland roads never change). */
+export const roadSeed = (r: Route) => 40 + ALL_ROUTES.indexOf(r);
 
 /** Where the light on top of a town's gym antenna is painted. */
 export const gymLight = (t: Town): [number, number] => [t.x, t.y - 10];
@@ -336,20 +347,25 @@ export interface Overworld {
   shore: Int16Array;
 }
 
-let cached: Overworld | null = null;
+const cached = new Map<RegionId, Overworld>();
 
-export function overworld(): Overworld {
-  if (cached) return cached;
+/** The painting of one region (the mainland by default); painted once and cached. */
+export function overworld(region: RegionId = "mainland"): Overworld {
+  const hit = cached.get(region);
+  if (hit) return hit;
+  const TOWNS = regionTowns(region);
+  const ROUTES = regionRoutes(region);
+  const st = STYLES[region];
   const c = new Canvas();
   const water = new Uint8Array(MAP_W * MAP_H);
   const land = new Uint8Array(MAP_W * MAP_H);
   const heights = new Float32Array(MAP_W * MAP_H);
   for (let y = 0; y < MAP_H; y++)
     for (let x = 0; x < MAP_W; x++) {
-      const isLand = landField(x, y) > 0.12;
+      const isLand = landField(x, y, TOWNS, ROUTES, st) > 0.12;
       land[idx(x, y)] = isLand ? 1 : 0;
       water[idx(x, y)] = isLand ? 0 : 1;
-      heights[idx(x, y)] = elevation(x, y);
+      heights[idx(x, y)] = elevation(x, y, st);
     }
   // towns always stand on dry land
   for (const t of TOWNS)
@@ -396,9 +412,9 @@ export function overworld(): Overworld {
 
   // roads first (stamps must avoid them), then towns
   const roadMask = new Uint8Array(MAP_W * MAP_H);
-  ROUTES.forEach((r, n) => {
+  ROUTES.forEach((r) => {
     const before = c.px.slice();
-    road(c, water, routePoints(r), roadSeed(n));
+    road(c, water, routePoints(r), roadSeed(r));
     for (let i = 0; i < before.length; i++) if (before[i] !== c.px[i]) roadMask[i] = 1;
   });
   const busy = (x: number, y: number, pad: number) => {
@@ -424,12 +440,12 @@ export function overworld(): Overworld {
       if (e > 0.6 && !busy(jx, jy, 5)) {
         const h = 8 + Math.floor(hash(jx, jy, 33) * 6 + (e - 0.6) * 18);
         stamps.push({ y: jy, draw: () => mountain(c, jx, jy, h) });
-      } else if (e <= 0.56 && fbm(jx, jy, 51) > 0.53 && !busy(jx, jy, 4)) {
+      } else if (e <= 0.56 && fbm(jx, jy, 51 + st.seed) > 0.53 && !busy(jx, jy, 4)) {
         stamps.push({ y: jy, draw: () => tree(c, jx, jy, hash(jx, jy, 34) < 0.5) });
         // clusters: a second tree tucked beside the first
         const kx = jx + 4;
         const ky = jy + 3;
-        if (fbm(kx, ky, 51) > 0.58 && !busy(kx, ky, 4)) stamps.push({ y: ky, draw: () => tree(c, kx, ky, false) });
+        if (fbm(kx, ky, 51 + st.seed) > 0.58 && !busy(kx, ky, 4)) stamps.push({ y: ky, draw: () => tree(c, kx, ky, false) });
       }
     }
   const roadLayer = c.px.slice();
@@ -458,6 +474,7 @@ export function overworld(): Overworld {
     }
     rows.push(row);
   }
-  cached = { image: { palette: pal, rows }, water, shore: toLand };
-  return cached;
+  const out = { image: { palette: pal, rows }, water, shore: toLand };
+  cached.set(region, out);
+  return out;
 }

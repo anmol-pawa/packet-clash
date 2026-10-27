@@ -1,5 +1,6 @@
 import { parseCidr } from "@/lib/net/ipv4";
-import type { Route, Town } from "./world";
+import type { RegionId, Route, Town } from "./world";
+
 
 /**
  * The two regions after the Backbone Summit (gym 9). Cisco Cove is the CCNA
@@ -9,13 +10,10 @@ import type { Route, Town } from "./world";
  * Addressing continues the mainland plan: towns are 10.0.N.0/24 (N = gym) and
  * routes are /30s from 10.255.0.44 on (the mainland uses .0 to .40).
  *
- * This is the data model only. Positions are pixels on each region's own
- * 320×224 map, and the world map doesn't list these towns until the region
- * maps are painted (roadmap 6.1b), so `bossSprite` stays null until each
+ * Positions are pixels on each region's own 320×224 map. `TOWNS` and
+ * `ROUTES` in ./world merge these in; `bossSprite` stays null until each
  * leader's art exists (6.1c onwards, one boss per run).
  */
-
-export type RegionId = "mainland" | "cisco-cove" | "scale-citadel";
 
 export interface Region {
   id: RegionId;
@@ -61,8 +59,5 @@ export const NEW_ROUTES: Route[] = [
   R("r17", "Route 17", "Spine uplink", "balancer-bluff", "fabric-fort", 16, [[108, 148]]),
   R("r18", "Route 18", "400G optics", "fabric-fort", "offer-spire", 17, [[206, 84]]),
 ];
-
-/** The first town of a region links back to the Backbone Summit, which lives on the mainland map. */
-export const regionOf = (gym: number): RegionId => (gym <= 9 ? "mainland" : gym <= 13 ? "cisco-cove" : "scale-citadel");
 
 export const newTownCidrs = () => NEW_TOWNS.map((t) => parseCidr(t.subnet));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ROUTES, town, TOWNS } from "@/content/world";
+import { MAINLAND_ROUTES as ROUTES, town, MAINLAND_TOWNS as TOWNS } from "@/content/world";
 import { COURIER, COURIER_H, COURIER_W } from "@/game/art/world/courier";
 import { mapFrame } from "@/game/art/world/mapAnim";
 import { gymLight, MAP_H, MAP_W, overworld } from "@/game/art/world/overworld";

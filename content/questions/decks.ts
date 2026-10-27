@@ -12,7 +12,7 @@ import { GENERATORS } from "./generators";
 /** Questions per battle (the deck cycles if the battle runs longer). */
 export const DECK_SIZE = 10;
 
-/** Each gym's chapter (gym 9, the interview gauntlet, asks its own bank). */
+/** Each gym's chapter (gym 9, the interview gauntlet, asks its own bank; gyms 10-16 use the CCNA and interview banks). */
 export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   1: ["models"],
   2: ["link"],
@@ -23,6 +23,14 @@ export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   7: ["security"],
   8: ["journey"],
   9: ["interview"],
+  // Cisco Cove is the CCNA arc, Scale Citadel the SDE arc (finer per-gym topics come with 6.3)
+  10: ["ccna"],
+  11: ["ccna"],
+  12: ["ccna"],
+  13: ["ccna"],
+  14: ["interview"],
+  15: ["interview"],
+  16: ["interview"],
 };
 
 /** A gym battle's deck: its chapter's cards first, then any chapter's, never the same card twice. */

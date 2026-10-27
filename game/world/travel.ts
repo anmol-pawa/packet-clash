@@ -1,4 +1,4 @@
-import { isRouteOpen, ROUTES, routePoints, town, type Route, type Town } from "@/content/world";
+import { isRouteOpen, regionOf, regionRoutes, routePoints, town, type Route, type Town } from "@/content/world";
 import { roadSamples, roadSeed } from "@/game/art/world/overworld";
 
 /**
@@ -27,7 +27,7 @@ function line(a: Pt, b: Pt): Pt[] {
 
 /** The painted road of a route, from `from` to `to`, as it runs outside both towns. */
 export function roadBetween(r: Route, fromId: string): Pt[] {
-  const pts = roadSamples(routePoints(r), roadSeed(ROUTES.indexOf(r)));
+  const pts = roadSamples(routePoints(r), roadSeed(r));
   const road = r.from === fromId ? pts : [...pts].reverse();
   const a = town(fromId);
   const b = town(r.from === fromId ? r.to : r.from);
@@ -74,6 +74,10 @@ export interface Journey {
 
 /** The shortest open journey between two towns (Dijkstra by road length), or null if none. */
 export function journey(fromId: string, toId: string, badges: readonly number[]): Journey | null {
+  // a journey stays on one region's roads; crossing regions is a ferry (see WorldMap)
+  const region = regionOf(town(fromId).gym);
+  if (region !== regionOf(town(toId).gym)) return null;
+  const roads = regionRoutes(region);
   const best = new Map<string, number>([[fromId, 0]]);
   const prev = new Map<string, { town: string; route: Route }>();
   const done = new Set<string>();
@@ -83,7 +87,7 @@ export function journey(fromId: string, toId: string, badges: readonly number[])
     if (cur === null) return null;
     if (cur === toId) break;
     done.add(cur);
-    for (const r of ROUTES) {
+    for (const r of roads) {
       if (!isRouteOpen(r, badges)) continue;
       const next = r.from === cur ? r.to : r.to === cur ? r.from : null;
       if (!next || done.has(next)) continue;

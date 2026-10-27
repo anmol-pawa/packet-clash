@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gymOpen } from "@/content/gyms";
 import { lessonsFor } from "@/content/lessons";
-import { currentTown, isRouteOpen, isUnlocked, ROUTES, town, TOWNS, townCidr, type Town } from "@/content/world";
+import { currentTown, isRouteOpen, isUnlocked, REGIONS, regionOf, regionTowns, ROUTES, town, TOWNS, townCidr, type RegionId, type Town } from "@/content/world";
 import { PixelSprite } from "@/components/ui/PixelSprite";
 import { needsStarter, validPartner } from "@/game/engine/party";
 import { PartnerCard } from "./PartnerCard";
@@ -23,20 +23,21 @@ const WALK_SPEED = 64;
 const STRIDE = 5;
 
 /** The painted overworld at 1 px per pixel; CSS scales it with nearest-neighbour filtering. */
-function MapCanvas() {
+function MapCanvas({ region }: { region: RegionId }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const ctx = ref.current?.getContext("2d");
     if (!ctx) return;
-    const grid = parseSprite(overworld().image);
+    const grid = parseSprite(overworld(region).image);
     const img = ctx.createImageData(grid.width, grid.height);
     grid.pixels.forEach((c, i) => {
       const n = parseInt(c!.slice(1), 16);
       img.data.set([(n >> 16) & 255, (n >> 8) & 255, n & 255, 255], i * 4);
     });
     ctx.putImageData(img, 0, 0);
-  }, []);
-  return <canvas ref={ref} width={MAP_W} height={MAP_H} role="img" aria-label="Overworld map: an island of nine towns joined by roads" className="pixelated absolute inset-0 h-full w-full" />;
+  }, [region]);
+  const label = REGIONS.find((r) => r.id === region)!.name;
+  return <canvas ref={ref} width={MAP_W} height={MAP_H} role="img" aria-label={`Overworld map of ${label}: ${regionTowns(region).length} towns joined by roads`} className="pixelated absolute inset-0 h-full w-full" />;
 }
 
 const rgbaCache = new Map<string, number>();
@@ -60,7 +61,7 @@ interface Trip {
  * The living layer over the painting, at the same 1:1 pixel scale: water
  * shimmer, blinking gym lights, packets on the links and the walking courier.
  */
-function MapLife({ badges, at, trip, still, onArrive }: { badges: readonly number[]; at: string; trip: Trip | null; still: boolean; onArrive: (to: string) => void }) {
+function MapLife({ region, badges, at, trip, still, onArrive }: { region: RegionId; badges: readonly number[]; at: string; trip: Trip | null; still: boolean; onArrive: (to: string) => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const arrive = useRef(onArrive);
   useEffect(() => {
@@ -80,6 +81,8 @@ function MapLife({ badges, at, trip, still, onArrive }: { badges: readonly numbe
     let last = "";
     const draw = (now: number) => {
       const tick = still ? 0 : Math.floor(now / MAP_TICK_MS);
+      // the courier shows on the map of the region it stands in
+      const here = regionOf(town(at).gym) === region;
       let pos = doorstep(town(at));
       let face: keyof typeof COURIER = "down";
       let step = 0;
@@ -100,16 +103,16 @@ function MapLife({ badges, at, trip, still, onArrive }: { badges: readonly numbe
       if (key !== last) {
         last = key;
         buf.fill(0);
-        for (const [i, c] of mapFrame(tick, badges)) buf[i] = word(c);
+        for (const [i, c] of mapFrame(tick, badges, region)) buf[i] = word(c);
         // a soft ground shadow, then the courier
-        for (let j = 0; j < 2; j++)
+        if (here) for (let j = 0; j < 2; j++)
           for (let i = 2 + j; i < 10 - j; i++) {
             const x = x0 + i;
             const y = y0 + COURIER_FEET[1] + j;
             if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) buf[y * MAP_W + x] = shadow;
           }
         const g = sprites[face][step];
-        g.pixels.forEach((c, i) => {
+        if (here) g.pixels.forEach((c, i) => {
           if (!c) return;
           const x = x0 + (i % g.width);
           const y = y0 + ((i / g.width) | 0) - (step % 2 ? 1 : 0);
@@ -121,7 +124,7 @@ function MapLife({ badges, at, trip, still, onArrive }: { badges: readonly numbe
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [badges, at, trip, still, sprites]);
+  }, [region, badges, at, trip, still, sprites]);
 
   return <canvas ref={ref} width={MAP_W} height={MAP_H} aria-hidden className="pixelated pointer-events-none absolute inset-0 h-full w-full" />;
 }
@@ -156,6 +159,8 @@ export function WorldMap() {
   }, []);
   const still = osStill || save.settings.reducedMotion;
   const at = save.mapTown && TOWNS.some((t) => t.id === save.mapTown) && isUnlocked(town(save.mapTown), badges) ? save.mapTown : TOWNS[0].id;
+  const [view, setView] = useState<RegionId | null>(null);
+  const region = view ?? regionOf(town(at).gym);
   const sel = town(picked ?? here.id);
   const open = isUnlocked(sel, badges);
   const lan = townCidr(sel);
@@ -167,6 +172,14 @@ export function WorldMap() {
   const walkTo = (t: Town) => {
     setPicked(t.id);
     if (trip || t.id === at) return;
+    // the link between two regions is a ferry crossing: no road to walk, the courier just arrives
+    if (regionOf(t.gym) !== regionOf(town(at).gym)) {
+      if (isUnlocked(t, badges)) {
+        updateSave((s) => ({ ...s, mapTown: t.id }));
+        setView(regionOf(t.gym));
+      }
+      return;
+    }
     const j = journey(at, t.id, badges);
     if (j) setTrip({ to: t.id, journey: j });
   };
@@ -179,19 +192,37 @@ export function WorldMap() {
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4">
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <h1 className="font-pixel text-sm text-[#ffd257] sm:text-base">WORLD MAP</h1>
-        <div className="flex items-center gap-[7px] sm:gap-2.5" aria-label={`Badges: ${badges.length} of 9`}>
+        <div className="flex items-center gap-[7px] sm:gap-2.5" aria-label={`Badges: ${badges.length} of ${TOWNS.length}`}>
           {TOWNS.map((t) => (
             <Badge key={t.id} t={t} earned={badges.includes(t.gym)} />
           ))}
         </div>
       </header>
 
+      <div role="tablist" aria-label="Region" className="grid grid-cols-3 gap-2">
+        {REGIONS.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            role="tab"
+            aria-selected={r.id === region}
+            onClick={() => {
+              setView(r.id);
+              setPicked(regionTowns(r.id).find((t) => isUnlocked(t, badges) && !badges.includes(t.gym))?.id ?? regionTowns(r.id)[0].id);
+            }}
+            className={`pixel-button flex min-h-11 items-center justify-center px-1 py-2 text-[10px] sm:text-xs ${r.id === region ? "" : "opacity-60"}`}
+          >
+            {r.name.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       <PartnerCard p={validPartner(save.partner)} />
 
       <div className="relative w-full overflow-hidden rounded-md border-4 border-[#f4f1ff] shadow-[0_0_0_4px_#0b0818,6px_6px_0_4px_#0b0818]" style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }}>
-        <MapCanvas />
-        <MapLife badges={badges} at={at} trip={trip} still={still} onArrive={arrive} />
-        {TOWNS.map((t) => {
+        <MapCanvas region={region} />
+        <MapLife region={region} badges={badges} at={at} trip={trip} still={still} onArrive={arrive} />
+        {regionTowns(region).map((t) => {
           const unlocked = isUnlocked(t, badges);
           const isSel = t.id === sel.id;
           return (
@@ -267,7 +298,7 @@ export function WorldMap() {
             <p className="font-pixel text-[10px] leading-relaxed text-[#ffd257]">ON THE ROAD TO {town(trip.to).name.toUpperCase()}…</p>
           ) : sel.id !== at ? (
             <button type="button" onClick={() => walkTo(sel)} className="pixel-button flex min-h-12 w-full items-center justify-center px-4 py-3 text-xs sm:w-auto">
-              ▶ WALK TO {sel.name.toUpperCase()}
+              {regionOf(sel.gym) !== regionOf(town(at).gym) ? "⛴ FERRY TO" : "▶ WALK TO"} {sel.name.toUpperCase()}
             </button>
           ) : gymOpen(sel) ? (
             <Link href={`/gym?n=${sel.gym}`} className="pixel-button flex min-h-12 w-full items-center justify-center px-4 py-3 text-xs sm:w-auto">

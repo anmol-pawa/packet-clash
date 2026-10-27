@@ -9,12 +9,12 @@ describe("gyms", () => {
   it("finds a gym's town from a query value and rejects anything else", () => {
     expect(gymTown("2")?.id).toBe("copperfield");
     expect(gymTown(9)?.name).toBe("Backbone Summit");
-    for (const bad of ["0", "10", "x", "", null, undefined, "2.5"]) expect(gymTown(bad)).toBeNull();
+    for (const bad of ["0", "17", "x", "", null, undefined, "2.5"]) expect(gymTown(bad)).toBeNull();
   });
 
   it("makes later leaders tougher, with gym 2 matching the demo Braidwyrm", () => {
     expect(gymFoe(gymTown(2)!)).toEqual({ name: "Braidwyrm", level: 8, hp: 100, maxHp: 100, types: ["PHYSICAL"] });
-    for (let g = 2; g <= 9; g++) {
+    for (let g = 2; g <= 16; g++) {
       const [a, b] = [gymFoe(gymTown(g - 1)!), gymFoe(gymTown(g)!)];
       expect(b.level).toBeGreaterThan(a.level);
       expect(b.maxHp).toBeGreaterThan(a.maxHp);
@@ -37,9 +37,9 @@ describe("gyms", () => {
     expect(winBadge([1, 2], 2)).toEqual([1, 2]);
   });
 
-  it("each win opens the next town, and the whole island after nine badges", () => {
+  it("each win opens the next town, and the whole game after sixteen badges", () => {
     let badges: number[] = [];
-    for (let g = 1; g <= 9; g++) {
+    for (let g = 1; g <= 16; g++) {
       expect(currentTown(badges).gym).toBe(g);
       const next = unlockedBy(g);
       if (next) expect(isUnlocked(next, badges)).toBe(false);
@@ -49,7 +49,8 @@ describe("gyms", () => {
         expect(isUnlocked(next, badges)).toBe(true);
       }
     }
-    expect(unlockedBy(9)).toBeNull();
+    expect(unlockedBy(16)).toBeNull();
+    expect(unlockedBy(9)?.id).toBe("trunk-reef");
     expect(TOWNS.every((t) => isUnlocked(t, badges))).toBe(true);
   });
 });

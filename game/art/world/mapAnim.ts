@@ -1,4 +1,4 @@
-import { isRouteOpen, isUnlocked, ROUTES, routePoints, TOWNS } from "@/content/world";
+import { isRouteOpen, isUnlocked, regionRoutes, regionTowns, routePoints, type RegionId } from "@/content/world";
 import { gymLight, MAP_H, MAP_W, overworld, roadSamples, roadSeed } from "./overworld";
 
 /**
@@ -30,10 +30,12 @@ interface Static {
   deep: { i: number; diag: number; h: number }[];
   roads: [number, number][][];
 }
-let cache: Static | null = null;
-function statics(): Static {
-  if (cache) return cache;
-  const { shore } = overworld();
+const cache = new Map<RegionId, Static>();
+function statics(region: RegionId): Static {
+  const hit = cache.get(region);
+  if (hit) return hit;
+  const { shore } = overworld(region);
+  const TOWNS = regionTowns(region);
   const foam: number[] = [];
   const deep: Static["deep"] = [];
   for (let y = 0; y < MAP_H; y++)
@@ -44,16 +46,17 @@ function statics(): Static {
     }
   // packets stay on the open road, not on top of the town buildings
   const inTown = ([x, y]: [number, number]) => TOWNS.some((t) => Math.abs(x - t.x) <= 20 && Math.abs(y - t.y) <= 13);
-  const roads = ROUTES.map((r, n) => roadSamples(routePoints(r), roadSeed(n)).filter((p) => !inTown(p)));
-  cache = { foam, deep, roads };
-  return cache;
+  const roads = regionRoutes(region).map((r) => roadSamples(routePoints(r), roadSeed(r)).filter((p) => !inTown(p)));
+  const out = { foam, deep, roads };
+  cache.set(region, out);
+  return out;
 }
 
 export type Px = [index: number, color: string];
 
 /** The pixels to paint over the overworld on a given tick. */
-export function mapFrame(tick: number, badges: readonly number[]): Px[] {
-  const s = statics();
+export function mapFrame(tick: number, badges: readonly number[], region: RegionId = "mainland"): Px[] {
+  const s = statics(region);
   const out: Px[] = [];
   // foam laps in and out: the checkerboard swaps every half second
   const phase = (tick >> 2) & 1;
@@ -65,7 +68,7 @@ export function mapFrame(tick: number, badges: readonly number[]): Px[] {
     else if (band === 1 && d.h < 0.06) out.push([d.i, FOAM]);
   }
   // packets run along open links, one per road, there and back
-  ROUTES.forEach((r, n) => {
+  regionRoutes(region).forEach((r, n) => {
     if (!isRouteOpen(r, badges)) return;
     const road = s.roads[n];
     const len = road.length;
@@ -78,7 +81,7 @@ export function mapFrame(tick: number, badges: readonly number[]): Px[] {
     out.push([Math.round(head[1]) * MAP_W + Math.round(head[0]), PACKET]);
   });
   // gym antenna lights: open gyms blink, locked ones are dark
-  for (const t of TOWNS) {
+  for (const t of regionTowns(region)) {
     const [x, y] = gymLight(t);
     const i = y * MAP_W + x;
     if (!isUnlocked(t, badges)) out.push([i, LIGHT_OFF]);

@@ -1,4 +1,5 @@
 import { parseCidr, type Cidr } from "@/lib/net/ipv4";
+import { NEW_ROUTES, NEW_TOWNS } from "./regions";
 
 /**
  * The overworld is a network: every town is a /24 LAN with its gateway at .1,
@@ -41,7 +42,7 @@ export interface Route {
   via: [number, number][];
 }
 
-export const TOWNS: Town[] = [
+export const MAINLAND_TOWNS: Town[] = [
   { gym: 1, id: "layer-landing", name: "Layer Landing", subnet: "10.0.1.0/24", chapter: "2.1", topic: "OSI & TCP/IP models, encapsulation, delay", boss: "Stackadon", bossSprite: "stackadon", badge: "Layer Badge", badgeColor: "#7fd6f5", roof: "#3a7fd5", x: 44, y: 182 },
   { gym: 2, id: "copperfield", name: "Copperfield", subnet: "10.0.2.0/24", chapter: "2.2", topic: "Physical & data link: CRC, MAC, Ethernet, ARP", boss: "Braidwyrm", bossSprite: "braidwyrm", badge: "Frame Badge", badgeColor: "#f0a35a", roof: "#d0584c", x: 112, y: 196 },
   { gym: 3, id: "octet-harbor", name: "Octet Harbor", subnet: "10.0.3.0/24", chapter: "2.3", topic: "IPv4, subnetting & CIDR, NAT, ICMP, IPv6", boss: "Cidrab", bossSprite: "cidrab", badge: "Mask Badge", badgeColor: "#ff7096", roof: "#c24f8a", x: 184, y: 176 },
@@ -55,7 +56,7 @@ export const TOWNS: Town[] = [
 
 const R = (id: string, name: string, medium: string, from: string, to: string, n: number, via: [number, number][] = []): Route => ({ id, name, medium, from, to, link: `10.255.0.${n * 4}/30`, via });
 
-export const ROUTES: Route[] = [
+export const MAINLAND_ROUTES: Route[] = [
   R("r1", "Route 1", "Cat 6 twisted pair", "layer-landing", "copperfield", 0, [[78, 194]]),
   R("r2", "Route 2", "Coax trunk", "copperfield", "octet-harbor", 1, [[150, 200]]),
   R("r3", "Route 3", "Fibre ferry", "octet-harbor", "hopwood", 2, [[140, 150]]),
@@ -69,6 +70,23 @@ export const ROUTES: Route[] = [
   R("r10", "Route 10", "Leased line", "octet-harbor", "handshake-harbor", 9, [[190, 144]]),
   R("r11", "Route 11", "Fibre ring", "hopwood", "backbone-summit", 10, [[76, 84]]),
 ];
+
+/** Every town and route in the game, mainland first (the order is the unlock order and the road-seed index). */
+export const TOWNS: Town[] = [...MAINLAND_TOWNS, ...NEW_TOWNS];
+export const ROUTES: Route[] = [...MAINLAND_ROUTES, ...NEW_ROUTES];
+
+export type RegionId = "mainland" | "cisco-cove" | "scale-citadel";
+
+export const regionOf = (gym: number): RegionId => (gym <= 9 ? "mainland" : gym <= 13 ? "cisco-cove" : "scale-citadel");
+
+/** The towns painted on one region's map. */
+export const regionTowns = (id: RegionId): Town[] => TOWNS.filter((t) => regionOf(t.gym) === id);
+
+/** Roads painted on one region's map (both ends inside it). */
+export const regionRoutes = (id: RegionId): Route[] => ROUTES.filter((r) => regionOf(town(r.from).gym) === id && regionOf(town(r.to).gym) === id);
+
+/** Links that join two regions (Route 12 and Route 16): a ferry crossing, not a road on either map. */
+export const ferries = (): Route[] => ROUTES.filter((r) => regionOf(town(r.from).gym) !== regionOf(town(r.to).gym));
 
 export const town = (id: string): Town => {
   const t = TOWNS.find((t) => t.id === id);
@@ -117,3 +135,10 @@ export function reachable(start: string, badges: readonly number[]): Set<string>
   }
   return seen;
 }
+
+/** The three maps, in the order the region switcher lists them. */
+export const REGIONS: readonly { id: RegionId; name: string }[] = [
+  { id: "mainland", name: "Mainland" },
+  { id: "cisco-cove", name: "Cisco Cove" },
+  { id: "scale-citadel", name: "Scale Citadel" },
+];

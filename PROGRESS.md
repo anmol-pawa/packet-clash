@@ -748,3 +748,13 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: `tests/regions.test.ts` (numbering, uniqueness, non-overlapping subnets and /30s, unlock chain from the Backbone Summit, positions).
 - Verified: see run summary (lint, typecheck, tests, build:pages). No visible UI change, so no screenshots.
 - Next: 6.1b Region maps.
+
+## 2026-10-27: 6.1b Region maps
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **World** (`content/world.ts`): `TOWNS`/`ROUTES` now hold all 16 gyms and 18 routes (`MAINLAND_TOWNS`/`MAINLAND_ROUTES` keep the first nine), plus `regionOf`, `regionTowns`, `regionRoutes`, `ferries()` (Routes 12 and 16 join regions) and `REGIONS`.
+- **Painting** (`game/art/world/overworld.ts`): `overworld(region)` paints and caches one map per region from a per-region style (bays, high-ground ridge, noise seed). The mainland is unchanged (same seeds; road seeds are the route's index in the full list). Cisco Cove is a low wooded coast; Scale Citadel has a snowy northern range. `mapFrame(tick, badges, region)` animates each map; `journey()` stays on one region's roads.
+- **Map UI**: a MAINLAND / CISCO COVE / SCALE CITADEL tab switcher, opening on the courier's region. Picking an open town in another region is a ferry crossing (instant, "FERRY TO"). The badge case and counters now read "of 16". Gyms 10-16 show "the gym doors open soon" until their bosses are drawn.
+- **Decks**: `GYM_TOPICS` 10-13 use `ccna` and 14-16 use `interview`.
+- Tests: 9-gym tests now use the mainland lists, and gym and unlock tests cover all 16. New region-map tests: town and route split, distinct maps with towns on dry land, roads under the courier, no walking across ferries, packets only on a region's open roads. 757 total.
+- Verified: lint, typecheck, 757 tests, `build:pages` (185 files precached). Playwright at desktop and iPhone 14 on all three maps plus a ferry crossing: no console errors and no horizontal overflow.
+- Next: 6.1c Spantoise boss art (gym 10).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentTown, isRouteOpen, isUnlocked, reachable, ROUTES, routePoints, town, TOWNS, townCidr } from "@/content/world";
+import { currentTown, isRouteOpen, isUnlocked, reachable, MAINLAND_ROUTES as ROUTES, routePoints, town, MAINLAND_TOWNS as TOWNS, townCidr, TOWNS as AllTowns } from "@/content/world";
 import { contains, hostRange, isPrivate, overlaps, parseCidr, parseIp, usableHosts } from "@/lib/net/ipv4";
 
 describe("world map", () => {
@@ -36,8 +36,9 @@ describe("world map", () => {
   });
 
   it("is a connected mesh (every town reachable, with redundant paths)", () => {
-    const all = TOWNS.map((t) => t.gym);
-    expect(reachable("layer-landing", all).size).toBe(9);
+    const all = AllTowns.map((t) => t.gym);
+    expect(reachable("layer-landing", all).size).toBe(AllTowns.length);
+    expect(reachable("layer-landing", all.slice(0, 8)).size).toBe(9); // the Backbone Summit is the last mainland town
     expect(ROUTES.length).toBeGreaterThan(TOWNS.length - 1);
     for (const r of ROUTES) expect(r.from).not.toBe(r.to);
     // each consecutive gym pair is directly linked, so the badge path is walkable
@@ -54,7 +55,9 @@ describe("world map", () => {
     expect(TOWNS.filter((t) => isUnlocked(t, [1, 2, 3])).map((t) => t.gym)).toEqual([1, 2, 3, 4]);
     expect(currentTown([]).id).toBe("layer-landing");
     expect(currentTown([1, 2]).id).toBe("octet-harbor");
-    expect(currentTown([1, 2, 3, 4, 5, 6, 7, 8, 9]).id).toBe("backbone-summit");
+    expect(currentTown([1, 2, 3, 4, 5, 6, 7, 8]).id).toBe("backbone-summit");
+    expect(currentTown([1, 2, 3, 4, 5, 6, 7, 8, 9]).id).toBe("trunk-reef"); // the first town of Cisco Cove
+    expect(currentTown(AllTowns.map((t) => t.gym)).id).toBe("offer-spire");
     expect(reachable("layer-landing", [1]).size).toBe(2);
     expect(isRouteOpen(ROUTES.find((r) => r.id === "r9")!, [1, 2])).toBe(false);
     expect(isRouteOpen(ROUTES.find((r) => r.id === "r9")!, [1, 2, 3])).toBe(true);
