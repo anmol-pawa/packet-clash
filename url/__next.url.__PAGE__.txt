@@ -1,0 +1,32 @@
+1:"$Sreact.fragment"
+2:"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js"
+3:I[39756,["$2"],"default"]
+4:I[37457,["$2"],"default"]
+5:"/packet-clash/_next/static/chunks/2uhsrlep1uzku.js"
+6:I[22016,["$2","$5"],""]
+7:I[64576,["$2"],"PwaRegister"]
+e:I[63218,["$2","$5"],"UrlJourney"]
+f:I[97367,["$2"],"OutletBoundary"]
+10:"$Sreact.suspense"
+13:"ViewportBoundary"
+14:I[97367,["$2"],"$13"]
+15:"MetadataBoundary"
+16:I[97367,["$2"],"$15"]
+17:I[27201,["$2"],"IconMark"]
+:HL["/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","style"]
+:HL["/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","style"]
+9:X
+c:X
+c:C
+d:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","main",null,{"className":"mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4","children":[["$","header",null,{"className":"flex items-center justify-between font-pixel text-[10px] text-[#9d93d6]","children":[["$","$L6",null,{"href":"/lessons?n=8","className":"back-link py-2 hover:text-white","children":"◀ LESSONS"}],["$","h1",null,{"className":"text-xs text-[#ffd257] sm:text-sm","children":"TYPE A URL"}]]}],["$","$Le",null,{}]]}],[["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/2uhsrlep1uzku.js","async":true}]],["$","$Lf",null,{"children":["$","$10",null,{"name":"Next.MetadataOutlet","children":"$@11"}]}]]}],"p":"$@12","v":null,"s":"$9"}}]]
+a:[["children",{"s":"url","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@b","v":"$c","s":"$9"},"c":"$Qd"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","precedence":"next"}],["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js","async":true}]],["$","html",null,{"lang":"en","className":"BrFEAq_variable k6SQQW_variable Zy_X_G_variable h-full","children":["$","body",null,{"className":"min-h-full","children":[["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}],"notFound":[["$","main",null,{"className":"flex min-h-dvh flex-col items-center justify-center gap-6 p-4 text-center","children":[["$","h1",null,{"className":"font-pixel text-xl text-[#ffd257]","children":"404 · PACKET LOST"}],["$","p",null,{"className":"max-w-xs text-lg","children":"This route has no entry in the routing table."}],["$","$L6",null,{"href":"/","className":"pixel-button px-5 py-3 text-sm","children":"BACK HOME"}]]}],[]]}],["$","$L7",null,{}]]}]}]]}],"p":"$@8","v":null,"s":"$9"},"c":"$Qa"},"h":{"r":["$","$1","h",{"children":[null,["$","$L14",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}],["$","meta","2",{"name":"theme-color","content":"#141029"}]]}],["$","$L16",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$10",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Typing a URL — Packet Clash"}],["$","meta","1",{"name":"description","content":"Catch, train and battle packet creatures while you learn computer networks, from the OSI model and subnetting to TCP, DNS, TLS and interview questions."}],["$","link","2",{"rel":"manifest","href":"/packet-clash/manifest.webmanifest"}],["$","meta","3",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","4",{"name":"apple-mobile-web-app-title","content":"Packet Clash"}],["$","meta","5",{"name":"apple-mobile-web-app-status-bar-style","content":"black-translucent"}],["$","link","6",{"rel":"icon","href":"/packet-clash/icon.png?icon.1v6eyzmfwf4z5.png","sizes":"64x64","type":"image/png"}],["$","link","7",{"rel":"apple-touch-icon","href":"/packet-clash/apple-icon.png?apple-icon.0mpzxjl6m8rsh.png","sizes":"180x180","type":"image/png"}],["$","$L17","8",{}]]}]}],null]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"p":"$@18","v":null,"s":"$9"}},"a":"$@19","u":"$@1a","b":"GXy-62xnS2islbJv9xQVR"}
+11:null
+9:300
+1a:true
+9:C
+19:0
+b:"$undefined"
+8:"$undefined"
+18:"$undefined"
+12:"$undefined"

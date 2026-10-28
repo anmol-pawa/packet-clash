@@ -1,0 +1,33 @@
+1:"$Sreact.fragment"
+2:"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js"
+3:I[39756,["$2"],"default"]
+4:I[37457,["$2"],"default"]
+5:"/packet-clash/_next/static/chunks/11x_7uzt0exci.js"
+6:"/packet-clash/_next/static/chunks/0s6df56t5-cmo.js"
+7:I[22016,["$2","$5","$6"],""]
+8:I[64576,["$2"],"PwaRegister"]
+f:I[32558,["$2","$5","$6"],"TcpMachine"]
+10:I[97367,["$2"],"OutletBoundary"]
+11:"$Sreact.suspense"
+14:"ViewportBoundary"
+15:I[97367,["$2"],"$14"]
+16:"MetadataBoundary"
+17:I[97367,["$2"],"$16"]
+18:I[27201,["$2"],"IconMark"]
+:HL["/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","style"]
+:HL["/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","style"]
+a:X
+d:X
+d:C
+e:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","main",null,{"className":"mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4","children":[["$","header",null,{"className":"flex items-center justify-between font-pixel text-[10px] text-[#9d93d6]","children":[["$","$L7",null,{"href":"/lessons?n=5","className":"back-link py-2 hover:text-white","children":"◀ LESSONS"}],["$","h1",null,{"className":"text-xs text-[#ffd257] sm:text-sm","children":"TCP STATES"}]]}],["$","$Lf",null,{}]]}],[["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/11x_7uzt0exci.js","async":true}],["$","script","script-1",{"src":"/packet-clash/_next/static/chunks/0s6df56t5-cmo.js","async":true}]],["$","$L10",null,{"children":["$","$11",null,{"name":"Next.MetadataOutlet","children":"$@12"}]}]]}],"p":"$@13","v":null,"s":"$a"}}]]
+b:[["children",{"s":"tcp","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@c","v":"$d","s":"$a"},"c":"$Qe"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","precedence":"next"}],["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js","async":true}]],["$","html",null,{"lang":"en","className":"BrFEAq_variable k6SQQW_variable Zy_X_G_variable h-full","children":["$","body",null,{"className":"min-h-full","children":[["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}],"notFound":[["$","main",null,{"className":"flex min-h-dvh flex-col items-center justify-center gap-6 p-4 text-center","children":[["$","h1",null,{"className":"font-pixel text-xl text-[#ffd257]","children":"404 · PACKET LOST"}],["$","p",null,{"className":"max-w-xs text-lg","children":"This route has no entry in the routing table."}],["$","$L7",null,{"href":"/","className":"pixel-button px-5 py-3 text-sm","children":"BACK HOME"}]]}],[]]}],["$","$L8",null,{}]]}]}]]}],"p":"$@9","v":null,"s":"$a"},"c":"$Qb"},"h":{"r":["$","$1","h",{"children":[null,["$","$L15",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}],["$","meta","2",{"name":"theme-color","content":"#141029"}]]}],["$","$L17",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$11",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"TCP state machine — Packet Clash"}],["$","meta","1",{"name":"description","content":"Catch, train and battle packet creatures while you learn computer networks, from the OSI model and subnetting to TCP, DNS, TLS and interview questions."}],["$","link","2",{"rel":"manifest","href":"/packet-clash/manifest.webmanifest"}],["$","meta","3",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","4",{"name":"apple-mobile-web-app-title","content":"Packet Clash"}],["$","meta","5",{"name":"apple-mobile-web-app-status-bar-style","content":"black-translucent"}],["$","link","6",{"rel":"icon","href":"/packet-clash/icon.png?icon.1v6eyzmfwf4z5.png","sizes":"64x64","type":"image/png"}],["$","link","7",{"rel":"apple-touch-icon","href":"/packet-clash/apple-icon.png?apple-icon.0mpzxjl6m8rsh.png","sizes":"180x180","type":"image/png"}],["$","$L18","8",{}]]}]}],null]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"p":"$@19","v":null,"s":"$a"}},"a":"$@1a","u":"$@1b","b":"GXy-62xnS2islbJv9xQVR"}
+12:null
+a:300
+1b:true
+a:C
+1a:0
+c:"$undefined"
+9:"$undefined"
+19:"$undefined"
+13:"$undefined"

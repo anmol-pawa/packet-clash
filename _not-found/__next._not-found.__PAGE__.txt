@@ -1,0 +1,31 @@
+1:"$Sreact.fragment"
+2:"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js"
+3:I[39756,["$2"],"default"]
+4:I[37457,["$2"],"default"]
+5:"/packet-clash/_next/static/chunks/2n5qeheznvl4u.js"
+6:I[22016,["$2","$5"],""]
+7:I[64576,["$2"],"PwaRegister"]
+e:I[97367,["$2"],"OutletBoundary"]
+f:"$Sreact.suspense"
+12:"ViewportBoundary"
+13:I[97367,["$2"],"$12"]
+14:"MetadataBoundary"
+15:I[97367,["$2"],"$14"]
+16:I[27201,["$2"],"IconMark"]
+:HL["/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","style"]
+:HL["/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","style"]
+9:X
+c:X
+c:C
+d:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","main",null,{"className":"flex min-h-dvh flex-col items-center justify-center gap-6 p-4 text-center","children":[["$","h1",null,{"className":"font-pixel text-xl text-[#ffd257]","children":"404 · PACKET LOST"}],["$","p",null,{"className":"max-w-xs text-lg","children":"This route has no entry in the routing table."}],["$","$L6",null,{"href":"/","className":"pixel-button px-5 py-3 text-sm","children":"BACK HOME"}]]}],[["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/2n5qeheznvl4u.js","async":true}]],["$","$Le",null,{"children":["$","$f",null,{"name":"Next.MetadataOutlet","children":"$@10"}]}]]}],"p":"$@11","v":null,"s":"$9"}}]]
+a:[["children",{"s":"/_not-found","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@b","v":"$c","s":"$9"},"c":"$Qd"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","precedence":"next"}],["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js","async":true}]],["$","html",null,{"lang":"en","className":"BrFEAq_variable k6SQQW_variable Zy_X_G_variable h-full","children":["$","body",null,{"className":"min-h-full","children":[["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}],"notFound":[["$","main",null,{"className":"flex min-h-dvh flex-col items-center justify-center gap-6 p-4 text-center","children":[["$","h1",null,{"className":"font-pixel text-xl text-[#ffd257]","children":"404 · PACKET LOST"}],["$","p",null,{"className":"max-w-xs text-lg","children":"This route has no entry in the routing table."}],["$","$L6",null,{"href":"/","className":"pixel-button px-5 py-3 text-sm","children":"BACK HOME"}]]}],[]]}],["$","$L7",null,{}]]}]}]]}],"p":"$@8","v":null,"s":"$9"},"c":"$Qa"},"h":{"r":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L13",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}],["$","meta","2",{"name":"theme-color","content":"#141029"}]]}],["$","$L15",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$f",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Packet Clash — a networks creature-battler"}],["$","meta","1",{"name":"description","content":"Catch, train and battle packet creatures while you learn computer networks, from the OSI model and subnetting to TCP, DNS, TLS and interview questions."}],["$","link","2",{"rel":"manifest","href":"/packet-clash/manifest.webmanifest"}],["$","meta","3",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","4",{"name":"apple-mobile-web-app-title","content":"Packet Clash"}],["$","meta","5",{"name":"apple-mobile-web-app-status-bar-style","content":"black-translucent"}],["$","link","6",{"rel":"icon","href":"/packet-clash/icon.png?icon.1v6eyzmfwf4z5.png","sizes":"64x64","type":"image/png"}],["$","link","7",{"rel":"apple-touch-icon","href":"/packet-clash/apple-icon.png?apple-icon.0mpzxjl6m8rsh.png","sizes":"180x180","type":"image/png"}],["$","$L16","8",{}]]}]}],null]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"p":"$@17","v":null,"s":"$9"}},"a":"$@18","u":"$@19","b":"GXy-62xnS2islbJv9xQVR"}
+10:null
+9:300
+19:true
+9:C
+18:0
+b:"$undefined"
+8:"$undefined"
+17:"$undefined"
+11:"$undefined"

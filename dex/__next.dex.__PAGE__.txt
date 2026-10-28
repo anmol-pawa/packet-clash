@@ -1,0 +1,36 @@
+1:"$Sreact.fragment"
+2:"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js"
+3:I[39756,["$2"],"default"]
+4:I[37457,["$2"],"default"]
+5:"/packet-clash/_next/static/chunks/0x72m2mt2rssl.js"
+6:"/packet-clash/_next/static/chunks/1bedv608pbzrk.js"
+7:"/packet-clash/_next/static/chunks/22ff0063t42sz.js"
+8:"/packet-clash/_next/static/chunks/2ssosn7ietjlc.js"
+9:"/packet-clash/_next/static/chunks/27_t5tx1rasj8.js"
+a:I[22016,["$2","$5","$6","$7","$8","$9"],""]
+b:I[64576,["$2"],"PwaRegister"]
+12:I[82715,["$2","$5","$6","$7","$8","$9"],"Packetdex"]
+13:I[97367,["$2"],"OutletBoundary"]
+14:"$Sreact.suspense"
+17:"ViewportBoundary"
+18:I[97367,["$2"],"$17"]
+19:"MetadataBoundary"
+1a:I[97367,["$2"],"$19"]
+1b:I[27201,["$2"],"IconMark"]
+:HL["/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","style"]
+:HL["/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","style"]
+d:X
+10:X
+10:C
+11:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[["$","main",null,{"className":"mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-4","children":[["$","header",null,{"className":"flex items-center justify-between font-pixel text-[10px] text-[#9d93d6]","children":[["$","$La",null,{"href":"/map","className":"back-link py-2 hover:text-white","children":"◀ MAP"}],["$","h1",null,{"className":"text-xs text-[#ffd257] sm:text-sm","children":"PACKETDEX"}]]}],["$","$L12",null,{}]]}],[["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/0x72m2mt2rssl.js","async":true}],["$","script","script-1",{"src":"/packet-clash/_next/static/chunks/1bedv608pbzrk.js","async":true}],["$","script","script-2",{"src":"/packet-clash/_next/static/chunks/22ff0063t42sz.js","async":true}],["$","script","script-3",{"src":"/packet-clash/_next/static/chunks/2ssosn7ietjlc.js","async":true}],["$","script","script-4",{"src":"/packet-clash/_next/static/chunks/27_t5tx1rasj8.js","async":true}]],["$","$L13",null,{"children":["$","$14",null,{"name":"Next.MetadataOutlet","children":"$@15"}]}]]}],"p":"$@16","v":null,"s":"$d"}}]]
+e:[["children",{"s":"dex","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@f","v":"$10","s":"$d"},"c":"$Q11"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/0_6cxdu6qevld.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/packet-clash/_next/static/chunks/2dkqmc7p9s9-4.css","precedence":"next"}],["$","script","script-0",{"src":"/packet-clash/_next/static/chunks/40b5fq5ut9s-f.js","async":true}]],["$","html",null,{"lang":"en","className":"BrFEAq_variable k6SQQW_variable Zy_X_G_variable h-full","children":["$","body",null,{"className":"min-h-full","children":[["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}],"notFound":[["$","main",null,{"className":"flex min-h-dvh flex-col items-center justify-center gap-6 p-4 text-center","children":[["$","h1",null,{"className":"font-pixel text-xl text-[#ffd257]","children":"404 · PACKET LOST"}],["$","p",null,{"className":"max-w-xs text-lg","children":"This route has no entry in the routing table."}],["$","$La",null,{"href":"/","className":"pixel-button px-5 py-3 text-sm","children":"BACK HOME"}]]}],[]]}],["$","$Lb",null,{}]]}]}]]}],"p":"$@c","v":null,"s":"$d"},"c":"$Qe"},"h":{"r":["$","$1","h",{"children":[null,["$","$L18",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}],["$","meta","2",{"name":"theme-color","content":"#141029"}]]}],["$","$L1a",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$14",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Packetdex — Packet Clash"}],["$","meta","1",{"name":"description","content":"Catch, train and battle packet creatures while you learn computer networks, from the OSI model and subnetting to TCP, DNS, TLS and interview questions."}],["$","link","2",{"rel":"manifest","href":"/packet-clash/manifest.webmanifest"}],["$","meta","3",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","4",{"name":"apple-mobile-web-app-title","content":"Packet Clash"}],["$","meta","5",{"name":"apple-mobile-web-app-status-bar-style","content":"black-translucent"}],["$","link","6",{"rel":"icon","href":"/packet-clash/icon.png?icon.1v6eyzmfwf4z5.png","sizes":"64x64","type":"image/png"}],["$","link","7",{"rel":"apple-touch-icon","href":"/packet-clash/apple-icon.png?apple-icon.0mpzxjl6m8rsh.png","sizes":"180x180","type":"image/png"}],["$","$L1b","8",{}]]}]}],null]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"p":"$@1c","v":null,"s":"$d"}},"a":"$@1d","u":"$@1e","b":"GXy-62xnS2islbJv9xQVR"}
+15:null
+d:300
+1e:true
+d:C
+1d:0
+f:"$undefined"
+c:"$undefined"
+1c:"$undefined"
+16:"$undefined"
