@@ -1,5 +1,5 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
@@ -7,6 +7,7 @@ import { acceptsAsPath, afterLinkChange, asPaths, bellmanFordRounds, dijkstra, d
 import { fragment, longestPrefixMatch, splitSubnets, vlsmAllocate } from "@/lib/net/addressing";
 import { blockSize, broadcastOf, formatCidr, formatIp, hostRange, parseCidr, parseIp, usableHosts } from "@/lib/net/ipv4";
 import { ackAfter, cwndSeries, fullPipeWindow, goBackNTransmissions, handshake, selectiveRepeatTransmissions, windowUtilization } from "@/lib/net/transport";
+import { evaluateAcl, parseAclLine } from "@/lib/net/acl";
 import { crc, crcOk, hammingSyndrome } from "@/lib/net/errors";
 import { backoffChoices, minFrameBits } from "@/lib/net/link";
 import { simulateSwitch } from "@/lib/net/switching";
@@ -19,7 +20,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl";
 
 export interface Lesson {
   id: string;
@@ -129,6 +130,10 @@ const jBrowser = journeyRtts("browser", "tcp-tls13");
 const jQuic = journeyRtts("browser", "quic-0rtt");
 
 const dh = diffieHellman(DH_DEMO.p, DH_DEMO.g, DH_DEMO.a, DH_DEMO.b);
+
+// gym 13: three ACL lines and the implicit deny, three probes (A matches lines 1 and 2, B line 2, C nothing)
+const aclVerdicts = ACL_DEMO_PROBES.map((p, i) => ({ id: p.id, line: aclHit(i), action: evaluateAcl(ACL_DEMO_LINES.map(parseAclLine), p.packet).action }));
+const aclSay = (i: number) => `${aclVerdicts[i].action} (${aclVerdicts[i].line === ACL_DEMO_LINES.length ? "the implicit deny" : `line ${aclVerdicts[i].line + 1}`})`;
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -633,6 +638,27 @@ export const LESSONS: Record<number, Lesson[]> = {
       },
     },
   ],
+  13: [
+    {
+      id: "acl-matching",
+      title: "Access lists: first match wins",
+      figure: "acl",
+      caption: "Probe A would match two lines, but line 1 stops it first.",
+      paras: [
+        "An access list is an ordered list of permit and deny lines. The router checks a packet against the lines from the top and stops at the first one that matches; the rest are never read. If no line matches, the packet hits an invisible deny ip any any at the end, the implicit deny. So an ACL with only deny lines blocks everything, and the order of lines matters: put the specific exceptions above the general rules.",
+        "A standard ACL (numbers 1 to 99 and 1300 to 1999) looks only at the source address. An extended ACL (100 to 199 and 2000 to 2699) also matches protocol, destination and ports. Addresses use a wildcard mask, the inverse of a subnet mask: a 0 bit must match, a 1 bit is ignored, so 0.0.0.255 means any host in a /24, and host 10.1.1.9 is the same as 10.1.1.9 0.0.0.0.",
+        "Apply an ACL to an interface with ip access-group, once per direction, in or out. By convention you place an extended ACL near the source, so unwanted traffic is dropped early, and a standard ACL near the destination, because it cannot tell destinations apart.",
+      ],
+      example: {
+        title: "Three probes against the list above",
+        lines: [
+          `A, TCP from 10.1.1.9 to port 22: ${aclSay(0)}. Line 2 would also match, but it is never reached.`,
+          `B, TCP from 10.1.1.20 to port 22: ${aclSay(1)}.`,
+          `C, UDP to port 53: ${aclSay(2)}. No line mentions UDP, so it falls through.`,
+        ],
+      },
+    },
+  ],
 };
 
 export const lessonsFor = (gym: number): Lesson[] => LESSONS[gym] ?? [];
@@ -647,4 +673,4 @@ export function markLessonsSeen(seen: readonly number[], gym: number): number[] 
 }
 
 // exported for tests
-export const WORKED = { krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList, dijSteps, dijRes, bfRounds, ctiPlain, ctiPoison, bgpPaths, hsSegs, dataAck, gbnSends, srSends, gbnCount, srCount, uStop, uThree, pipeWindow, cw };
+export const WORKED = { aclVerdicts, krCircuit, krOverload, dTrans, dProp, bdp, crcRes, crcRecv, hamFlipped, hamSyndrome, cdMinBits, subNets, vlsmPlan, lpmWinner, lpmMatches, fragList, dijSteps, dijRes, bfRounds, ctiPlain, ctiPoison, bgpPaths, hsSegs, dataAck, gbnSends, srSends, gbnCount, srCount, uStop, uThree, pipeWindow, cw };

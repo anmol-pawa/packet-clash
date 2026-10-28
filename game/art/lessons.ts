@@ -8,6 +8,7 @@ import { URL_JOURNEY, connectRtts, journeyRtts, type JourneyPhase, type Transpor
 import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissions, type TcpState } from "@/lib/net/transport";
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
+import { entryMatches, evaluateAcl, parseAclLine, prefixOfWildcard, type AclPacket, type AddrMatch } from "@/lib/net/acl";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
 import { MICRO_H, microRows, microWidth } from "./microFont";
@@ -1453,5 +1454,87 @@ export function connectFigure(): SpriteDef {
   c.text(x0, ly, "TCP", "#9a7be0");
   c.text(x0 + 20, ly, "TLS OR QUIC", "#e0564c");
   c.text(x0 + 66, ly, "REQUEST", REQ_COL);
+  return c.sprite();
+}
+
+/**
+ * The access-list card: three lines read top down, the implicit deny after
+ * them, and three probe packets. Each probe is stopped by the first line that
+ * matches; later lines that would also match are marked dim and never reached.
+ */
+export const ACL_DEMO_LINES: readonly string[] = ["deny tcp host 10.1.1.9 any eq 22", "permit tcp 10.1.1.0 0.0.0.255 any eq 22", "permit icmp any any"];
+
+export const ACL_DEMO_PROBES: readonly { id: string; packet: AclPacket }[] = [
+  { id: "A", packet: { protocol: "tcp", src: parseIp("10.1.1.9"), dst: parseIp("192.0.2.5"), dstPort: 22 } },
+  { id: "B", packet: { protocol: "tcp", src: parseIp("10.1.1.20"), dst: parseIp("192.0.2.5"), dstPort: 22 } },
+  { id: "C", packet: { protocol: "udp", src: parseIp("10.1.1.20"), dst: parseIp("8.8.8.8"), dstPort: 53 } },
+];
+
+const aclEntries = ACL_DEMO_LINES.map(parseAclLine);
+
+/** The first matching line (zero-based) for each probe, or `aclEntries.length` for the implicit deny. */
+export const aclHit = (i: number): number => evaluateAcl(aclEntries, ACL_DEMO_PROBES[i].packet).line ?? aclEntries.length;
+
+const aclAddr = (m: AddrMatch): string => (m.wildcard === 0xffffffff ? "ANY" : m.wildcard === 0 ? formatIp(m.addr) : `${formatIp(m.addr)}/${prefixOfWildcard(m.wildcard)}`);
+const ACL_PERMIT = "#6fe3a0";
+const ACL_DENY = "#e0564c";
+
+export function aclFigure(): SpriteDef {
+  const w = 160;
+  const rowH = 8;
+  const rows = aclEntries.length + 1;
+  const probeTop = 14 + rows * rowH + 10;
+  const c = new Canvas(w, probeTop + 10 + ACL_DEMO_PROBES.length * rowH + 4);
+  c.panel();
+  const col = { n: 4, act: 10, proto: 37, src: 60, dst: 107, port: 124, mark: 142 };
+  c.text(col.n, 4, "ACL ON THE EDGE ROUTER", INK);
+  const head = (x: number, t: string) => c.text(x, 11, t, DIM);
+  head(col.act, "ACT");
+  head(col.proto, "PROTO");
+  head(col.src, "SOURCE");
+  head(col.dst, "DEST");
+  head(col.port, "PORT");
+  c.hline(2, 17, w - 4, "#3b3370");
+  const marks = ACL_DEMO_PROBES.map((p, i) => ({ id: p.id, first: aclHit(i), all: aclEntries.map((e, j) => (entryMatches(e, p.packet) ? j : -1)).filter((j) => j >= 0) }));
+  aclEntries.forEach((e, i) => {
+    const y = 20 + i * rowH;
+    const colr = e.action === "permit" ? ACL_PERMIT : ACL_DENY;
+    c.text(col.n, y, String(i + 1), DIM);
+    c.text(col.act, y, e.action.toUpperCase(), colr);
+    c.text(col.proto, y, e.protocol.toUpperCase(), INK);
+    c.text(col.src, y, aclAddr(e.src), INK);
+    c.text(col.dst, y, aclAddr(e.dst), INK);
+    c.text(col.port, y, e.dstPort && e.dstPort.op === "eq" ? String(e.dstPort.port) : "-", INK);
+  });
+  const iy = 20 + aclEntries.length * rowH;
+  c.hline(2, iy - 1, w - 4, "#3b3370", 2);
+  c.text(col.n, iy, "X", DIM);
+  c.text(col.act, iy, "DENY", "#a1544d");
+  c.text(col.proto, iy, "IP", DIM);
+  c.text(col.src, iy, "ANY", DIM);
+  c.text(col.dst, iy, "ANY", DIM);
+  c.text(col.port, iy, "-", DIM);
+  // probe letters beside the lines they reach (bright where they stop, dim where they would also match)
+  marks.forEach((m, k) => {
+    const lines = m.all.length ? m.all : [aclEntries.length];
+    if (!m.all.includes(m.first)) lines.push(m.first);
+    lines.forEach((j) => c.text(col.mark + 4 * k - 6, 20 + j * rowH, m.id, j === m.first ? "#ffd257" : "#5a5196"));
+  });
+  c.hline(2, probeTop - 3, w - 4, "#3b3370");
+  c.text(col.n, probeTop, "PROBE", DIM);
+  c.text(34, probeTop, "SOURCE", DIM);
+  c.text(76, probeTop, "PORT", DIM);
+  c.text(96, probeTop, "RESULT", DIM);
+  ACL_DEMO_PROBES.forEach((p, i) => {
+    const y = probeTop + 8 + i * rowH;
+    const hit = aclHit(i);
+    const verdict = evaluateAcl(aclEntries, p.packet);
+    c.text(col.n, y, p.id, "#ffd257");
+    c.text(12, y, p.packet.protocol.toUpperCase(), INK);
+    c.text(34, y, formatIp(p.packet.src), INK);
+    c.text(76, y, String(p.packet.dstPort), INK);
+    c.text(96, y, verdict.action.toUpperCase(), verdict.action === "permit" ? ACL_PERMIT : ACL_DENY);
+    c.text(124, y, hit === aclEntries.length ? "X" : `LINE ${hit + 1}`, DIM);
+  });
   return c.sprite();
 }

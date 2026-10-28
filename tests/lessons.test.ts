@@ -4,12 +4,13 @@ import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
-import { BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
 import { hammingSyndrome } from "@/lib/net/errors";
 import { ACTIVE_OPEN_CLOSE, PASSIVE_OPEN_CLOSE, TCP_TRANSITIONS } from "@/lib/net/transport";
+import { evaluateAcl, parseAclLine } from "@/lib/net/acl";
 import { parseSprite } from "@/lib/pixel";
 
 describe("lesson content", () => {
@@ -325,9 +326,30 @@ describe("gym 8 lessons", () => {
   });
 });
 
+describe("gym 13 lessons", () => {
+  it("has the ACL card, and its example comes from the solver", () => {
+    expect(lessonsFor(13).map((l) => l.figure)).toEqual(["acl"]);
+    expect(ACL_DEMO_LINES).toHaveLength(3);
+  });
+
+  it("stops probe A at line 1 (deny), B at line 2 (permit) and C at the implicit deny", () => {
+    expect(ACL_DEMO_PROBES.map((_, i) => aclHit(i))).toEqual([0, 1, 3]);
+    expect(WORKED.aclVerdicts.map((v) => v.action)).toEqual(["deny", "permit", "deny"]);
+    const lines = lessonsFor(13)[0].example!.lines;
+    expect(lines[0]).toContain("deny (line 1)");
+    expect(lines[1]).toContain("permit (line 2)");
+    expect(lines[2]).toContain("deny (the implicit deny)");
+  });
+
+  it("would let probe A through if line 2 came first: order matters", () => {
+    const swapped = [ACL_DEMO_LINES[1], ACL_DEMO_LINES[0], ACL_DEMO_LINES[2]].map(parseAclLine);
+    expect(evaluateAcl(swapped, ACL_DEMO_PROBES[0].packet)).toEqual({ action: "permit", line: 0 });
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

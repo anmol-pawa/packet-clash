@@ -809,3 +809,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Tests: verdicts (strong/hire/lean/no hire, red-flag cap), round weights, tilt order, bar shape and colour, plaque reveal, idle/attack/hurt/faint lighting, plus shared creature and boss checks; 823 total.
 - Verified: lint, typecheck, 823 tests, `build:pages` (184 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Head and eye were enlarged after the first screenshot; the tail and scale were pulled inward after the outline test caught edge clipping.
 - Next: 6.2 Lesson cards and figures for the new chapters (first: ACL matching).
+
+## 2026-10-28: 6.2a Lesson card: ACL matching (gym 13)
+- Main was green locally (no stale lock). The Actions quota note applies (before 2026-11-01), so CI and the Pages deploy were not checked; relied on local verification.
+- **Content** (`content/lessons.ts`): `LESSONS[13]` gets its first card, "Access lists: first match wins": top-down first match, implicit deny, standard vs extended number ranges, wildcard masks, `ip access-group` and the placement rule. The worked example's three probes are graded by `evaluateAcl`/`parseAclLine` from `lib/net/acl`, not typed by hand. New `Figure` kind `"acl"`.
+- **Art** (`game/art/lessons.ts`): `aclFigure()` draws the three lines and the implicit deny as a table, plus three probes with their verdicts. Probe letters sit beside the lines they reach (bright where they stop, dim where a later line would also match). Wired into `LessonDeck` and `/dev/sprites`.
+- Tests (`tests/lessons.test.ts`): card exists; probes stop at line 1 (deny), line 2 (permit) and the implicit deny; swapping lines 1 and 2 flips probe A to permit; the figure joins the shared sprite checks; 826 total.
+- Verified: lint, typecheck, 826 tests, `build:pages` (183 files precached; first builds hit the known advisory stop, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Header and column collisions were fixed after the first screenshot.
+- Known gaps: the figure shows prefixes (10.1.1.0/24) rather than wildcard masks; the card text explains the wildcard.
+- Next: 6.2b STP root election card (gym 10).
