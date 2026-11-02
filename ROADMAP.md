@@ -138,7 +138,7 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
   - [x] 6.1i Boss gym 16 Loopwarden.
 - [ ] 6.2 Lesson cards and figures for the new chapters, one per run, each on `/dev/sprites` and reviewed in screenshots (new lessons go in `LESSONS[gym]`).
   - [x] 6.2a ACL matching (gym 13).
-  - [ ] 6.2b STP root election (gym 10).
+  - [x] 6.2b STP root election (gym 10).
   - [ ] 6.2c EtherChannel (gym 10).
   - [ ] 6.2d Consistent-hash ring (gym 14).
   - [ ] 6.2e Token bucket (gym 15 or 16, wherever rate limiting is taught).

@@ -9,6 +9,7 @@ import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissio
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import { entryMatches, evaluateAcl, parseAclLine, prefixOfWildcard, type AclPacket, type AddrMatch } from "@/lib/net/acl";
+import { computeStp, effectivePriority, stpPortCost, type PortRole, type StpBridge, type StpLink, type StpResult } from "@/lib/net/stp";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
 import { MICRO_H, microRows, microWidth } from "./microFont";
@@ -1536,5 +1537,70 @@ export function aclFigure(): SpriteDef {
     c.text(96, y, verdict.action.toUpperCase(), verdict.action === "permit" ? ACL_PERMIT : ACL_DENY);
     c.text(124, y, hit === aclEntries.length ? "X" : `LINE ${hit + 1}`, DIM);
   });
+  return c.sprite();
+}
+
+/**
+ * The STP card: four switches in a ring, every priority left at the default
+ * (32768 + VLAN 1), so the lowest MAC wins the root election. The roles and
+ * costs come from `computeStp`, which runs the real 802.1D rules.
+ */
+export const STP_DEMO_BRIDGES: readonly StpBridge[] = [
+  { name: "SW1", priority: effectivePriority(32768, 1), mac: "0c1a00000040" },
+  { name: "SW2", priority: effectivePriority(32768, 1), mac: "0c1a00000010" },
+  { name: "SW3", priority: effectivePriority(32768, 1), mac: "0c1a00000030" },
+  { name: "SW4", priority: effectivePriority(32768, 1), mac: "0c1a00000020" },
+];
+export const STP_DEMO_LINKS: readonly StpLink[] = [
+  { a: "SW2", b: "SW1", cost: stpPortCost(100) },
+  { a: "SW2", b: "SW3", cost: stpPortCost(100) },
+  { a: "SW1", b: "SW4", cost: stpPortCost(100) },
+  { a: "SW3", b: "SW4", cost: stpPortCost(1000) },
+];
+export const stpDemo = (): StpResult => computeStp(STP_DEMO_BRIDGES, STP_DEMO_LINKS);
+
+const STP_POS: Record<string, [number, number]> = { SW2: [80, 22], SW1: [22, 62], SW3: [138, 62], SW4: [80, 102] };
+const STP_ROLE_COLOUR: Record<PortRole, string> = { root: "#6fe3a0", designated: "#5cc8ff", blocked: "#e0564c" };
+const STP_ROLE_LETTER: Record<PortRole, string> = { root: "R", designated: "D", blocked: "X" };
+
+export function stpFigure(): SpriteDef {
+  const res = stpDemo();
+  const c = new Canvas(160, 130);
+  c.panel();
+  c.ctext(80, 4, "802.1D ON A RING OF FOUR", INK);
+  const line = (x0: number, y0: number, x1: number, y1: number, col: string, dashed: boolean) => {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let i = 0; i <= n; i++) if (!dashed || Math.floor(i / 3) % 2 === 0) c.set(Math.round(x0 + ((x1 - x0) * i) / n), Math.round(y0 + ((y1 - y0) * i) / n), col);
+  };
+  const blocked = (l: StpLink) => res.ports.some((p) => p.role === "blocked" && ((p.bridge === l.a && p.peer === l.b) || (p.bridge === l.b && p.peer === l.a)));
+  for (const l of STP_DEMO_LINKS) {
+    const [ax, ay] = STP_POS[l.a];
+    const [bx, by] = STP_POS[l.b];
+    line(ax, ay, bx, by, blocked(l) ? "#7a3a3f" : "#8f86c4", blocked(l));
+    const lx = Math.round((ax + bx) / 2);
+    const ly = Math.round((ay + by) / 2);
+    c.rect(lx - 5, ly - 4, 10, 8, "#1c1640");
+    c.ctext(lx, ly - 2, String(l.cost), "#ffd257");
+  }
+  for (const b of STP_DEMO_BRIDGES) {
+    const [x, y] = STP_POS[b.name];
+    const root = b.name === res.root;
+    c.brick(x - 18, y - 8, 36, 17, root ? ["#ffe58a", "#e0a020", "#a56a14", "#6d4210"] : ["#9d8df0", "#6a5acd", "#463a9a", "#2e2566"]);
+    c.ctext(x, y - 4, b.name, root ? OUTLINE : INK);
+    c.ctext(x, y + 2, root ? "ROOT" : `COST ${res.pathCost[b.name]}`, root ? OUTLINE : INK);
+  }
+  for (const p of res.ports) {
+    const [bx, by] = STP_POS[p.bridge];
+    const [px, py] = STP_POS[p.peer];
+    const t = 0.3;
+    const mx = Math.round(bx + (px - bx) * t);
+    const my = Math.round(by + (py - by) * t);
+    c.rect(mx - 4, my - 4, 9, 9, OUTLINE);
+    c.rect(mx - 3, my - 3, 7, 7, STP_ROLE_COLOUR[p.role]);
+    c.text(mx - 1, my - 2, STP_ROLE_LETTER[p.role], OUTLINE);
+  }
+  c.text(4, 120, "R ROOT PORT", STP_ROLE_COLOUR.root);
+  c.text(56, 120, "D DESIGNATED", STP_ROLE_COLOUR.designated);
+  c.text(116, 120, "X BLOCKED", STP_ROLE_COLOUR.blocked);
   return c.sprite();
 }

@@ -818,3 +818,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 826 tests, `build:pages` (183 files precached; first builds hit the known advisory stop, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Header and column collisions were fixed after the first screenshot.
 - Known gaps: the figure shows prefixes (10.1.1.0/24) rather than wildcard masks; the card text explains the wildcard.
 - Next: 6.2b STP root election card (gym 10).
+
+## 2026-11-02: 6.2b Lesson card: STP root election (gym 10)
+- Main was green locally (no stale lock). Actions quota note ended 2026-11-01, but this session could not reach the Actions API, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content** (`content/lessons.ts`): `LESSONS[10]` gets its first card, "Spanning tree: one root, no loops": why loops hurt (no TTL), lowest bridge ID wins (priority + VLAN, then MAC), root port by lowest path cost (100 Mbps = 19, 1 Gbps = 4, 802.1D short costs), designated vs blocked ports, and reconvergence time. The worked example's numbers (root, SW4's two paths 38 vs 23, blocked end) come from `computeStp`, not typed by hand. New `Figure` kind `"stp"`.
+- **Art** (`game/art/lessons.ts`): `stpFigure()` draws a ring of four switches with default priorities; root in amber, link costs, R/D/X port markers coloured by role, the blocked link dashed. Roles are computed by `computeStp`. Wired into `LessonDeck` and `/dev/sprites`.
+- Tests (`tests/lessons.test.ts`): card exists; root is SW2 (lowest MAC at equal priority); path costs 0/19/19/23; SW4 root port toward SW3 and blocked toward SW1; exactly links - (switches - 1) = 1 blocked port; the example text matches the solver; figure joins the shared sprite checks. 827 total.
+- Verified: lint, typecheck, 827 tests, `build:pages` (185 files precached; the known advisory stop hit first, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Markers collided with cost labels and the box text touched the edges on the first two screenshots; fixed.
+- Known gaps: the figure has no tie-break example (equal-cost paths go to the lower neighbour bridge ID; explained in the card text only).
+- Next: 6.2c EtherChannel (gym 10).

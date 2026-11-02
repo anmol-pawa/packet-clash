@@ -1,5 +1,5 @@
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
@@ -20,7 +20,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp";
 
 export interface Lesson {
   id: string;
@@ -134,6 +134,10 @@ const dh = diffieHellman(DH_DEMO.p, DH_DEMO.g, DH_DEMO.a, DH_DEMO.b);
 // gym 13: three ACL lines and the implicit deny, three probes (A matches lines 1 and 2, B line 2, C nothing)
 const aclVerdicts = ACL_DEMO_PROBES.map((p, i) => ({ id: p.id, line: aclHit(i), action: evaluateAcl(ACL_DEMO_LINES.map(parseAclLine), p.packet).action }));
 const aclSay = (i: number) => `${aclVerdicts[i].action} (${aclVerdicts[i].line === ACL_DEMO_LINES.length ? "the implicit deny" : `line ${aclVerdicts[i].line + 1}`})`;
+
+// gym 10: four switches in a ring with default priorities; the lowest MAC is the root
+const stp = stpDemo();
+const stpRole = (bridge: string, peer: string) => stp.ports.find((p) => p.bridge === bridge && p.peer === peer)!.role;
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -635,6 +639,27 @@ export const LESSONS: Record<number, Lesson[]> = {
       example: {
         title: "Round trips before the request can be sent",
         lines: [`TCP + TLS 1.2: 1 + 2 = ${connectRtts("tcp-tls12")}.`, `TCP + TLS 1.3: 1 + 1 = ${connectRtts("tcp-tls13")}.`, `QUIC: ${connectRtts("quic")}. QUIC resumption with 0-RTT: ${connectRtts("quic-0rtt")}.`],
+      },
+    },
+  ],
+  10: [
+    {
+      id: "stp-root-election",
+      title: "Spanning tree: one root, no loops",
+      figure: "stp",
+      caption: "Costs are 100 Mbps = 19 and 1 Gbps = 4. The dashed link is the one STP blocks.",
+      paras: [
+        "Redundant switch links create loops, and an Ethernet frame has no TTL, so a broadcast would circle forever. Spanning tree protocol (802.1D, and its faster cousin 802.1w, rapid PVST+) switches off just enough ports to leave a loop-free tree. First the switches elect a root bridge: the lowest bridge ID wins, where the ID is the priority (default 32768, plus the VLAN number) followed by the MAC address. With default priorities the lowest MAC wins, so set the priority on purpose to pick your root.",
+        "Every other switch then picks one root port, the port with the lowest total path cost to the root (a 10 Mbps link costs 100, 100 Mbps 19, 1 Gbps 4, 10 Gbps 2). Ties go to the lower neighbour bridge ID. On each link, the end with the lower cost to the root is the designated port and forwards. Any port that is neither root nor designated is blocked, so it keeps listening but forwards no data.",
+        "When a link fails, a blocked port moves on through listening and learning before it forwards, about 30 to 50 seconds in classic STP, and a couple of seconds in rapid STP.",
+      ],
+      example: {
+        title: "The ring in the figure",
+        lines: [
+          `Default priorities tie, so the lowest MAC wins: ${stp.root} is the root.`,
+          `SW4 reaches the root two ways: through SW1 for ${19 + 19}, or through SW3 for ${19 + 4}. Its root port faces SW3, at cost ${stp.pathCost.SW4}.`,
+          `On the SW1 to SW4 link, SW1 (cost ${stp.pathCost.SW1}) is designated and SW4's end is ${stpRole("SW4", "SW1")}. That one blocked port breaks the loop.`,
+        ],
       },
     },
   ],
