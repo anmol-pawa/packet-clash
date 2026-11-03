@@ -9,7 +9,8 @@ import { cwndSeries, goBackNTransmissions, handshake, selectiveRepeatTransmissio
 import { blockSize, formatIp, parseCidr, parseIp } from "@/lib/net/ipv4";
 import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import { entryMatches, evaluateAcl, parseAclLine, prefixOfWildcard, type AclPacket, type AddrMatch } from "@/lib/net/acl";
-import { computeStp, effectivePriority, stpPortCost, type PortRole, type StpBridge, type StpLink, type StpResult } from "@/lib/net/stp";
+import { computeStp, effectivePriority, stpPortCost, type PortRole, type StpBridge, type StpLink, type StpResult, type EtherChannelMode } from "@/lib/net/stp";
+import { etherChannelOutcome, type ChannelOutcome } from "@/lib/net/lab";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
 import { MICRO_H, microRows, microWidth } from "./microFont";
@@ -1602,5 +1603,50 @@ export function stpFigure(): SpriteDef {
   c.text(4, 120, "R ROOT PORT", STP_ROLE_COLOUR.root);
   c.text(56, 120, "D DESIGNATED", STP_ROLE_COLOUR.designated);
   c.text(116, 120, "X BLOCKED", STP_ROLE_COLOUR.blocked);
+  return c.sprite();
+}
+
+/**
+ * The EtherChannel card: which pairs of channel-group modes bundle. LACP
+ * (802.3ad / 802.1AX) uses active and passive; PAgP (Cisco) uses desirable and
+ * auto; "on" is static and only bundles with another "on". Every cell comes
+ * from `etherChannelOutcome`.
+ */
+export const CHANNEL_MODES: readonly EtherChannelMode[] = ["active", "passive", "desirable", "auto", "on"];
+export const CHANNEL_CELL: Record<ChannelOutcome, { text: string; colour: string }> = {
+  forms: { text: "OK", colour: "#6fe3a0" },
+  "protocol-mismatch": { text: "PROT", colour: "#e0564c" },
+  "nobody-initiates": { text: "IDLE", colour: "#ffd257" },
+  "on-needs-on": { text: "ON", colour: "#c77dff" },
+};
+
+export function channelFigure(): SpriteDef {
+  const c = new Canvas(160, 130);
+  c.panel();
+  c.ctext(80, 4, "ETHERCHANNEL MODE PAIRS", INK);
+  const x0 = 42;
+  const y0 = 24;
+  const cw = 23;
+  const ch = 13;
+  CHANNEL_MODES.forEach((m, i) => {
+    const label = m.toUpperCase();
+    // column headers: three letters (ACT PAS DES AUT ON) keep them inside the cell
+    c.ctext(x0 + i * cw + Math.floor(cw / 2), y0 - 8, label.slice(0, 3), i < 2 ? "#5cc8ff" : i < 4 ? "#ffb35c" : "#c77dff");
+    c.text(4, y0 + i * ch + 4, label, i < 2 ? "#5cc8ff" : i < 4 ? "#ffb35c" : "#c77dff");
+  });
+  CHANNEL_MODES.forEach((a, r) =>
+    CHANNEL_MODES.forEach((b, k) => {
+      const cell = CHANNEL_CELL[etherChannelOutcome(a, b)];
+      const x = x0 + k * cw;
+      const y = y0 + r * ch;
+      c.rect(x, y, cw - 1, ch - 1, OUTLINE);
+      c.rect(x + 1, y + 1, cw - 3, ch - 3, "#2a2260");
+      c.ctext(x + Math.floor((cw - 1) / 2), y + 4, cell.text, cell.colour);
+    }),
+  );
+  c.text(4, y0 + 5 * ch + 4, "LACP - ACTIVE PASSIVE", "#5cc8ff");
+  c.text(4, y0 + 5 * ch + 12, "PAGP - DESIRABLE AUTO", "#ffb35c");
+  c.text(4, y0 + 5 * ch + 20, "OK BUNDLES  PROT MIXED PROTOCOLS", DIM);
+  c.text(4, y0 + 5 * ch + 28, "IDLE NO INITIATOR  ON NEEDS ON", DIM);
   return c.sprite();
 }

@@ -4,7 +4,8 @@ import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
-import { STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { etherChannelOutcome } from "@/lib/net/lab";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
 import { bandwidthDelayProduct } from "@/lib/net/basics";
@@ -328,7 +329,7 @@ describe("gym 8 lessons", () => {
 
 describe("gym 10 lessons", () => {
   it("has the STP card, and its example comes from the solver", () => {
-    expect(lessonsFor(10).map((l) => l.figure)).toEqual(["stp"]);
+    expect(lessonsFor(10).map((l) => l.figure)).toEqual(["stp", "channel"]);
     const r = stpDemo();
     expect(r.root).toBe("SW2"); // lowest MAC at equal priority
     expect(r.pathCost).toEqual({ SW1: 19, SW2: 0, SW3: 19, SW4: 23 });
@@ -342,6 +343,19 @@ describe("gym 10 lessons", () => {
     expect(lines[1]).toContain("through SW1 for 38");
     expect(lines[1]).toContain("through SW3 for 23");
     expect(lines[2]).toContain("blocked");
+  });
+
+  it("has the EtherChannel card, and its grid matches the mode rules", () => {
+    const card = lessonsFor(10)[1];
+    expect(card.figure).toBe("channel");
+    expect(card.example!.lines[0]).toContain("active with passive: forms");
+    expect(card.example!.lines[1]).toContain("nobody-initiates");
+    expect(card.example!.lines[2]).toContain("protocol-mismatch");
+    expect(card.example!.lines[3]).toContain("on-needs-on");
+    // forms exactly where the independent rule says: same protocol and one initiator, or on/on
+    const forms = (a: string, b: string) => (a === "on" || b === "on" ? a === b : (["active", "passive"].includes(a) === ["active", "passive"].includes(b)) && ["active", "desirable"].some((m) => m === a || m === b));
+    for (const a of CHANNEL_MODES) for (const b of CHANNEL_MODES) expect(etherChannelOutcome(a, b) === "forms").toBe(forms(a, b));
+    expect(Object.keys(CHANNEL_CELL)).toHaveLength(4);
   });
 });
 
@@ -368,7 +382,7 @@ describe("gym 13 lessons", () => {
 
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

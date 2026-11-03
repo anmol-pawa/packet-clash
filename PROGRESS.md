@@ -827,3 +827,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 827 tests, `build:pages` (185 files precached; the known advisory stop hit first, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. Markers collided with cost labels and the box text touched the edges on the first two screenshots; fixed.
 - Known gaps: the figure has no tie-break example (equal-cost paths go to the lower neighbour bridge ID; explained in the card text only).
 - Next: 6.2c EtherChannel (gym 10).
+
+## 2026-11-03: 6.2c Lesson card: EtherChannel (gym 10)
+- Main was green locally (no stale lock). The Actions quota note ended 2026-11-01, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content** (`content/lessons.ts`): `LESSONS[10]` gets a second card, "EtherChannel: bundling links": why bundle (STP sees one link, per-flow hashing keeps order, one flow never exceeds one member), LACP (802.3ad / 802.1AX, active/passive) vs PAgP (Cisco, desirable/auto), static `on`, member-matching requirements and the classic misconfigurations. The worked example's outcomes come from `etherChannelOutcome`. New `Figure` kind `"channel"`.
+- **Art** (`game/art/lessons.ts`): `channelFigure()` draws the 5x5 mode-pair grid (OK / PROT / IDLE / ON per cell, from `etherChannelOutcome`) with a LACP/PAgP legend. Wired into `LessonDeck` and `/dev/sprites`.
+- Tests (`tests/lessons.test.ts`): card exists; example lines match the solver; the whole grid is checked against an independently written rule; figure joins the shared sprite checks; 828 total.
+- Verified: lint, typecheck, 828 tests, `build:pages` (183 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow; screenshot read well (header abbreviations shortened to 3 letters afterwards; the micro font has no colon, so the legend uses dashes).
+- Known gaps: the card doesn't cover load-balancing hash choices (src-mac vs src-dst-ip) beyond one sentence.
+- Next: 6.2d Consistent-hash ring (gym 14).

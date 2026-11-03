@@ -35,7 +35,7 @@ import { TOWNS } from "@/content/world";
 import { PACKET, SPARK } from "@/game/art/effects";
 import { chipSprite, tagSprite } from "@/game/art/headers";
 import { encapsulate } from "@/game/engine/encap";
-import { stpFigure, aclFigure, budgetFigure, connectFigure, journeyFigure, bellmanFordFigure, certChainFigure, dhFigure, tlsFigure, dnsFigure, doraFigure, httpFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, cwndFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, tcpFlowFigure, vlsmFigure, windowFigure } from "@/game/art/lessons";
+import { channelFigure, stpFigure, aclFigure, budgetFigure, connectFigure, journeyFigure, bellmanFordFigure, certChainFigure, dhFigure, tlsFigure, dnsFigure, doraFigure, httpFigure, bgpFigure, countToInfinityFigure, crcFigure, csmaFigure, cwndFigure, dijkstraFigure, delaysFigure, fragFigure, hammingFigure, layerStackFigure, lpmFigure, macLearningFigure, subnetFigure, switchingFigure, tcpFlowFigure, vlsmFigure, windowFigure } from "@/game/art/lessons";
 import { silhouette } from "@/lib/pixel";
 
 const CREATURES: CreatureArt[] = [PINGKIT, TRACEVIX, FRAMADILLO, TRUNKADILLO, ACKORN, OAKWIND, STACKADON, BRAIDWYRM, CIDRAB, HOOTPATH, SYNACKLE, ORACLYNX, KEYVERN, FETCHIMERA, GIGAROC, SPANTOISE, AREADON, NATTOPUS, ACLAW, HASHORN, SPINEBACK, LOOPWARDEN];
@@ -298,6 +298,7 @@ function LessonSection({ scale }: { scale: number }) {
     ["tls vs quic", connectFigure()],
     ["acl matching", aclFigure()],
     ["stp root election", stpFigure()],
+    ["etherchannel modes", channelFigure()],
   ] as const;
   return (
     <section className="flex flex-col gap-3">

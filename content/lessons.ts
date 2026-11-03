@@ -1,5 +1,6 @@
+import { etherChannelOutcome } from "@/lib/net/lab";
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
@@ -20,7 +21,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel";
 
 export interface Lesson {
   id: string;
@@ -138,6 +139,8 @@ const aclSay = (i: number) => `${aclVerdicts[i].action} (${aclVerdicts[i].line =
 // gym 10: four switches in a ring with default priorities; the lowest MAC is the root
 const stp = stpDemo();
 const stpRole = (bridge: string, peer: string) => stp.ports.find((p) => p.bridge === bridge && p.peer === peer)!.role;
+
+const chanOutcome = (a: (typeof CHANNEL_MODES)[number], b: (typeof CHANNEL_MODES)[number]) => etherChannelOutcome(a, b);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
 
@@ -659,6 +662,26 @@ export const LESSONS: Record<number, Lesson[]> = {
           `Default priorities tie, so the lowest MAC wins: ${stp.root} is the root.`,
           `SW4 reaches the root two ways: through SW1 for ${19 + 19}, or through SW3 for ${19 + 4}. Its root port faces SW3, at cost ${stp.pathCost.SW4}.`,
           `On the SW1 to SW4 link, SW1 (cost ${stp.pathCost.SW1}) is designated and SW4's end is ${stpRole("SW4", "SW1")}. That one blocked port breaks the loop.`,
+        ],
+      },
+    },
+    {
+      id: "etherchannel-modes",
+      title: "EtherChannel: bundling links",
+      figure: "channel",
+      caption: "Each cell is the result for the mode on the row against the mode on the column, from the same code the quiz uses.",
+      paras: [
+        "STP would block all but one of several parallel links between two switches. An EtherChannel (a port channel) bundles them into one logical link instead, so STP sees a single link, all the member links carry traffic, and the bundle survives a member failing. Traffic is spread per flow, by hashing fields such as source and destination MAC or IP (and ports on some platforms), so one flow stays on one member and arrives in order. That means a single big transfer never exceeds one member's speed.",
+        "Two protocols can negotiate the bundle. LACP is the open one (IEEE 802.3ad, now 802.1AX) with modes active and passive; PAgP is Cisco's own, with desirable and auto. A side in active or desirable starts the negotiation, a passive or auto side only answers. So at least one end must initiate, and both ends must use the same protocol. Mode on skips negotiation and forces the bundle, so it only works against another on.",
+        "Members must match: the same speed, duplex and VLAN or trunk settings, or the bundle will not form. This is the classic misconfiguration: auto on both ends, or LACP on one end and PAgP on the other, and the ports stay as separate links with STP blocking all but one.",
+      ],
+      example: {
+        title: "Reading the grid",
+        lines: [
+          `active with passive: ${chanOutcome("active", "passive")}. Active asks, passive answers.`,
+          `passive with passive: ${chanOutcome("passive", "passive")}. Both wait for the other to ask.`,
+          `active with desirable: ${chanOutcome("active", "desirable")}. LACP and PAgP do not talk to each other.`,
+          `on with active: ${chanOutcome("on", "active")}. A forced bundle needs another forced bundle.`,
         ],
       },
     },
