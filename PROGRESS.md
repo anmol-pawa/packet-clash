@@ -836,3 +836,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 828 tests, `build:pages` (183 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow; screenshot read well (header abbreviations shortened to 3 letters afterwards; the micro font has no colon, so the legend uses dashes).
 - Known gaps: the card doesn't cover load-balancing hash choices (src-mac vs src-dst-ip) beyond one sentence.
 - Next: 6.2d Consistent-hash ring (gym 14).
+
+## 2026-11-04: 6.2d Lesson card: consistent-hash ring (gym 14)
+- Main was green locally (no stale lock). The Actions quota note has ended, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content** (`content/lessons.ts`): `LESSONS[14]` gets its first card, "Consistent hashing: a ring of owners": why hash mod N reshuffles almost everything, clockwise ownership, only ~1/N keys move (all to the new node), virtual nodes for balance, and real uses (caches, Dynamo-style stores, sticky load balancing). The example's numbers come from `ringMoved` and `ringLookup`. New `Figure` kind `"ring"`.
+- **Art** (`game/art/lessons.ts`): `ringFigure()` draws the ring with 3 nodes x 3 virtual points, 12 keys inside it, node D's points in pink, moved keys marked with a cross, plus the ring-vs-mod-N counts (3 of 12 vs 10 of 12). Owners and counts come from `lib/net/loadbalance` via `ringDemo()`. Wired into `LessonDeck` and `/dev/sprites`.
+- Tests (`tests/lessons.test.ts`): card exists; moved counts are 3 and 10; every moved key goes to D; unmoved keys keep an original owner; the ring moves fewer keys than mod N; figure joins the shared sprite checks; 830 total.
+- Verified: lint, typecheck, 830 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The last text line was clipped and then cramped on the first two screenshots; fixed.
+- Known gaps: the figure uses a fixed 12-key demo; no leave-node case (explained in text only).
+- Next: 6.2e Token bucket.

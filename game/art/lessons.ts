@@ -11,6 +11,7 @@ import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import { entryMatches, evaluateAcl, parseAclLine, prefixOfWildcard, type AclPacket, type AddrMatch } from "@/lib/net/acl";
 import { computeStp, effectivePriority, stpPortCost, type PortRole, type StpBridge, type StpLink, type StpResult, type EtherChannelMode } from "@/lib/net/stp";
 import { etherChannelOutcome, type ChannelOutcome } from "@/lib/net/lab";
+import { buildRing, ringHash, ringLookup, ringMoved } from "@/lib/net/loadbalance";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
 import { MICRO_H, microRows, microWidth } from "./microFont";
@@ -1648,5 +1649,70 @@ export function channelFigure(): SpriteDef {
   c.text(4, y0 + 5 * ch + 12, "PAGP - DESIRABLE AUTO", "#ffb35c");
   c.text(4, y0 + 5 * ch + 20, "OK BUNDLES  PROT MIXED PROTOCOLS", DIM);
   c.text(4, y0 + 5 * ch + 28, "IDLE NO INITIATOR  ON NEEDS ON", DIM);
+  return c.sprite();
+}
+
+/**
+ * The consistent-hash ring card: three nodes with three virtual nodes each,
+ * twelve keys, then node D joins. Owners, the moved count and the "hash mod N"
+ * comparison all come from `lib/net/loadbalance`.
+ */
+export const RING_NODES: readonly string[] = ["A", "B", "C"];
+export const RING_VNODES = 3;
+export const RING_KEYS: readonly string[] = Array.from({ length: 12 }, (_, i) => `user${i + 1}`);
+export const RING_COLOUR: Record<string, string> = { A: "#5cc8ff", B: "#ffb35c", C: "#6fe3a0", D: "#ff7ad9" };
+
+export function ringDemo() {
+  const after = [...RING_NODES, "D"];
+  const before = buildRing(RING_NODES, RING_VNODES);
+  const later = buildRing(after, RING_VNODES);
+  const owners = RING_KEYS.map((k) => ({ key: k, before: ringLookup(before, k), after: ringLookup(later, k), pos: ringHash(k) }));
+  const modMovedKeys = RING_KEYS.filter((k) => ringHash(k) % RING_NODES.length !== ringHash(k) % after.length).length;
+  return { points: later, owners, ringMoved: ringMoved(RING_KEYS, RING_NODES, after, RING_VNODES), modMoved: modMovedKeys };
+}
+
+export function ringFigure(): SpriteDef {
+  const c = new Canvas(160, 108);
+  c.panel();
+  c.ctext(80, 4, "CONSISTENT HASH RING", INK);
+  const cx = 38;
+  const cy = 56;
+  const at = (pos: number, r: number): [number, number] => {
+    const a = (pos / 2 ** 32) * Math.PI * 2 - Math.PI / 2;
+    return [Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r)];
+  };
+  const demo = ringDemo();
+  for (let i = 0; i < 360; i++) {
+    const [x, y] = at((i / 360) * 2 ** 32, 31);
+    c.set(x, y, "#4b3f8f");
+  }
+  for (const p of demo.points) {
+    const [x, y] = at(p.pos, 31);
+    const col = RING_COLOUR[p.node];
+    c.rect(x - 2, y - 2, 5, 5, OUTLINE);
+    c.rect(x - 1, y - 1, 3, 3, col);
+    if (p.node !== "D") c.set(x - 1, y - 1, INK);
+  }
+  for (const o of demo.owners) {
+    const [x, y] = at(o.pos, 21);
+    const moved = o.before !== o.after;
+    c.rect(x - 1, y - 1, 3, 3, moved ? RING_COLOUR[o.after] : RING_COLOUR[o.before]);
+    if (moved) {
+      c.set(x - 2, y, INK);
+      c.set(x + 2, y, INK);
+      c.set(x, y - 2, INK);
+      c.set(x, y + 2, INK);
+    }
+  }
+  const tx = 82;
+  c.text(tx, 18, "NODES A B C", INK);
+  c.text(tx, 26, "THREE POINTS EACH", DIM);
+  c.text(tx, 38, "KEY GOES CLOCKWISE", INK);
+  c.text(tx, 46, "TO THE NEXT POINT", INK);
+  c.text(tx, 60, "NODE D JOINS", RING_COLOUR.D);
+  c.text(tx, 68, `RING MOVES ${demo.ringMoved} OF ${RING_KEYS.length}`, "#6fe3a0");
+  c.text(tx, 76, "ALL TO D", "#6fe3a0");
+  c.text(tx, 86, "HASH MOD N MOVES", "#e0564c");
+  c.text(tx, 94, `${demo.modMoved} OF ${RING_KEYS.length}`, "#e0564c");
   return c.sprite();
 }

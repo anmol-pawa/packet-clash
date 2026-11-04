@@ -4,7 +4,7 @@ import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
-import { CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { RING_KEYS, RING_NODES, ringDemo, ringFigure, CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { etherChannelOutcome } from "@/lib/net/lab";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
@@ -380,9 +380,32 @@ describe("gym 13 lessons", () => {
   });
 });
 
+describe("gym 14 lessons", () => {
+  it("has the ring card, and its example comes from the loadbalance solver", () => {
+    const card = lessonsFor(14)[0];
+    expect(lessonsFor(14).map((l) => l.figure)).toEqual(["ring"]);
+    const d = ringDemo();
+    expect(d.ringMoved).toBe(3);
+    expect(d.modMoved).toBe(10);
+    expect(card.example!.lines[1]).toContain("3 of 12");
+    expect(card.example!.lines[2]).toContain("10 of 12");
+  });
+
+  it("moves keys only to the new node, and the ring moves far fewer keys than mod N", () => {
+    const d = ringDemo();
+    const moved = d.owners.filter((o) => o.before !== o.after);
+    expect(moved).toHaveLength(d.ringMoved);
+    expect(moved.every((o) => o.after === "D")).toBe(true);
+    expect(d.owners.filter((o) => o.before === o.after).every((o) => RING_NODES.includes(o.before))).toBe(true);
+    expect(d.ringMoved).toBeLessThan(d.modMoved);
+    expect(d.points).toHaveLength((RING_NODES.length + 1) * 3);
+    expect(d.owners).toHaveLength(RING_KEYS.length);
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure(), ringFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

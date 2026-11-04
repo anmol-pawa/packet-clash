@@ -1,6 +1,6 @@
 import { etherChannelOutcome } from "@/lib/net/lab";
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { ringDemo, RING_KEYS, CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
@@ -21,7 +21,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel" | "ring";
 
 export interface Lesson {
   id: string;
@@ -140,6 +140,7 @@ const aclSay = (i: number) => `${aclVerdicts[i].action} (${aclVerdicts[i].line =
 const stp = stpDemo();
 const stpRole = (bridge: string, peer: string) => stp.ports.find((p) => p.bridge === bridge && p.peer === peer)!.role;
 
+const ringWorked = ringDemo();
 const chanOutcome = (a: (typeof CHANNEL_MODES)[number], b: (typeof CHANNEL_MODES)[number]) => etherChannelOutcome(a, b);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
@@ -703,6 +704,27 @@ export const LESSONS: Record<number, Lesson[]> = {
           `A, TCP from 10.1.1.9 to port 22: ${aclSay(0)}. Line 2 would also match, but it is never reached.`,
           `B, TCP from 10.1.1.20 to port 22: ${aclSay(1)}.`,
           `C, UDP to port 53: ${aclSay(2)}. No line mentions UDP, so it falls through.`,
+        ],
+      },
+    },
+  ],
+  14: [
+    {
+      id: "consistent-hash-ring",
+      title: "Consistent hashing: a ring of owners",
+      figure: "ring",
+      caption: "Dots inside the ring are keys; a white-crossed dot changed owner when D joined.",
+      paras: [
+        "Spreading keys over servers with hash(key) mod N works until N changes. Add one server and almost every key lands somewhere new, so a cache loses nearly everything at once and the database behind it takes the hit. Consistent hashing fixes that. Hash both the servers and the keys onto the same circle of positions; each key belongs to the first server point you meet going clockwise from it.",
+        "When a server joins, it takes over only the keys between its points and the previous points on the ring, so about 1/N of the keys move, and they all move to the new server. When a server leaves, only its keys move, to the next point clockwise. Nothing else is reshuffled.",
+        "With one point per server the arcs are very uneven, so each server is placed at many virtual nodes (commonly dozens to hundreds). More points smooth the load and let a bigger machine own more of them. Real systems use this for cache clusters, sharded stores such as Dynamo-style databases, and load balancers that want the same client to reach the same backend.",
+      ],
+      example: {
+        title: "Adding a fourth node to the ring in the figure",
+        lines: [
+          `${RING_KEYS.length} keys, nodes A, B and C with three points each. Node D joins.`,
+          `On the ring ${ringWorked.ringMoved} of ${RING_KEYS.length} keys change owner, and every one of them moves to D.`,
+          `Hash mod N from 3 to 4 servers would move ${ringWorked.modMoved} of ${RING_KEYS.length}.`,
         ],
       },
     },

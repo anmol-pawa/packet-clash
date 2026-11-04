@@ -140,7 +140,7 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
   - [x] 6.2a ACL matching (gym 13).
   - [x] 6.2b STP root election (gym 10).
   - [x] 6.2c EtherChannel (gym 10).
-  - [ ] 6.2d Consistent-hash ring (gym 14).
+  - [x] 6.2d Consistent-hash ring (gym 14).
   - [ ] 6.2e Token bucket (gym 15 or 16, wherever rate limiting is taught).
   - [ ] 6.2f Clos / leaf-spine fabric (gym 15).
 - [ ] 6.3 Update the Leitner box, daily challenge and interview deck to draw from the new topics; migrate saves safely (older saves load with empty progress for new gyms).
