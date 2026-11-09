@@ -845,3 +845,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 830 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The last text line was clipped and then cramped on the first two screenshots; fixed.
 - Known gaps: the figure uses a fixed 12-key demo; no leave-node case (explained in text only).
 - Next: 6.2e Token bucket.
+
+## 2026-11-09: 6.2e Lesson card: token bucket (gym 14)
+- Main was green locally (no stale lock). Actions quota note has ended; CI and the Pages deploy were checked after the push (see end of entry).
+- **Content** (`content/lessons.ts`): `LESSONS[14]` gets a second card, "Token bucket: allow bursts, cap the average": capacity vs refill rate, 429/Retry-After, burst-then-settle behaviour, comparison with leaky bucket and fixed/sliding windows, atomic shared-store limiters. The worked example (capacity 4, 1 token/s; burst of six at t=0, four at t=3, two at t=10 → 9 of 12 allowed) comes from `tokenBucket` in `lib/net/ratelimit`. New `Figure` kind `"bucket"`.
+- **Art** (`game/art/lessons.ts`): `bucketFigure()` draws, per request, the tokens on hand (yellow cells) and the verdict (green/red). Wired into `LessonDeck` and `/dev/sprites`.
+- Tests (`tests/lessons.test.ts`): card order; verdicts equal `tokenBucket`; exact allow/deny pattern; level never exceeds capacity and allow ⇔ at least one whole token; example text matches; figure joins shared sprite checks. 832 total.
+- Verified: lint, typecheck, 832 tests, `build:pages` (184 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow; figure screenshot read cleanly first time.
+- Known gaps: no leaky-bucket or sliding-window figure (text only).
+- Next: 6.2f Clos / leaf-spine fabric (gym 15).

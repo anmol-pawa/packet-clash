@@ -4,7 +4,8 @@ import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
-import { RING_KEYS, RING_NODES, ringDemo, ringFigure, CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { BUCKET_CAPACITY, BUCKET_TIMES, bucketDemo, bucketFigure, RING_KEYS, RING_NODES, ringDemo, ringFigure, CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { tokenBucket } from "@/lib/net/ratelimit";
 import { etherChannelOutcome } from "@/lib/net/lab";
 import { totalBytes } from "@/game/engine/encap";
 import { tcpSteps } from "@/game/engine/tcpMachine";
@@ -383,7 +384,7 @@ describe("gym 13 lessons", () => {
 describe("gym 14 lessons", () => {
   it("has the ring card, and its example comes from the loadbalance solver", () => {
     const card = lessonsFor(14)[0];
-    expect(lessonsFor(14).map((l) => l.figure)).toEqual(["ring"]);
+    expect(lessonsFor(14).map((l) => l.figure)[0]).toBe("ring");
     const d = ringDemo();
     expect(d.ringMoved).toBe(3);
     expect(d.modMoved).toBe(10);
@@ -403,9 +404,33 @@ describe("gym 14 lessons", () => {
   });
 });
 
+describe("gym 14 token bucket card", () => {
+  it("is the second card, and its example comes from the rate-limit solver", () => {
+    expect(lessonsFor(14).map((l) => l.figure)).toEqual(["ring", "bucket"]);
+    const d = bucketDemo();
+    expect(d.allowed).toEqual(tokenBucket(BUCKET_TIMES, BUCKET_CAPACITY, 1));
+    expect(d.allowed.slice(0, 6)).toEqual([true, true, true, true, false, false]);
+    expect(d.allowed.slice(6, 10)).toEqual([true, true, true, false]);
+    expect(d.allowed.slice(10)).toEqual([true, true]);
+    const lines = lessonsFor(14)[1].example!.lines;
+    expect(lines[0]).toContain("4 are allowed and 2 are rejected");
+    expect(lines[1]).toContain("3 allowed, 1 rejected");
+    expect(lines[2]).toContain("9 of 12");
+  });
+
+  it("never holds more than capacity, and a request is allowed exactly when a whole token is on hand", () => {
+    const d = bucketDemo();
+    d.before.forEach((lvl, i) => {
+      expect(lvl).toBeLessThanOrEqual(BUCKET_CAPACITY);
+      expect(d.allowed[i]).toBe(lvl >= 1);
+    });
+    expect(d.before[10]).toBe(BUCKET_CAPACITY);
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure(), ringFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure(), ringFigure(), bucketFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

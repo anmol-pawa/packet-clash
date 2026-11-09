@@ -11,6 +11,7 @@ import { simulateSwitch, type Frame } from "@/lib/net/switching";
 import { entryMatches, evaluateAcl, parseAclLine, prefixOfWildcard, type AclPacket, type AddrMatch } from "@/lib/net/acl";
 import { computeStp, effectivePriority, stpPortCost, type PortRole, type StpBridge, type StpLink, type StpResult, type EtherChannelMode } from "@/lib/net/stp";
 import { etherChannelOutcome, type ChannelOutcome } from "@/lib/net/lab";
+import { tokenBucket } from "@/lib/net/ratelimit";
 import { buildRing, ringHash, ringLookup, ringMoved } from "@/lib/net/loadbalance";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
@@ -1714,5 +1715,60 @@ export function ringFigure(): SpriteDef {
   c.text(tx, 76, "ALL TO D", "#6fe3a0");
   c.text(tx, 86, "HASH MOD N MOVES", "#e0564c");
   c.text(tx, 94, `${demo.modMoved} OF ${RING_KEYS.length}`, "#e0564c");
+  return c.sprite();
+}
+
+/**
+ * The token-bucket card: capacity 4, refill 1 token/s, a burst of six at t=0,
+ * four at t=3, two at t=10. Verdicts come from `tokenBucket`; the token level
+ * before each request is replayed here only to draw the bars.
+ */
+export const BUCKET_CAPACITY = 4;
+export const BUCKET_RATE = 1;
+export const BUCKET_TIMES: readonly number[] = [0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 10, 10];
+
+export function bucketDemo() {
+  const allowed = tokenBucket(BUCKET_TIMES, BUCKET_CAPACITY, BUCKET_RATE);
+  let tokens = BUCKET_CAPACITY;
+  let last = BUCKET_TIMES[0];
+  const before = BUCKET_TIMES.map((t, i) => {
+    tokens = Math.min(BUCKET_CAPACITY, tokens + (t - last) * BUCKET_RATE);
+    last = t;
+    const level = tokens;
+    if (allowed[i]) tokens -= 1;
+    return level;
+  });
+  return { allowed, before, allowedCount: allowed.filter(Boolean).length };
+}
+
+export function bucketFigure(): SpriteDef {
+  const c = new Canvas(160, 100);
+  c.panel();
+  c.ctext(80, 4, "TOKEN BUCKET", INK);
+  const d = bucketDemo();
+  const x0 = 12;
+  const step = 11;
+  const GOOD = "#6fe3a0";
+  const BAD = "#e0564c";
+  c.text(2, 14, "T", DIM);
+  c.text(2, 26, "TOK", DIM);
+  c.text(2, 54, "REQ", DIM);
+  BUCKET_TIMES.forEach((t, i) => {
+    const x = x0 + 4 + i * step;
+    if (i === 0 || BUCKET_TIMES[i - 1] !== t) c.text(x - 1, 14, String(t), INK);
+    // tokens available just before this request: stacked cells, filled from the bottom
+    for (let k = 0; k < BUCKET_CAPACITY; k++) {
+      const filled = k < Math.floor(d.before[i]);
+      c.rect(x, 22 + (BUCKET_CAPACITY - 1 - k) * 6, 8, 5, filled ? "#ffd257" : "#2a2152");
+    }
+    const ok = d.allowed[i];
+    c.rect(x, 50, 8, 8, OUTLINE);
+    c.rect(x + 1, 51, 6, 6, ok ? GOOD : BAD);
+    c.set(x + 1, 51, INK);
+  });
+  c.text(8, 66, `CAPACITY ${BUCKET_CAPACITY} REFILL ${BUCKET_RATE} PER SEC`, DIM);
+  c.text(8, 76, `BURST OF SIX AT 0 PASSES ${d.allowed.slice(0, 6).filter(Boolean).length}`, GOOD);
+  c.text(8, 84, "T3 REFILLED THREE T10 CAPPED AT FOUR", INK);
+  c.text(8, 92, `${d.allowedCount} OF ${BUCKET_TIMES.length} ALLOWED`, GOOD);
   return c.sprite();
 }

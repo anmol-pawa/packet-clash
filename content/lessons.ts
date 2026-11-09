@@ -1,6 +1,6 @@
 import { etherChannelOutcome } from "@/lib/net/lab";
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { ringDemo, RING_KEYS, CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { bucketDemo, BUCKET_CAPACITY, BUCKET_RATE, BUCKET_TIMES, ringDemo, RING_KEYS, CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
@@ -21,7 +21,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel" | "ring";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel" | "ring" | "bucket";
 
 export interface Lesson {
   id: string;
@@ -141,6 +141,7 @@ const stp = stpDemo();
 const stpRole = (bridge: string, peer: string) => stp.ports.find((p) => p.bridge === bridge && p.peer === peer)!.role;
 
 const ringWorked = ringDemo();
+const bucketWorked = bucketDemo();
 const chanOutcome = (a: (typeof CHANNEL_MODES)[number], b: (typeof CHANNEL_MODES)[number]) => etherChannelOutcome(a, b);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
@@ -725,6 +726,25 @@ export const LESSONS: Record<number, Lesson[]> = {
           `${RING_KEYS.length} keys, nodes A, B and C with three points each. Node D joins.`,
           `On the ring ${ringWorked.ringMoved} of ${RING_KEYS.length} keys change owner, and every one of them moves to D.`,
           `Hash mod N from 3 to 4 servers would move ${ringWorked.modMoved} of ${RING_KEYS.length}.`,
+        ],
+      },
+    },
+    {
+      id: "token-bucket",
+      title: "Token bucket: allow bursts, cap the average",
+      figure: "bucket",
+      caption: "Yellow cells are tokens on hand before each request; green passed, red was rejected.",
+      paras: [
+        "A rate limiter has to say yes or no to every request in microseconds, without a queue. The token bucket does it with two numbers. The bucket holds at most `capacity` tokens and refills at `rate` tokens per second. A request takes one token and is allowed; if the bucket is empty it is rejected (an API usually answers HTTP 429 with a Retry-After hint).",
+        "Because an idle client refills the bucket up to its capacity, it may later send a burst of that size at once, then settle to the refill rate. The long-run average can never exceed the rate, and the largest burst can never exceed the capacity. Tune capacity for burst tolerance and rate for sustained load.",
+        "Compare the neighbours. A leaky bucket drains at a fixed rate and smooths traffic into an even stream, so it shapes rather than allows bursts. A fixed window counter is cheap but lets twice the limit through around a window boundary; sliding windows fix that at a higher memory or CPU cost. Distributed limiters keep the counters in a shared store such as Redis, usually with an atomic script so two gateways cannot both spend the last token.",
+      ],
+      example: {
+        title: "Capacity 4, refill 1 per second",
+        lines: [
+          `Six requests arrive at t=0: ${bucketWorked.allowed.slice(0, 6).filter(Boolean).length} are allowed and ${bucketWorked.allowed.slice(0, 6).filter((a) => !a).length} are rejected.`,
+          `Four arrive at t=3, after three seconds of refill: ${bucketWorked.allowed.slice(6, 10).filter(Boolean).length} allowed, ${bucketWorked.allowed.slice(6, 10).filter((a) => !a).length} rejected.`,
+          `Two arrive at t=10: the bucket refilled only to its capacity of ${BUCKET_CAPACITY}, so both pass. ${bucketWorked.allowedCount} of ${BUCKET_TIMES.length} requests were allowed (rate ${BUCKET_RATE}/s).`,
         ],
       },
     },
