@@ -4,7 +4,7 @@ import { dnsCost, pageLoadRtts } from "@/lib/net/application";
 import { ENCAP_STEPS, LESSONS, WORKED, lessonsFor, markLessonsSeen, showLessonsFirst } from "@/content/lessons";
 import { TOWNS } from "@/content/world";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
-import { BUCKET_CAPACITY, BUCKET_TIMES, bucketDemo, bucketFigure, RING_KEYS, RING_NODES, ringDemo, ringFigure, CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
+import { FABRIC_SPINES, fabricDemo, fabricFigure, BUCKET_CAPACITY, BUCKET_TIMES, bucketDemo, bucketFigure, RING_KEYS, RING_NODES, ringDemo, ringFigure, CHANNEL_CELL, CHANNEL_MODES, channelFigure, STP_DEMO_BRIDGES, STP_DEMO_LINKS, stpDemo, stpFigure, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclFigure, aclHit, BUDGET_ROWS, CONNECT_ROWS, JOURNEY_LABELS, budgetFigure, connectFigure, journeyFigure, CERT_CHAIN, DH_DEMO, TLS_FLOW, certChainFigure, dhFigure, tlsFigure, DNS_COLUMNS, DNS_FLOW, DORA_LINES, HTTP_DEMO, HTTP_ROWS, dnsFigure, doraFigure, httpCells, httpFigure, TCP_FLOW, WINDOW_DEMO, bellmanFordFigure, bgpFigure, countToInfinityFigure, cwndFigure, dijkstraFigure, stateTrail, tcpFlowFigure, windowFigure, windowSends, BURST, CRC_DEMO, HAMMING_DEMO, OSI_LAYERS, TCPIP_LAYERS, TDM_FRAMES, crcFigure, csmaFigure, delaysFigure, fragFigure, hammingFigure, lpmFigure, subnetFigure, vlsmFigure, layerStackFigure, macLearningFigure, packetOrder, switchingFigure } from "@/game/art/lessons";
 import { tokenBucket } from "@/lib/net/ratelimit";
 import { etherChannelOutcome } from "@/lib/net/lab";
 import { totalBytes } from "@/game/engine/encap";
@@ -428,9 +428,23 @@ describe("gym 14 token bucket card", () => {
   });
 });
 
+describe("gym 15 leaf-spine card", () => {
+  it("is the first card of the gym and its numbers come from the datacenter solvers", () => {
+    expect(lessonsFor(15).map((l) => l.figure)).toEqual(["fabric"]);
+    const d = fabricDemo();
+    expect(d).toMatchObject({ downPerLeaf: 44, leaves: 32, servers: 1408, pathsBetweenLeaves: FABRIC_SPINES, links: 16 });
+    expect(d.ratio).toBeCloseTo(2.75, 10);
+    const lines = lessonsFor(15)[0].example!.lines;
+    expect(lines[0]).toContain("44 face servers");
+    expect(lines[1]).toContain("32 leaves, 1408 servers");
+    expect(lines[2]).toContain("4 equal-cost paths");
+    expect(lines[2]).toContain("2.75:1");
+  });
+});
+
 describe("lesson figures", () => {
   it("are valid sprites with an outline colour and several shades", () => {
-    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure(), ringFigure(), bucketFigure()]) {
+    for (const def of [layerStackFigure(), switchingFigure(), delaysFigure(), crcFigure(), hammingFigure(), csmaFigure(), macLearningFigure(), subnetFigure(), vlsmFigure(), lpmFigure(), fragFigure(), dijkstraFigure(), bellmanFordFigure(), countToInfinityFigure(), bgpFigure(), tcpFlowFigure(), windowFigure(), cwndFigure(), dnsFigure(), httpFigure(), doraFigure(), tlsFigure(), certChainFigure(), dhFigure(), journeyFigure(), budgetFigure(), connectFigure(), aclFigure(), stpFigure(), channelFigure(), ringFigure(), bucketFigure(), fabricFigure()]) {
       const g = parseSprite(def);
       expect(g.width).toBeGreaterThan(60);
       expect(g.width).toBeLessThanOrEqual(160); // fits an iPhone at 2× scale

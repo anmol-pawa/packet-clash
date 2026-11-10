@@ -854,3 +854,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 832 tests, `build:pages` (184 files precached). Sprite viewer at desktop and iPhone 14: no console errors, no overflow; figure screenshot read cleanly first time.
 - Known gaps: no leaky-bucket or sliding-window figure (text only).
 - Next: 6.2f Clos / leaf-spine fabric (gym 15).
+
+## 2026-11-10: 6.2f Lesson card: leaf-spine fabric (gym 15)
+- Main was green locally (no stale lock). This session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content** (`content/lessons.ts`): `LESSONS[15]` gets its first card, "Leaf-spine: every leaf is one spine away": why two tiers replaced access/aggregation/core trees, full leaf-to-spine mesh, two hops and ECMP across as many paths as spines, scale-out by adding spines or leaves, port arithmetic and oversubscription, VXLAN overlay on a routed underlay. The worked example (48-port leaf, 4 spines, 32-port spine → 44 down, 32 leaves, 1408 servers, 4 paths, 2.75:1 at 25G/100G) comes from `leafSpine` and `oversubscription`. New `Figure` kind `"fabric"`.
+- **Art** (`game/art/lessons.ts`): `fabricFigure()` draws 4 spines, 4 leaves, the 16-link mesh and servers under each leaf; text numbers come from `fabricDemo()`. Wired into `LessonDeck` and `/dev/sprites`.
+- Tests (`tests/lessons.test.ts`): card order; sizing numbers and the example text match the solvers; figure joins the shared sprite checks; 833 total.
+- Verified: lint, typecheck, 833 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The first screenshot had the mesh squashed flat; I increased the tier spacing and it reads clearly.
+- Known gaps: no failure case (a spine down) in the figure; fat-tree is in questions only.
+- Next: 6.3 Leitner box, daily challenge and interview deck draw from the new topics, with safe save migration.

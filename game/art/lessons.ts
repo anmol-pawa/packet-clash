@@ -12,6 +12,7 @@ import { entryMatches, evaluateAcl, parseAclLine, prefixOfWildcard, type AclPack
 import { computeStp, effectivePriority, stpPortCost, type PortRole, type StpBridge, type StpLink, type StpResult, type EtherChannelMode } from "@/lib/net/stp";
 import { etherChannelOutcome, type ChannelOutcome } from "@/lib/net/lab";
 import { tokenBucket } from "@/lib/net/ratelimit";
+import { leafSpine, oversubscription } from "@/lib/net/datacenter";
 import { buildRing, ringHash, ringLookup, ringMoved } from "@/lib/net/loadbalance";
 import type { SpriteDef } from "@/lib/pixel";
 import { chipRamp } from "./headers";
@@ -1770,5 +1771,65 @@ export function bucketFigure(): SpriteDef {
   c.text(8, 76, `BURST OF SIX AT 0 PASSES ${d.allowed.slice(0, 6).filter(Boolean).length}`, GOOD);
   c.text(8, 84, "T3 REFILLED THREE T10 CAPPED AT FOUR", INK);
   c.text(8, 92, `${d.allowedCount} OF ${BUCKET_TIMES.length} ALLOWED`, GOOD);
+  return c.sprite();
+}
+
+/**
+ * The leaf-spine card: every leaf connects to every spine, so any two leaves
+ * are exactly one spine apart and there are as many equal-cost paths as spines.
+ * The sizing example (48-port leaf, 4 uplinks, 32-port spine) comes from
+ * `leafSpine` and `oversubscription` in `lib/net/datacenter`.
+ */
+export const FABRIC_SPINES = 4;
+export const FABRIC_LEAVES = 4;
+export const FABRIC_LEAF_PORTS = 48;
+export const FABRIC_SPINE_PORTS = 32;
+export const FABRIC_SERVER_GBPS = 25;
+export const FABRIC_UPLINK_GBPS = 100;
+
+export function fabricDemo() {
+  const sized = leafSpine(FABRIC_LEAF_PORTS, FABRIC_SPINES, FABRIC_SPINE_PORTS);
+  const ratio = oversubscription(sized.downPerLeaf, FABRIC_SERVER_GBPS, FABRIC_SPINES, FABRIC_UPLINK_GBPS);
+  return { ...sized, ratio, links: FABRIC_SPINES * FABRIC_LEAVES };
+}
+
+export function fabricFigure(): SpriteDef {
+  const c = new Canvas(160, 126);
+  c.panel();
+  c.ctext(80, 4, "LEAF SPINE FABRIC", INK);
+  const d = fabricDemo();
+  const sx = (i: number) => 22 + i * 38;
+  const lx = (i: number) => 22 + i * 38;
+  const SY = 18;
+  const LY = 58;
+  const line = (x0: number, y0: number, x1: number, y1: number, col: string) => {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let i = 0; i <= n; i++) c.set(Math.round(x0 + ((x1 - x0) * i) / n), Math.round(y0 + ((y1 - y0) * i) / n), col);
+  };
+  for (let s = 0; s < FABRIC_SPINES; s++) for (let l = 0; l < FABRIC_LEAVES; l++) line(sx(s), SY + 5, lx(l), LY, s === 1 || s === 2 ? "#5b4fa8" : "#8f86c4");
+  for (let s = 0; s < FABRIC_SPINES; s++) {
+    c.rect(sx(s) - 9, SY - 4, 18, 9, OUTLINE);
+    c.rect(sx(s) - 8, SY - 3, 16, 7, "#ffb35c");
+    c.hline(sx(s) - 8, SY - 3, 16, "#ffd9a0");
+    c.hline(sx(s) - 8, SY + 3, 16, "#b8742c");
+  }
+  for (let l = 0; l < FABRIC_LEAVES; l++) {
+    c.rect(lx(l) - 9, LY, 18, 8, OUTLINE);
+    c.rect(lx(l) - 8, LY + 1, 16, 6, "#5cc8ff");
+    c.hline(lx(l) - 8, LY + 1, 16, "#a8e4ff");
+    c.hline(lx(l) - 8, LY + 6, 16, "#2d7fa8");
+    for (let k = -1; k <= 1; k++) {
+      line(lx(l), LY + 8, lx(l) + k * 7, LY + 14, "#6fe3a0");
+      c.rect(lx(l) + k * 7 - 2, LY + 14, 5, 4, OUTLINE);
+      c.rect(lx(l) + k * 7 - 1, LY + 15, 3, 2, "#6fe3a0");
+    }
+  }
+  c.text(2, 18, "SP", "#ffb35c");
+  c.text(2, 59, "LF", "#5cc8ff");
+  c.text(8, 82, `${d.links} LINKS ${FABRIC_LEAVES} LEAVES TIMES ${FABRIC_SPINES} SPINES`, DIM);
+  c.text(8, 90, `${d.pathsBetweenLeaves} EQUAL COST PATHS LEAF TO LEAF`, INK);
+  c.text(8, 100, `${FABRIC_LEAF_PORTS} PORT LEAF ${d.downPerLeaf} DOWN ${FABRIC_SPINES} UP`, DIM);
+  c.text(8, 108, `${d.leaves} LEAVES ${d.servers} SERVERS`, "#6fe3a0");
+  c.text(8, 116, `OVERSUB ${d.ratio.toFixed(2)} TO 1`, "#ffd257");
   return c.sprite();
 }

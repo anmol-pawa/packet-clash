@@ -1,6 +1,6 @@
 import { etherChannelOutcome } from "@/lib/net/lab";
 import { encapsulate, totalBytes } from "@/game/engine/encap";
-import { bucketDemo, BUCKET_CAPACITY, BUCKET_RATE, BUCKET_TIMES, ringDemo, RING_KEYS, CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
+import { fabricDemo, FABRIC_SPINES, FABRIC_LEAF_PORTS, FABRIC_SPINE_PORTS, bucketDemo, BUCKET_CAPACITY, BUCKET_RATE, BUCKET_TIMES, ringDemo, RING_KEYS, CHANNEL_MODES, stpDemo, ACL_DEMO_LINES, ACL_DEMO_PROBES, aclHit, CERT_CHAIN, DH_DEMO, BF_DEST, DHCP_DEMO, DNS_FLOW, HTTP_DEMO, BGP_CHAIN, CRC_DEMO, CTI_GRAPH, CWND_DEMO, HANDSHAKE_DEMO, WINDOW_DEMO, windowSends, ROUTE_DEMO, FRAG_DEMO, HAMMING_DEMO, LPM_DEMO, MAC_DEMO, SUBNET_DEMO, VLSM_DEMO } from "@/game/art/lessons";
 import { URL_JOURNEY, connectRtts, journeyRtts } from "@/lib/net/journey";
 import { diffieHellman, TLS13_HANDSHAKE } from "@/lib/net/security";
 import { DHCP_DORA, dhcpTimers, dnsCost, pageLoadRtts } from "@/lib/net/application";
@@ -21,7 +21,7 @@ import { bandwidthDelayProduct, circuitUsers, probMoreThanActive, propagationDel
  * solvers the quiz uses (and checked in tests/lessons.test.ts).
  */
 
-export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel" | "ring" | "bucket";
+export type Figure = "layers" | "encap" | "switching" | "delays" | "crc" | "hamming" | "csmacd" | "macLearn" | "subnet" | "vlsm" | "lpm" | "frag" | "dijkstra" | "bellman" | "cti" | "bgp" | "tcpflow" | "window" | "cwnd" | "dns" | "http" | "dora" | "tls" | "pki" | "dh" | "journey" | "budget" | "connect" | "acl" | "stp" | "channel" | "ring" | "bucket" | "fabric";
 
 export interface Lesson {
   id: string;
@@ -142,6 +142,7 @@ const stpRole = (bridge: string, peer: string) => stp.ports.find((p) => p.bridge
 
 const ringWorked = ringDemo();
 const bucketWorked = bucketDemo();
+const fabricWorked = fabricDemo();
 const chanOutcome = (a: (typeof CHANNEL_MODES)[number], b: (typeof CHANNEL_MODES)[number]) => etherChannelOutcome(a, b);
 
 const encapLine = ENCAP_STEPS.map((s) => `${s.pdu} ${totalBytes(s)} B`).join(" → ");
@@ -745,6 +746,27 @@ export const LESSONS: Record<number, Lesson[]> = {
           `Six requests arrive at t=0: ${bucketWorked.allowed.slice(0, 6).filter(Boolean).length} are allowed and ${bucketWorked.allowed.slice(0, 6).filter((a) => !a).length} are rejected.`,
           `Four arrive at t=3, after three seconds of refill: ${bucketWorked.allowed.slice(6, 10).filter(Boolean).length} allowed, ${bucketWorked.allowed.slice(6, 10).filter((a) => !a).length} rejected.`,
           `Two arrive at t=10: the bucket refilled only to its capacity of ${BUCKET_CAPACITY}, so both pass. ${bucketWorked.allowedCount} of ${BUCKET_TIMES.length} requests were allowed (rate ${BUCKET_RATE}/s).`,
+        ],
+      },
+    },
+  ],
+  15: [
+    {
+      id: "leaf-spine",
+      title: "Leaf-spine: every leaf is one spine away",
+      figure: "fabric",
+      caption: "Orange spines, blue leaves, green servers. Every leaf links to every spine, and servers never plug into a spine.",
+      paras: [
+        "Old datacenters used a tree: access, aggregation, core. Traffic between two racks climbed to the top and the uplinks became the bottleneck, so spanning tree also blocked links to avoid loops. Modern fabrics use two tiers instead. Servers plug into leaf switches, and every leaf has one uplink to every spine. Leaves never link to leaves and spines never link to spines.",
+        "That gives a fixed shape: any two leaves are exactly two hops apart (leaf, spine, leaf), and there are as many equal-cost paths as there are spines. The fabric runs routing (commonly BGP or OSPF on routed links) with ECMP, which hashes each flow onto one spine so packets of a flow stay in order. To add bandwidth, add spines; to add servers, add leaves, until you run out of spine ports.",
+        "Sizing is port arithmetic. A leaf with P ports and U uplinks has P - U server ports. A spine with S ports has one port per leaf, so the fabric has S leaves and (P - U) x S servers. The oversubscription ratio is server bandwidth into a leaf divided by its uplink bandwidth; 1:1 is non-blocking, and 2 to 3:1 is common when traffic is not all cross-rack. Overlays such as VXLAN then run on top of this routed underlay.",
+      ],
+      example: {
+        title: `${FABRIC_LEAF_PORTS}-port leaves, ${FABRIC_SPINES} spines, ${FABRIC_SPINE_PORTS}-port spines`,
+        lines: [
+          `Each leaf keeps ${FABRIC_SPINES} ports for uplinks, so ${fabricWorked.downPerLeaf} face servers.`,
+          `Each spine has ${FABRIC_SPINE_PORTS} ports, one per leaf: ${fabricWorked.leaves} leaves, ${fabricWorked.servers} servers.`,
+          `Any two leaves have ${fabricWorked.pathsBetweenLeaves} equal-cost paths. With 25G servers and 100G uplinks the ratio is ${fabricWorked.ratio.toFixed(2)}:1.`,
         ],
       },
     },
