@@ -49,3 +49,49 @@ describe("battle decks", () => {
     expect(keys(demoDeck(7))).toEqual(keys(deck));
   });
 });
+
+describe("Cisco Cove and Scale Citadel decks (6.3)", () => {
+  const all = [...BANK, ...GENERATORS];
+
+  it("every CCNA and interview card is claimed by a gym on purpose, and every gym 10-16 has a deep pool", async () => {
+    const { focusGym } = await import("@/content/questions/decks");
+    const pool: Record<number, number> = {};
+    for (const x of all) {
+      const g = focusGym(x.topic, x.id);
+      if (g === null) {
+        expect(["ccna", "interview"]).not.toContain(x.topic);
+        continue;
+      }
+      pool[g] = (pool[g] ?? 0) + 1;
+    }
+    for (const gym of [10, 11, 12, 13, 14, 15, 16]) expect(pool[gym], `gym ${gym}`).toBeGreaterThanOrEqual(25);
+    expect(focusGym("ccna", "gen-ccna-stp-root")).toBe(10);
+    expect(focusGym("ccna", "ospf-dr-election")).toBe(11);
+    expect(focusGym("ccna", "gen-ccna-natpool")).toBe(12);
+    expect(focusGym("ccna", "gen-acl-verdict")).toBe(13);
+    expect(focusGym("interview", "gen-sde-ringmoved")).toBe(14);
+    expect(focusGym("interview", "gen-sde-leafspine")).toBe(15);
+    expect(focusGym("interview", "dbg-502")).toBe(16);
+    expect(focusGym("models", "osi-layers")).toBeNull();
+  });
+
+  it("each new gym deck is full, unique, seeded, graded correctly and stays on its own chapter", async () => {
+    const { focusGym } = await import("@/content/questions/decks");
+    const idOf = (q: { id: string; topic: string }) => q.id;
+    const genIds = new Set(GENERATORS.map((g) => g.id));
+    for (let gym = 10; gym <= 16; gym++) {
+      const s = startSession(EMPTY_LEITNER);
+      const deck = gymDeck(s, gym, 7);
+      expect(deck).toHaveLength(DECK_SIZE);
+      expect(new Set(keys(deck)).size).toBe(DECK_SIZE);
+      expect(keys(gymDeck(s, gym, 7))).toEqual(keys(deck));
+      for (const q of deck) {
+        expect(grade(q, correctResponse(q))).toBe(true);
+        // Generated questions carry the generator id's stem; fixed ones their own id.
+        const src = all.find((x) => x.id === idOf(q) || (genIds.has(x.id) && q.id.startsWith(x.id)));
+        expect(src, q.id).toBeDefined();
+        expect(focusGym(src!.topic, src!.id), `${q.id} in gym ${gym}`).toBe(gym);
+      }
+    }
+  });
+});

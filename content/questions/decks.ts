@@ -33,10 +33,38 @@ export const GYM_TOPICS: Readonly<Record<number, readonly TopicId[]>> = {
   16: ["interview"],
 };
 
+/**
+ * The finer split of the two big topics. Gyms 10-13 share "ccna" and 14-16
+ * share "interview", so each gym also keeps the cards whose id starts with one
+ * of its prefixes (first matching rule wins; an unmatched card falls to gym 12 or 16,
+ * and a test keeps that set empty). Generator ids start with `gen-`.
+ */
+const FOCUS_RULES: Readonly<Record<"ccna" | "interview", readonly (readonly [number, RegExp])[]>> = {
+  ccna: [
+    [13, /^(acl|wlan|sec|auto)-|^ccna-(ips|wlc)|^gen-(wildcard|acl)|^gen-ccna-(wlan|json|rest|plane)/],
+    [10, /^(stp|rstp|etherchannel|port|dai|native|dtp|cdp|dhcp-snooping|router-on-a-stick|ccna)-|^gen-(poe|cable|frame|ping|traceroute)|^gen-ccna-(stp|etherchannel|secport)/],
+    [11, /^(iprt|ospf|eigrp|fhrp|hsrp|glbp|v6)-|^gen-(route|ad|floating|ospf|eigrp)|^gen-ccna-(v6|eui|hsrp)/],
+    [12, /^(nat|ntp|dns|snmp|syslog|qos|dhcp)-|^gen-ccna-(nat|syslog|dscp)/],
+  ],
+  interview: [
+    [14, /^(lb|rl)-|^iv-lb|^gen-sde-(wrr|leastconn|iphash|modmoved|ringmoved|tokenbucket|fixedwindow|backoff|breaker|retryamp)/],
+    [15, /^(dc|tp|rt)-|^iv-(websocket|tcp-vs-udp|stun)|^gen-sde-(mathis|wscale|slowstart|timewait|bufferbloat|rtp|jitterbuf|voip|polling|longpoll|oversub|leafspine|fattree|vxlan|vpcips|podcidr)/],
+  ],
+};
+
+/** Which of gyms 10-16 a CCNA or interview card belongs to (null for every other topic). */
+export function focusGym(topic: TopicId, id: string): number | null {
+  if (topic !== "ccna" && topic !== "interview") return null;
+  for (const [gym, re] of FOCUS_RULES[topic]) if (re.test(id)) return gym;
+  return topic === "ccna" ? 12 : 16;
+}
+
 /** A gym battle's deck: its chapter's cards first, then any chapter's, never the same card twice. */
 export function gymDeck(s: LeitnerState, gym: number, seed: number, size = DECK_SIZE): Question[] {
   const topics = GYM_TOPICS[gym];
-  const own = pickDeck(s, BANK, GENERATORS, { seed, size, topics });
+  const split = gym >= 10;
+  const focus = <T extends { id: string; topic: TopicId }>(x: T) => !split || focusGym(x.topic, x.id) === gym;
+  const own = pickDeck(s, BANK.filter(focus), GENERATORS.filter(focus), { seed, size, topics });
   if (own.length >= size) return own;
   const used = new Set(own.map((q) => cardKey(q.id)));
   const rest = pickDeck(

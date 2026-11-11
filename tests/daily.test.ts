@@ -45,3 +45,13 @@ describe("daily challenge", () => {
     expect(normalizeDaily({ last: "yesterday", streak: -3, best: 2.7 })).toEqual({ last: null, streak: 0, best: 2, score: 0 });
   });
 });
+
+describe("daily challenge draws from the new chapters (6.3)", () => {
+  it("over a few months the day's deck includes CCNA and interview cards", async () => {
+    const { dailyDeck } = await import("@/game/engine/daily");
+    const topics = new Set<string>();
+    for (let d = 1; d <= 120; d++) for (const q of dailyDeck(`2026-${String(1 + Math.floor((d - 1) / 28)).padStart(2, "0")}-${String(1 + ((d - 1) % 28)).padStart(2, "0")}`)) topics.add(q.topic);
+    expect(topics.has("ccna")).toBe(true);
+    expect(topics.has("interview")).toBe(true);
+  });
+});

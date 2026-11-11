@@ -863,3 +863,13 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 833 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). Sprite viewer at desktop and iPhone 14: no console errors, no overflow. The first screenshot had the mesh squashed flat; I increased the tier spacing and it reads clearly.
 - Known gaps: no failure case (a spine down) in the figure; fat-tree is in questions only.
 - Next: 6.3 Leitner box, daily challenge and interview deck draw from the new topics, with safe save migration.
+
+## 2026-11-11: 6.3 New chapters in decks, daily, Leitner and saves
+- Main was green locally (no lock held). This session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification. I did not take the routine lock this run (nothing else was running).
+- **Gym decks** (`content/questions/decks.ts`): gyms 10-13 shared the `ccna` topic and 14-16 the `interview` topic, so every battle in an arc drew the same mixed pool. New `focusGym(topic, id)` splits each pool by id prefix (switching and L1/L2 basics -> 10, IP connectivity/OSPF/EIGRP/FHRP/IPv6 -> 11, NAT/NTP/DNS/SNMP/syslog/QoS/DHCP -> 12, ACLs/wireless/security/automation -> 13, load balancing, rate limiting, hashing and backoff -> 14, datacenter/QUIC/BBR/real-time -> 15, debugging/system design/sockets/web security -> 16). `gymDeck` keeps its Leitner ordering and top-up from other chapters.
+- **Daily challenge and Leitner** already draw from the whole `BANK` and `GENERATORS`, so the new chapters were included; now covered by a test (120 days of decks include `ccna` and `interview` cards). The FAANG loop and `/interview` were done in 5.10.
+- **Saves** (`lib/save.ts`): load logic extracted into a pure `normalizeSave` that repairs wrong-typed fields, de-duplicates and sorts badges (10-16 kept), and gives old saves empty progress for new gyms.
+- Tests: `tests/decks.test.ts` (every gym 10-16 has >= 25 cards, rule spot-checks, each deck is full/unique/seeded/graded and every card belongs to its gym), `tests/daily.test.ts`, new `tests/save.test.ts`. 839 total.
+- Verified: lint, typecheck, 839 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI changes, so no screenshots.
+- Known gaps: the focus rules are id-prefix patterns, so a new bank with a new prefix lands in gym 12 (ccna) or 16 (interview) until the rules are updated; the tests check the pools stay deep.
+- Next: 7.1 whole-bank audit test.

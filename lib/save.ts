@@ -48,14 +48,37 @@ const DEFAULT: SaveData = {
 let cache: SaveData | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * A stored save, repaired: older saves (no progress for gyms 10-16, or missing
+ * newer fields) load with empty progress there, and wrong-typed fields fall
+ * back to the defaults. Never throws, never drops what it can keep.
+ */
+export function normalizeSave(parsed: unknown): SaveData {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return { ...DEFAULT };
+  const p = parsed as Partial<Record<keyof SaveData, unknown>>;
+  const nums = (x: unknown) => (Array.isArray(x) ? x.filter((n): n is number => Number.isInteger(n) && n > 0) : []);
+  const strs = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === "string") : []);
+  const settings = p.settings && typeof p.settings === "object" ? (p.settings as Partial<Settings>) : {};
+  return {
+    ...DEFAULT,
+    ...(parsed as Partial<SaveData>),
+    xp: typeof p.xp === "number" && Number.isFinite(p.xp) && p.xp >= 0 ? p.xp : 0,
+    badges: [...new Set(nums(p.badges))].sort((a, b) => a - b),
+    seen: strs(p.seen),
+    caught: strs(p.caught),
+    mapTown: typeof p.mapTown === "string" ? p.mapTown : null,
+    lessonsSeen: nums(p.lessonsSeen),
+    leitner: normalizeLeitner(p.leitner as Parameters<typeof normalizeLeitner>[0]),
+    daily: normalizeDaily(p.daily as Parameters<typeof normalizeDaily>[0]),
+    settings: { ...DEFAULT.settings, ...settings },
+  };
+}
+
 function load(): SaveData {
   if (cache) return cache;
   try {
     const raw = localStorage.getItem(KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    cache = parsed
-      ? { ...DEFAULT, ...parsed, leitner: normalizeLeitner(parsed.leitner), daily: normalizeDaily(parsed.daily), settings: { ...DEFAULT.settings, ...(parsed.settings ?? {}) } }
-      : { ...DEFAULT };
+    cache = raw ? normalizeSave(JSON.parse(raw)) : { ...DEFAULT };
   } catch {
     cache = { ...DEFAULT };
   }
