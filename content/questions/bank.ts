@@ -2,7 +2,7 @@
  * Hand-written questions, one or more of each kind. Chapter banks (2.x) grow
  * this; every answer is checked in tests/questions.test.ts.
  */
-import type { Question } from "@/game/engine/questions";
+import { balanceMcq, type Question } from "@/game/engine/questions";
 import { ACL_BANK } from "./aclBank";
 import { IPROUTE_BANK } from "./iprouteBank";
 import { OSPF_BANK } from "./ospfBank";
@@ -1728,4 +1728,4 @@ const CHAPTER_BANK: readonly Question[] = [
   },
 ];
 
-export const BANK: readonly Question[] = [...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK, ...IPSERVICES_BANK, ...WIRELESS_BANK, ...AUTOMATION_BANK, ...LOADBALANCE_BANK, ...RATELIMIT_BANK, ...PERF_BANK, ...REALTIME_BANK, ...DC_BANK, ...SOCKET_BANK, ...WEBSEC_BANK, ...DEBUG_BANK, ...SYSDESIGN_BANK];
+export const BANK: readonly Question[] = balanceMcq([...CHAPTER_BANK, ...INTERVIEW_BANK, ...CCNA_BANK, ...ACL_BANK, ...IPROUTE_BANK, ...OSPF_BANK, ...SWITCHING_BANK, ...IPV6_BANK, ...IPSERVICES_BANK, ...WIRELESS_BANK, ...AUTOMATION_BANK, ...LOADBALANCE_BANK, ...RATELIMIT_BANK, ...PERF_BANK, ...REALTIME_BANK, ...DC_BANK, ...SOCKET_BANK, ...WEBSEC_BANK, ...DEBUG_BANK, ...SYSDESIGN_BANK]);

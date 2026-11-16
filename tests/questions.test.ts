@@ -93,8 +93,10 @@ describe("grading", () => {
   const order = BANK.find((q) => q.id === "dhcp-dora")!;
 
   it("grades multiple choice", () => {
-    expect(grade(mcq, { kind: "mcq", choice: 2 })).toBe(true);
-    expect(grade(mcq, { kind: "mcq", choice: 0 })).toBe(false);
+    if (mcq.kind !== "mcq") throw new Error("arp should be multiple choice");
+    expect(mcq.choices[mcq.answer]).toBe("ARP");
+    expect(grade(mcq, { kind: "mcq", choice: mcq.answer })).toBe(true);
+    expect(grade(mcq, { kind: "mcq", choice: (mcq.answer + 1) % mcq.choices.length })).toBe(false);
     expect(grade(mcq, { kind: "numeric", value: 2 })).toBe(false);
   });
 

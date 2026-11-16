@@ -222,3 +222,22 @@ export function buildDeck(questions: readonly Question[], generators: readonly G
   const made = generators.filter(keep).map((g) => g.generate(Math.floor(r() * 2 ** 31)));
   return shuffled(r, [...questions.filter(keep), ...made]).slice(0, o.size);
 }
+
+/**
+ * Re-seat each hand-written multiple-choice answer in a slot picked from a hash
+ * of the question id, so the correct position is balanced across a bank yet
+ * stable between builds (saves key on ids, not slots). The distractors keep
+ * their relative order. Questions whose choices refer to each other ("both",
+ * "all of the above") keep their authored order.
+ */
+export function balanceMcq(questions: readonly Question[]): Question[] {
+  return questions.map((q) => {
+    if (q.kind !== "mcq" || q.choices.some((c) => /\b(above|below|both|neither|none of|all of)\b/i.test(c))) return q;
+    let h = 2166136261;
+    for (let i = 0; i < q.id.length; i++) h = Math.imul(h ^ q.id.charCodeAt(i), 16777619) >>> 0;
+    const slot = (h >>> 8) % q.choices.length;
+    const others = q.choices.filter((_, i) => i !== q.answer);
+    const choices = [...others.slice(0, slot), q.choices[q.answer], ...others.slice(slot)];
+    return { ...q, choices, answer: slot };
+  });
+}

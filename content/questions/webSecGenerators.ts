@@ -2,7 +2,7 @@
  * 5.7 web security problems: same-origin, SameSite cookies, CORS preflight, DNS spoofing space,
  * reflection amplification and HSTS lifetimes. Answers come from `lib/net/websec`.
  */
-import type { Generator, Question } from "@/game/engine/questions";
+import { mcqChoices, type Generator, type Question } from "@/game/engine/questions";
 import { cookieSent, dnsSpoofSpace, hstsSeconds, needsPreflight, reflectedMbps, sameOrigin, type SameSite } from "@/lib/net/websec";
 import { randInt, rng } from "@/lib/rng";
 
@@ -35,8 +35,7 @@ export const sameOriginGen: Generator = {
       ...base,
       difficulty: 1,
       prompt: `A script on ${page} requests ${other}. Is that request same-origin?`,
-      choices: ["Same-origin", "Cross-origin", "Same-origin only if the paths match", "Decided by the server's CORS headers"],
-      answer: same ? 0 : 1,
+      ...mcqChoices(r, same ? "Same-origin" : "Cross-origin", ["Same-origin", "Cross-origin", "Same-origin only if the paths match", "Decided by the server's CORS headers"]),
       explain: "Origin = scheme + host + port. Any difference (http vs https, api. vs app., a non-default port) makes it cross-origin; the default port of the scheme (443 for https) equals the explicit one.",
     } satisfies Question;
   },
@@ -62,8 +61,7 @@ export const sameSiteGen: Generator = {
       ...base,
       difficulty: 2,
       prompt: `The bank's session cookie has SameSite=${attr}. Is it sent when ${scenario.text}?`,
-      choices: ["Sent", "Not sent", "Sent only if the cookie is HttpOnly", "Sent only after a preflight"],
-      answer: sent ? 0 : 1,
+      ...mcqChoices(r, sent ? "Sent" : "Not sent", ["Sent", "Not sent", "Sent only if the cookie is HttpOnly", "Sent only after a preflight"]),
       explain: "Strict: same-site requests only. Lax: also top-level GET navigations, but not cross-site POSTs or subresources. None: always sent (and must be Secure). This is why Lax by default blunts most CSRF.",
     } satisfies Question;
   },
@@ -91,8 +89,7 @@ export const preflightGen: Generator = {
       ...base,
       difficulty: 2,
       prompt: `A page makes a cross-origin fetch(): ${c.d}. Does the browser first send an OPTIONS preflight?`,
-      choices: ["Yes, a preflight is sent", "No, it is a simple request", "Only if the response sets cookies", "Only if the page uses HTTP"],
-      answer: need ? 0 : 1,
+      ...mcqChoices(r, need ? "Yes, a preflight is sent" : "No, it is a simple request", ["Yes, a preflight is sent", "No, it is a simple request", "Only if the response sets cookies", "Only if the page uses HTTP"]),
       explain: "Simple requests use GET/HEAD/POST, only CORS-safelisted headers, and a Content-Type of form-urlencoded, multipart/form-data or text/plain. Anything else (JSON bodies, Authorization, PUT/DELETE) triggers a preflight.",
     } satisfies Question;
   },

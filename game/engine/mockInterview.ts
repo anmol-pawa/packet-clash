@@ -13,7 +13,7 @@ import { SOCKET_BANK } from "@/content/questions/socketBank";
 import { SYSDESIGN_BANK } from "@/content/questions/sysdesignBank";
 import { WEBSEC_BANK } from "@/content/questions/webSecBank";
 import { rng, shuffled } from "@/lib/rng";
-import type { Difficulty, Question } from "./questions";
+import { balanceMcq, type Difficulty, type Question } from "./questions";
 
 /** Questions in one interview. */
 export const MOCK_LENGTH = 8;
@@ -25,7 +25,7 @@ export function timeLimit(q: Question): number {
 }
 
 /** Every hand-written interview card: the gauntlet plus the SDE chapters (sockets, web security, debugging, design, performance). */
-export const MOCK_POOL: readonly Question[] = [
+export const MOCK_POOL: readonly Question[] = balanceMcq([
   ...INTERVIEW_BANK,
   ...SOCKET_BANK,
   ...WEBSEC_BANK,
@@ -35,7 +35,7 @@ export const MOCK_POOL: readonly Question[] = [
   ...RATELIMIT_BANK,
   ...REALTIME_BANK,
   ...PERF_BANK,
-];
+]);
 
 /** A seeded interview: a shuffled pick, warm-ups first and tough follow-ups last. */
 export function interviewDeck(seed: number, size = MOCK_LENGTH): Question[] {

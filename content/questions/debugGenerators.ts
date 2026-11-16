@@ -2,7 +2,7 @@
  * 5.8 debugging problems: curl timing phases, traceroute jumps, MSS, PMTUD and ss queues.
  * Answers come from `lib/net/debug`.
  */
-import type { Generator, Question } from "@/game/engine/questions";
+import { mcqChoices, type Generator, type Question } from "@/game/engine/questions";
 import { PHASE_NAMES, biggestJumpHop, mssForMtu, pmtudOutcome, slowestPhase, ssDiagnosis, timeToFirstByteMs, type RequestPhases } from "@/lib/net/debug";
 import { randInt, rng } from "@/lib/rng";
 
@@ -133,8 +133,7 @@ export const pmtudGen: Generator = {
       ...base,
       difficulty: 3,
       prompt: `A sender uses a ${sender}-byte MTU with the DF bit set. The smallest MTU on the path is ${path} bytes, and routers ${icmp ? "do" : "do not"} return ICMP 'fragmentation needed'. What happens to full-size segments?`,
-      choices: ["They fit and are delivered", "The sender learns the path MTU and shrinks its segments", "They are silently dropped and the transfer stalls (black hole)", "They are fragmented and reassembled"],
-      answer: outcome === "fits" ? 0 : outcome === "adapts" ? 1 : 2,
+      ...mcqChoices(r, ["They fit and are delivered", "The sender learns the path MTU and shrinks its segments", "They are silently dropped and the transfer stalls (black hole)"][outcome === "fits" ? 0 : outcome === "adapts" ? 1 : 2], ["They fit and are delivered", "The sender learns the path MTU and shrinks its segments", "They are silently dropped and the transfer stalls (black hole)", "They are fragmented and reassembled"]),
       explain: "With DF set a router can't fragment: it drops the packet and signals ICMP type 3 code 4 (IPv6: Packet Too Big). If that ICMP is filtered the sender never shrinks, so small packets work and bulk transfers hang.",
     } satisfies Question;
   },
@@ -156,8 +155,7 @@ export const ssGen: Generator = {
       ...base,
       difficulty: 2,
       prompt: `\`ss -tn\` on a server shows an ESTABLISHED socket with Recv-Q ${recvQ.toLocaleString("en-US")} and Send-Q ${sendQ.toLocaleString("en-US")}. Where is the likely bottleneck?`,
-      choices: ["The local application is not reading from the socket", "The peer or the network is slow to ACK what we sent", "The listen backlog is full", "The DNS resolver"],
-      answer: d === "app-not-reading" ? 0 : 1,
+      ...mcqChoices(r, d === "app-not-reading" ? "The local application is not reading from the socket" : "The peer or the network is slow to ACK what we sent", ["The local application is not reading from the socket", "The peer or the network is slow to ACK what we sent", "The listen backlog is full", "The DNS resolver"]),
       explain: "Recv-Q = bytes received but not yet read by the app (an app problem). Send-Q = bytes sent or queued but not yet acknowledged (a peer, window or network problem). When both are non-zero, the larger queue points at the dominant side.",
     } satisfies Question;
   },

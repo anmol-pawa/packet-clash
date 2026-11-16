@@ -873,3 +873,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 839 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI changes, so no screenshots.
 - Known gaps: the focus rules are id-prefix patterns, so a new bank with a new prefix lands in gym 12 (ccna) or 16 (interview) until the rules are updated; the tests check the pools stay deep.
 - Next: 7.1 whole-bank audit test.
+
+## 2026-11-16: 7.1 Whole-bank audit
+- Main was green locally, no lock held. Actions quota note has ended, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **New `tests/bankAudit.test.ts`**: unique ids; structural audit (topic, type, difficulty, prompt, explanation, keyed answers in range, no duplicate choices/steps/bins, grading accepts the correct response) for every bank question, the mock-interview pool and 40 seeds of every generator; generators deterministic and varying with the seed; answer-slot balance for the bank, per chapter, the mock pool and each 4-choice generator.
+- **Fixes it forced**: (1) the correct MCQ slot was predictable (one slot held 43% of the bank). New pure `balanceMcq` (`game/engine/questions.ts`) re-seats each hand-written answer by a hash of its id, stable between builds, skipping questions whose choices refer to each other ("all of the above"); applied to `BANK` and `MOCK_POOL`. (2) Five generators (`sameOrigin`, `sameSite`, `preflight`, `pmtud`, `ss`) used a fixed choice list so the answer was always slot 0-2; they now use `mcqChoices`. Their tests (and the `arp` grading test) compare the answer text, not a slot index.
+- Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached). No visual change.
+- Known gap: ~81% of hand-written MCQs have the longest choice as the answer. Ratchet test at 0.85; new box 7.1b.
+- Next: 7.2 `docs/COVERAGE.md` (7.1b is queued after it).

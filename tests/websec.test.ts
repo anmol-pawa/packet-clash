@@ -62,7 +62,7 @@ describe("websec generators", () => {
     for (const s of seeds) {
       const so = sameOriginGen.generate(s) as McqQuestion;
       const [, page, target] = /on (\S+) requests (\S+)\./.exec(so.prompt)!;
-      expect(so.answer).toBe(sameOrigin(page, target) ? 0 : 1);
+      expect(so.choices[so.answer]).toBe(sameOrigin(page, target) ? "Same-origin" : "Cross-origin");
 
       const ss = sameSiteGen.generate(s) as McqQuestion;
       const attr = /SameSite=(\w+)/.exec(ss.prompt)![1];
@@ -70,11 +70,11 @@ describe("websec generators", () => {
       const top = ss.prompt.includes("navigates") || ss.prompt.includes("auto-submits");
       const post = ss.prompt.includes("POST to");
       const expected = !cross || attr === "None" || (attr === "Lax" && top && !post);
-      expect(ss.answer).toBe(expected ? 0 : 1);
+      expect(ss.choices[ss.answer]).toBe(expected ? "Sent" : "Not sent");
 
       const pf = preflightGen.generate(s) as McqQuestion;
       const json = pf.prompt.includes("application/json") || pf.prompt.includes("Authorization") || /a (PUT|DELETE) request/.test(pf.prompt);
-      expect(pf.answer).toBe(json ? 0 : 1);
+      expect(pf.choices[pf.answer]).toBe(json ? "Yes, a preflight is sent" : "No, it is a simple request");
 
       const d = dnsSpaceGen.generate(s) as NumericQuestion;
       expect(d.answer).toBe(65536 * Number(/from ([\d,]+) possible/.exec(d.prompt)![1].replace(/,/g, "")));

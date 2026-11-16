@@ -73,12 +73,12 @@ describe("debug generators", () => {
       const pm = pmtudGen.generate(s) as McqQuestion;
       const [, sender, path] = /uses a (\d+)-byte MTU.*?path is (\d+) bytes/.exec(pm.prompt)!;
       const icmp = !pm.prompt.includes("do not return");
-      const want = Number(sender) <= Number(path) ? 0 : icmp ? 1 : 2;
-      expect(pm.answer).toBe(want);
+      const want = ["They fit and are delivered", "The sender learns the path MTU and shrinks its segments", "They are silently dropped and the transfer stalls (black hole)"][Number(sender) <= Number(path) ? 0 : icmp ? 1 : 2];
+      expect(pm.choices[pm.answer]).toBe(want);
 
       const ss = ssGen.generate(s) as McqQuestion;
       const [, rq, sq] = /Recv-Q ([\d,]+) and Send-Q ([\d,]+)/.exec(ss.prompt)!.map((x) => Number(String(x).replace(/,/g, "")));
-      expect(ss.answer).toBe(rq > 0 && rq >= sq ? 0 : 1);
+      expect(ss.choices[ss.answer]).toBe(rq > 0 && rq >= sq ? "The local application is not reading from the socket" : "The peer or the network is slow to ACK what we sent");
     }
   });
 });
