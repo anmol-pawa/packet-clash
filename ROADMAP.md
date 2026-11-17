@@ -150,7 +150,12 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
 Do 6.2 and 6.3 first (they are above), then this section in order.
 
 - [x] 7.1 Whole-bank audit test (`tests/bankAudit.test.ts`): unique ids across every gym, CCNA, FAANG and interview bank, every keyed answer valid, every explanation present, and **answer-position balance** (no bank where the correct MCQ slot is predictable); every generator deterministic and well-formed over 40 seeds. Fix whatever it flags.
-- [ ] 7.1b Longest-answer bias: ~81% of hand-written MCQs have the correct answer as the longest choice (found by 7.1). Pad or tighten distractors chapter by chapter until `tests/bankAudit.test.ts` can lower its limit (now 0.85) to 0.45.
+- [ ] 7.1b Longest-answer bias: ~81% of hand-written MCQs have the correct answer as the longest choice (found by 7.1). Rebalance bank by bank (rewrite distractors only; answer strings are pinned in `tests/questions.test.ts`), add each finished bank to the "rebalanced banks" test in `tests/bankAudit.test.ts` (limit 0.5), and lower the global limit (now 0.85) to 0.45 when all are done. Remaining hit rate (longest = correct), from 7.1b run 1: SOCKET 21/21, WEBSEC 23/23, PERF 21/21, REALTIME 22/22, RATELIMIT 21/22, SYSDESIGN 6/6, LOADBALANCE 18/21, DEBUG 23/24, IPV6 13/14, INTERVIEW 8/8, IPSERVICES 17/27, WIRELESS 14/22, AUTOMATION 14/24, OSPF 10/14, SWITCHING 13/20, CCNA 12/14, plus the chapter and CCNA banks inside `bank.ts`.
+  - [x] 7.1b-1 `dcBank.ts` (22 MCQs, was 22/22 longest, now below 0.5).
+  - [ ] 7.1b-2 `socketBank`, `sysdesignBank`, `perfBank`.
+  - [ ] 7.1b-3 `webSecBank`, `realtimeBank`, `rateLimitBank`.
+  - [ ] 7.1b-4 `loadBalanceBank`, `debugBank`, `ipv6Bank`, `interviewBank`.
+  - [ ] 7.1b-5 the remaining CCNA-topic banks and `bank.ts`, then lower the global limit.
 - [ ] 7.2 `docs/COVERAGE.md`: a matrix mapping the CCNA 200-301 blueprint and typical SDE networking interview topics (TCP/UDP, DNS, HTTP/2/3, TLS, load balancing, CDN, sockets, debugging, cloud networking, security) to the lessons, generators and questions that cover them. Fill any hole it shows (add boxes below if a hole needs more than one run).
 - [ ] 7.3 Freshness pass (web-check, stamp "as of October 2026"): the current CCNA exam blueprint version, HTTP/3 and QUIC adoption, TLS 1.3 features (ECH, post-quantum hybrid key exchange in browsers), DoH/DoT, RPKI deployment, IPv6 adoption. Update lessons and questions with the stamp; never present a guessed number as fact.
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { correctResponse, grade, answerText, type Question } from "@/game/engine/questions";
 import { BANK } from "@/content/questions/bank";
 import { GENERATORS } from "@/content/questions/generators";
+import { DC_BANK } from "@/content/questions/dcBank";
 import { MOCK_POOL } from "@/game/engine/mockInterview";
 import { TYPES } from "@/game/engine/types";
 
@@ -111,6 +112,21 @@ describe("whole-bank audit", () => {
       if (lens.indexOf(Math.max(...lens)) === q.answer) longest++;
     }
     expect(longest / mcq.length).toBeLessThan(0.85);
+  });
+
+  // 7.1b progress: banks whose distractors have been rebalanced hold the lower limit here.
+  it("keeps the rebalanced banks free of a longest-choice giveaway", () => {
+    const share = (qs: readonly Question[]): number => {
+      const mcq = qs.filter((q) => q.kind === "mcq");
+      let longest = 0;
+      for (const q of mcq) {
+        if (q.kind !== "mcq") continue;
+        const lens = q.choices.map((c) => c.length);
+        if (lens.indexOf(Math.max(...lens)) === q.answer) longest++;
+      }
+      return longest / mcq.length;
+    };
+    expect(share(DC_BANK)).toBeLessThan(0.5);
   });
 
   it("builds every generator deterministically and well-formed over 40 seeds", () => {

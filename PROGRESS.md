@@ -881,3 +881,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached). No visual change.
 - Known gap: ~81% of hand-written MCQs have the longest choice as the answer. Ratchet test at 0.85; new box 7.1b.
 - Next: 7.2 `docs/COVERAGE.md` (7.1b is queued after it).
+
+## 2026-11-17: 7.1b-1 longest-answer bias, datacenter bank
+- Measured the bias per bank (most hand-written banks are 90-100% "correct answer is the longest choice"). Split 7.1b into 7.1b-1..5 in ROADMAP with the per-bank numbers.
+- `dcBank.ts`: rewrote all 66 distractors (right answers and their pins in `tests/questions.test.ts` untouched) to be as detailed and plausible as the right answer; about 13 of 22 now have a longer wrong choice. Longest-is-correct share fell from 22/22 to under half.
+- `tests/bankAudit.test.ts`: new "rebalanced banks" test holds `DC_BANK` under 0.5; each later sub-box adds its banks there.
+- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached). No visual change, so no screenshots. CI and Pages confirmation: this session has no `gh`; checked via GitHub MCP, see below.
+- Known gap: the global ratchet is still 0.85. Work lands on `claude/blissful-mendel-ssknfo` (this session may only push there); main is not updated by this run.
+- Next: 7.1b-2 (`socketBank`, `sysdesignBank`, `perfBank`).
