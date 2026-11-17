@@ -886,6 +886,6 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Measured the bias per bank (most hand-written banks are 90-100% "correct answer is the longest choice"). Split 7.1b into 7.1b-1..5 in ROADMAP with the per-bank numbers.
 - `dcBank.ts`: rewrote all 66 distractors (right answers and their pins in `tests/questions.test.ts` untouched) to be as detailed and plausible as the right answer; about 13 of 22 now have a longer wrong choice. Longest-is-correct share fell from 22/22 to under half.
 - `tests/bankAudit.test.ts`: new "rebalanced banks" test holds `DC_BANK` under 0.5; each later sub-box adds its banks there.
-- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached). No visual change, so no screenshots. CI and Pages confirmation: this session has no `gh`; checked via GitHub MCP, see below.
+- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached). No visual change, so no screenshots. CI and Pages confirmation not done: the push went to the session branch, not `main`, so no deploy runs.
 - Known gap: the global ratchet is still 0.85. Work lands on `claude/blissful-mendel-ssknfo` (this session may only push there); main is not updated by this run.
 - Next: 7.1b-2 (`socketBank`, `sysdesignBank`, `perfBank`).
