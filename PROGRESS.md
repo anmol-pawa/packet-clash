@@ -881,3 +881,12 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached). No visual change.
 - Known gap: ~81% of hand-written MCQs have the longest choice as the answer. Ratchet test at 0.85; new box 7.1b.
 - Next: 7.2 `docs/COVERAGE.md` (7.1b is queued after it).
+
+## 2026-11-18: 7.1b-1 Longest-answer bias: web security bank
+- Main was green locally. This session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification. Work is on the session branch `claude/blissful-mendel-vmo0b9` (not merged to `main` by this run).
+- 7.1b was the first unchecked box and spans ~340 questions, so I split it into 7.1b-1..4 in `ROADMAP.md` and did the first.
+- **Content** (`content/questions/webSecBank.ts`): all 23 MCQs got longer, still-wrong distractors (same misconceptions, more detail). Correct answers are the longest choice in 7 of 23 (was 21 of 23). No right answer or explanation changed.
+- **Tests**: ratchet in `tests/bankAudit.test.ts` lowered from 0.85 to 0.80 (whole bank now 321 of 414 = 77.5%).
+- Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, no screenshots.
+- Known gaps: bank-wide bias is still 77.5%; target 0.45.
+- Next: 7.1b-2 `debugBank.ts` and `socketBank.ts`.
