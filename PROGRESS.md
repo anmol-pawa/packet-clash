@@ -881,3 +881,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached). No visual change.
 - Known gap: ~81% of hand-written MCQs have the longest choice as the answer. Ratchet test at 0.85; new box 7.1b.
 - Next: 7.2 `docs/COVERAGE.md` (7.1b is queued after it).
+
+## 2026-11-19: 7.1b1 Longest-answer bias, datacenter and socket banks
+- Main was green locally. The Actions quota note has ended, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification. Work is on the session branch `claude/blissful-mendel-vo5ae6` (the run rules forbid pushing to other branches), so main needs a merge.
+- 7.1b is too big for one run, so it is split into 7.1b1-b4 in ROADMAP. Done now: `content/questions/dcBank.ts` (correct answer longest in 20/22 -> 12/22) and `socketBank.ts` (21/21 -> 7/21). Distractors were rewritten at comparable length and plausibly wrong; several correct answers were tightened. The whole-bank figure is 313/414 (75.6%, was 80.9%); the ratchet in `tests/bankAudit.test.ts` is now 0.77.
+- `tests/questions.test.ts` pins answer text, so the pins for every reworded correct answer were updated to match.
+- Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, so no screenshots.
+- Known gaps: websec, dbg, rl, tp, rt, lb, v6, ccna and iv banks still favour the longest answer.
+- Next: 7.1b2 `webSecBank` and `debugBank`.

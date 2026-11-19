@@ -110,7 +110,7 @@ describe("whole-bank audit", () => {
       const lens = q.choices.map((c) => c.length);
       if (lens.indexOf(Math.max(...lens)) === q.answer) longest++;
     }
-    expect(longest / mcq.length).toBeLessThan(0.85);
+    expect(longest / mcq.length).toBeLessThan(0.77);
   });
 
   it("builds every generator deterministically and well-formed over 40 seeds", () => {

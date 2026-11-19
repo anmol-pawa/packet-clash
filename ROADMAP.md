@@ -150,7 +150,11 @@ Audit: gym 9 and `/interview` cover the classic questions (TCP vs UDP, L4 vs L7,
 Do 6.2 and 6.3 first (they are above), then this section in order.
 
 - [x] 7.1 Whole-bank audit test (`tests/bankAudit.test.ts`): unique ids across every gym, CCNA, FAANG and interview bank, every keyed answer valid, every explanation present, and **answer-position balance** (no bank where the correct MCQ slot is predictable); every generator deterministic and well-formed over 40 seeds. Fix whatever it flags.
-- [ ] 7.1b Longest-answer bias: ~81% of hand-written MCQs have the correct answer as the longest choice (found by 7.1). Pad or tighten distractors chapter by chapter until `tests/bankAudit.test.ts` can lower its limit (now 0.85) to 0.45.
+- [ ] 7.1b Longest-answer bias: ~81% of hand-written MCQs had the correct answer as the longest choice (found by 7.1). Pad or tighten distractors bank by bank until `tests/bankAudit.test.ts` can lower its limit (now 0.77, 313/414 measured) to 0.45. Worst remaining by id prefix: websec 23/23, dbg 23/24, rl 21/22, tp 20/21, rt 21/22, lb 18/21, v6 13/14, ccna 12/14, sec 9/12, auto 14/24, iv 8/8.
+  - [x] 7.1b1 `dcBank` (20/22 -> 12/22) and `socketBank` (21/21 -> 7/21).
+  - [ ] 7.1b2 `webSecBank` and `debugBank`.
+  - [ ] 7.1b3 `rateLimitBank`, `perfBank` (tp) and `realtimeBank` (rt).
+  - [ ] 7.1b4 `loadBalanceBank`, `ipv6Bank`, `ccnaBank`, `interviewBank` (iv), `automationBank`, then lower the ratchet to 0.45.
 - [ ] 7.2 `docs/COVERAGE.md`: a matrix mapping the CCNA 200-301 blueprint and typical SDE networking interview topics (TCP/UDP, DNS, HTTP/2/3, TLS, load balancing, CDN, sockets, debugging, cloud networking, security) to the lessons, generators and questions that cover them. Fill any hole it shows (add boxes below if a hole needs more than one run).
 - [ ] 7.3 Freshness pass (web-check, stamp "as of October 2026"): the current CCNA exam blueprint version, HTTP/3 and QUIC adoption, TLS 1.3 features (ECH, post-quantum hybrid key exchange in browsers), DoH/DoT, RPKI deployment, IPv6 adoption. Update lessons and questions with the stamp; never present a guessed number as fact.
 
