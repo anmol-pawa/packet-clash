@@ -110,7 +110,21 @@ describe("whole-bank audit", () => {
       const lens = q.choices.map((c) => c.length);
       if (lens.indexOf(Math.max(...lens)) === q.answer) longest++;
     }
-    expect(longest / mcq.length).toBeLessThan(0.85);
+    expect(longest / mcq.length).toBeLessThan(0.8);
+  });
+
+  // Chapters already padded (7.1b): keep their distractors as detailed as the answer.
+  it("keeps padded chapters (load balancing, rate limiting) below 75% longest-answer", () => {
+    for (const prefix of ["lb-", "rl-"]) {
+      const mcq = BANK.filter((q) => q.kind === "mcq" && q.id.startsWith(prefix));
+      let longest = 0;
+      for (const q of mcq) {
+        if (q.kind !== "mcq") continue;
+        const lens = q.choices.map((c) => c.length);
+        if (lens.indexOf(Math.max(...lens)) === q.answer) longest++;
+      }
+      expect(longest / mcq.length, prefix).toBeLessThan(0.75);
+    }
   });
 
   it("builds every generator deterministically and well-formed over 40 seeds", () => {

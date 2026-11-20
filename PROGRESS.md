@@ -881,3 +881,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 846 tests, `build:pages` (184 files precached). No visual change.
 - Known gap: ~81% of hand-written MCQs have the longest choice as the answer. Ratchet test at 0.85; new box 7.1b.
 - Next: 7.2 `docs/COVERAGE.md` (7.1b is queued after it).
+
+## 2026-11-20: 7.1b Longest-answer bias, part 1 (load balancing, rate limiting)
+- Main was green locally. Actions quota note has ended, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content**: padded the wrong choices of `loadBalanceBank.ts` (21 MCQs) and `rateLimitBank.ts` (22 MCQs) so distractors are as detailed as the answer (all still wrong). Answers that tests pin as exact text (`lb-weighted`, `lb-algos-match`) were left bare, with bare distractors. Longest-answer share: lb 21/21 -> 9/21, rl 21/22 -> 16/22, whole bank 81% -> 78%.
+- **Tests** (`tests/bankAudit.test.ts`): whole-bank ratchet lowered 0.85 -> 0.80; new per-chapter ratchet keeps `lb-` and `rl-` under 75%. 847 tests.
+- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, so no screenshots.
+- Known gaps: the bias remains in tp, rt, dc, sock, websec, dbg, auto, v6, ccna, ospf, sec (each ~85-100%). Box 7.1b stays open.
+- Next: 7.1b part 2 (tp, rt, dc, sock, websec, dbg), then 7.2.
