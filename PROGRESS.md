@@ -889,3 +889,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, so no screenshots.
 - Known gaps: the bias remains in tp, rt, dc, sock, websec, dbg, auto, v6, ccna, ospf, sec (each ~85-100%). Box 7.1b stays open.
 - Next: 7.1b part 2 (tp, rt, dc, sock, websec, dbg), then 7.2.
+
+## 2026-11-21: 7.1b Longest-answer bias, part 2 (datacenter)
+- Main was green locally, no lock held; ran on the session branch `claude/blissful-mendel-my5vm7` (pushed there, not to main). No Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content** (`content/questions/dcBank.ts`): padded the distractors of all 22 datacenter/cloud MCQs, and lengthened one wrong choice in 12 of them so it is the longest (all still plainly wrong). Answers pinned by tests are unchanged.
+- **Tests** (`tests/bankAudit.test.ts`): per-chapter ratchet now covers `dc-` (under 65%) alongside `lb-` and `rl-`. 847 tests.
+- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, so no screenshots.
+- Known gaps: the bias remains in tp, rt, sock, websec, dbg, auto, v6, ccna, ospf, sec. Box 7.1b stays open.
+- Next: 7.1b part 3 (tp, rt, sock, websec, dbg), then 7.2.
