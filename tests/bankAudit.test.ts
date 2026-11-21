@@ -114,8 +114,8 @@ describe("whole-bank audit", () => {
   });
 
   // Chapters already padded (7.1b): keep their distractors as detailed as the answer.
-  it("keeps padded chapters (load balancing, rate limiting) below 75% longest-answer", () => {
-    for (const prefix of ["lb-", "rl-"]) {
+  it("keeps padded chapters (load balancing, rate limiting, datacenter) below their longest-answer limits", () => {
+    for (const [prefix, limit] of [["lb-", 0.75], ["rl-", 0.75], ["dc-", 0.65]] as const) {
       const mcq = BANK.filter((q) => q.kind === "mcq" && q.id.startsWith(prefix));
       let longest = 0;
       for (const q of mcq) {
@@ -123,7 +123,7 @@ describe("whole-bank audit", () => {
         const lens = q.choices.map((c) => c.length);
         if (lens.indexOf(Math.max(...lens)) === q.answer) longest++;
       }
-      expect(longest / mcq.length, prefix).toBeLessThan(0.75);
+      expect(longest / mcq.length, prefix).toBeLessThan(limit);
     }
   });
 
