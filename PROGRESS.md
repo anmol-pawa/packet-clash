@@ -897,3 +897,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, so no screenshots.
 - Known gaps: the bias remains in tp, rt, sock, websec, dbg, auto, v6, ccna, ospf, sec. Box 7.1b stays open.
 - Next: 7.1b part 3 (tp, rt, sock, websec, dbg), then 7.2.
+
+## 2026-11-22: 7.1b Longest-answer bias, part 3 (sockets, web security, debugging)
+- Main was green locally, lock taken and released. Actions quota note has ended, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content**: padded the wrong choices of `socketBank.ts` (21 MCQs), `webSecBank.ts` (23) and `debugBank.ts` (23) so distractors are as detailed as the answer, with at least one wrong choice longer (all still plainly wrong). Answers pinned by tests are unchanged. Longest-answer share: sock 21/21 -> 10/21, websec 23/23 -> 10/23, dbg 23/24 -> 7/24; whole bank 78% -> 66%.
+- **Tests** (`tests/bankAudit.test.ts`): whole-bank ratchet lowered 0.80 -> 0.70; per-chapter ratchet now also covers `sock-` (0.60), `websec-` (0.60) and `dbg-` (0.45). 847 tests.
+- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached). No UI change, so no screenshots.
+- Known gaps: the bias remains in tp (20/21), rt (21/22), v6, ccna, ospf, sec, auto. Box 7.1b stays open.
+- Next: 7.1b part 4 (tp, rt, v6), then 7.2.
