@@ -905,3 +905,11 @@ Each hourly routine run appends an entry: date (IST), task, what changed, how it
 - Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached). No UI change, so no screenshots.
 - Known gaps: the bias remains in tp (20/21), rt (21/22), v6, ccna, ospf, sec, auto. Box 7.1b stays open.
 - Next: 7.1b part 4 (tp, rt, v6), then 7.2.
+
+## 2026-11-23: 7.1b Longest-answer bias, part 4 (transport performance, real-time)
+- Main was green locally, lock taken and released. Actions quota note has ended, but this session has no Actions API access, so CI and the Pages deploy were not confirmed; relied on local verification.
+- **Content**: padded the wrong choices of `perfBank.ts` (`tp-`, 21 MCQs) and `realtimeBank.ts` (`rt-`, 22 MCQs) so distractors are as detailed as the answer (all still plainly wrong). Longest-answer share: tp 20/21 -> 12/21, rt 21/22 -> 14/22. Answers pinned by tests are unchanged.
+- **Tests** (`tests/bankAudit.test.ts`): per-chapter ratchet now also covers `tp-` (0.65) and `rt-` (0.70). 847 tests.
+- Verified: lint, typecheck, 847 tests, `build:pages` (184 files precached; the known advisory stop hit first, retry passed). No UI change, so no screenshots.
+- Known gaps: the bias remains in v6 (13/14), ccna, ospf, sec, auto. Box 7.1b stays open.
+- Next: 7.1b part 5 (v6, ccna, ospf), then 7.2.
